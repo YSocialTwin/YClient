@@ -1,0 +1,3474 @@
+[
+    {
+        "url_site": "www.aei.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "American Enterprise Institute",
+        "feed_url": "https://www.aei.org/feed/"
+    },
+    {
+        "url_site": "blabber.buzz",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Blabber Buzz",
+        "feed_url": "https://www.blabber.buzz/rss-news/syndication-all-bb-articles"
+    },
+    {
+        "url_site": "blackcommunitynews.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Black Community News",
+        "feed_url": "https://blackcommunitynews.com/feed/"
+    },
+    {
+        "url_site": "brownstone.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Brownstone Institute",
+        "feed_url": "https://brownstone.org/articles/feed/"
+    },
+    {
+        "url_site": "catholicworldreport.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Catholic World Report",
+        "feed_url": "https://www.catholicworldreport.com/feed/"
+    },
+    {
+        "url_site": "christiantoday.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Christian Today",
+        "feed_url": "https://www.christiantoday.com/rss/feed.xml"
+    },
+    {
+        "url_site": "www.citizenfreepress.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Citizen Free Press",
+        "feed_url": "https://www.dailymail.co.uk/news/index.rss"
+    },
+    {
+        "url_site": "citizensunited.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Citizens United",
+        "feed_url": "https://www.citizensunited.org/feed/"
+    },
+    {
+        "url_site": "www.city-journal.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "City Journal",
+        "feed_url": "https://search.manhattan.institute/cj/feed"
+    },
+    {
+        "url_site": "dailyreckoning.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Daily Reckoning",
+        "feed_url": "https://dailyreckoning.com/feed/"
+    },
+    {
+        "url_site": "dailysignal.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Daily Signal",
+        "feed_url": "https://www.dailysignal.com/feed"
+    },
+    {
+        "url_site": "dcenquirer.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "DC Enquirer",
+        "feed_url": "https://dcenquirer.com/index.rss"
+    },
+    {
+        "url_site": "www.freedomworks.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "FreedomWorks",
+        "feed_url": "https://www.freedomworks.org/feed/"
+    },
+    {
+        "url_site": "www.g-a-i.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Government Accountablity Institute",
+        "feed_url": "https://feeds.megaphone.fm/SHDI3422321192"
+    },
+    {
+        "url_site": "humanevents.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Human Events",
+        "feed_url": "http://humanevents.com/index.rss"
+    },
+    {
+        "url_site": "lawenforcementtoday.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Law Enforcement Today",
+        "feed_url": "http://lawenforcementtoday.com/index.rss"
+    },
+    {
+        "url_site": "loneconservative.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Lone Conservative",
+        "feed_url": "https://loneconservative.com/feed/"
+    },
+    {
+        "url_site": "www.manhattan-institute.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Manhattan Institute for Policy Research",
+        "feed_url": "https://search.manhattan.institute/mi/feed"
+    },
+    {
+        "url_site": "mindingthecampus.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Minding the Campus",
+        "feed_url": "https://www.mindingthecampus.org/feed/"
+    },
+    {
+        "url_site": "ngo-monitor.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "NGO Monitor",
+        "feed_url": "https://www.ngo-monitor.org/reports/feed/"
+    },
+    {
+        "url_site": "notthebee.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Not the Bee",
+        "feed_url": "https://notthebee.com/feed/"
+    },
+    {
+        "url_site": "reclaimthenet.org",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Reclaim the Net",
+        "feed_url": "https://reclaimthenet.org/feed"
+    },
+    {
+        "url_site": "shorenewsnetwork.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Shore News Network",
+        "feed_url": "https://www.shorenewsnetwork.com/feed/"
+    },
+    {
+        "url_site": "www.thenewamerican.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "The New American",
+        "feed_url": "https://thenewamerican.com/feed/"
+    },
+    {
+        "url_site": "www.thepostmillennial.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "The Post Millennial",
+        "feed_url": "https://thepostmillennial.com/index.rss"
+    },
+    {
+        "url_site": "tippinsights.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "TIPP Insights",
+        "feed_url": "https://tippinsights.com/latest/rss/"
+    },
+    {
+        "url_site": "wabcradio.com",
+        "category": "politics",
+        "leaning": "right",
+        "name": "WABC \u2013 New York",
+        "feed_url": "https://feeds.megaphone.fm/WABC8794454163"
+    },
+    {
+        "url_site": "aeon.co",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Aeon",
+        "feed_url": "https://aeon.co/feed.rss"
+    },
+    {
+        "url_site": "www.aljazeera.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Al Jazeera",
+        "feed_url": "https://www.aljazeera.com/xml/rss/all.xml"
+    },
+    {
+        "url_site": "americanpurpose.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "American Purpose",
+        "feed_url": "https://www.americanpurpose.com/rss/"
+    },
+    {
+        "url_site": "aspeninstitute.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Aspen Institute",
+        "feed_url": "https://www.aspeninstitute.org/feed/"
+    },
+    {
+        "url_site": "backchannel.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "BackChannel",
+        "feed_url": "https://www.wired.com/feed/rss"
+    },
+    {
+        "url_site": "www.berkshireeagle.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Berkshire Eagle",
+        "feed_url": "http://www.berkshireeagle.com/search/?f=rss&t=article&c=&l=50&s=start_time&sd=desc"
+    },
+    {
+        "url_site": "BPB.de",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Bundeszentrale f\u00fcr politische Bildung",
+        "feed_url": "https://BPB.de/rss-feed/62409.rss"
+    },
+    {
+        "url_site": "canarymedia.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Canary Media",
+        "feed_url": "https://www.canarymedia.com/rss.rss"
+    },
+    {
+        "url_site": "carolinapublicpress.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Carolina Public Press",
+        "feed_url": "https://carolinapublicpress.org/feed/"
+    },
+    {
+        "url_site": "boston.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "CBS Boston \u2013 WBZ-TV",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "losangeles.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "CBS Los Angeles \u2013 KCBS",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "www.cbsnews.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "CBS News",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "newyork.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "CBS New York",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "colombiareports.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Columbia Reports",
+        "feed_url": "https://colombiareports.com/feed/"
+    },
+    {
+        "url_site": "cronkitenews.azpbs.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Cronkite News",
+        "feed_url": "https://cronkitenews.azpbs.org/rss-feed/"
+    },
+    {
+        "url_site": "elDiario.es",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "elDiario.es",
+        "feed_url": "https://www.eldiario.es/rss/"
+    },
+    {
+        "url_site": "eldiariony.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "El Diario NY",
+        "feed_url": "https://eldiariony.com/feed/"
+    },
+    {
+        "url_site": "emerging-europe.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Emerging Europe",
+        "feed_url": "https://emerging-europe.com/feed/"
+    },
+    {
+        "url_site": "www.euractiv.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "EurActiv",
+        "feed_url": "https://www.euractiv.com/feed/"
+    },
+    {
+        "url_site": "www.fairobserver.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Fair Observer",
+        "feed_url": "https://www.fairobserver.com/feed/"
+    },
+    {
+        "url_site": "foodnavigator.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Food Navigator",
+        "feed_url": "https://www.foodnavigator.com/Info/Latest-News"
+    },
+    {
+        "url_site": "www.fwweekly.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Fort Worth Weekly",
+        "feed_url": "https://www.fwweekly.com/feed/"
+    },
+    {
+        "url_site": "globalnews.ca",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Global News",
+        "feed_url": "https://globalnews.ca/feed/"
+    },
+    {
+        "url_site": "gritdaily.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Grit Daily News",
+        "feed_url": "https://gritdaily.com/feed/"
+    },
+    {
+        "url_site": "harpers.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Harpers",
+        "feed_url": "https://harpers.org/feed/"
+    },
+    {
+        "url_site": "heavy.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Heavy",
+        "feed_url": "https://heavy.com/feed/"
+    },
+    {
+        "url_site": "hechingerreport.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Hechinger Report",
+        "feed_url": "https://hechingerreport.org/feed/"
+    },
+    {
+        "url_site": "www.hcn.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "High Country News",
+        "feed_url": "https://www.hcn.org/feed/"
+    },
+    {
+        "url_site": "highline.huffingtonpost.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Highline",
+        "feed_url": "https://chaski.huffpost.com/us/auto/topic/buzzfeed"
+    },
+    {
+        "url_site": "hongkongfp.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Hong Kong Free Press",
+        "feed_url": "https://hongkongfp.com/feed/"
+    },
+    {
+        "url_site": "civilbeat.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Honolulu Civil Beat",
+        "feed_url": "https://www.civilbeat.org/feed/"
+    },
+    {
+        "url_site": "www.icenews.is",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Ice News",
+        "feed_url": "https://www.icenews.is/feed/"
+    },
+    {
+        "url_site": "infobae.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "InfoBae",
+        "feed_url": "https://www.infobae.com/feeds/rss/"
+    },
+    {
+        "url_site": "www.inquisitr.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Inquisitr",
+        "feed_url": "https://www.inquisitr.com/flipboard_feed.rss"
+    },
+    {
+        "url_site": "insideevs.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "InsideEVs",
+        "feed_url": "https://insideevs.com/rss/news/all/"
+    },
+    {
+        "url_site": "imeu.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Institute for Middle East Understanding",
+        "feed_url": "http://feeds.feedburner.com/imeu/commentary"
+    },
+    {
+        "url_site": "invw.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "InvestigateWest",
+        "feed_url": "https://www.invw.org/feed/"
+    },
+    {
+        "url_site": "www.japantoday.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Japan Today",
+        "feed_url": "https://japantoday.com/feed"
+    },
+    {
+        "url_site": "daily.jstor.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Jstor Daily",
+        "feed_url": "https://daily.jstor.org/feed/"
+    },
+    {
+        "url_site": "jurist.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "JURIST",
+        "feed_url": "https://www.jurist.org/news/feed/"
+    },
+    {
+        "url_site": "justiceinfo.net",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Justice Info",
+        "feed_url": "https://www.justiceinfo.net/fr/feed"
+    },
+    {
+        "url_site": "khn.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Kaiser Health News",
+        "feed_url": "http://feeds.soundcloud.com/users/soundcloud:users:316295522/sounds.rss"
+    },
+    {
+        "url_site": "denver.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "KCNC-TV \u2013 CBS Denver",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "nwpb.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "KNWO \u2013 NPR \u2013 Cottonwood",
+        "feed_url": "https://www.nwpb.org/feed/"
+    },
+    {
+        "url_site": "sacramento.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "KOVR \u2013 CBS Sacramento",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "sanfrancisco.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "KPIX \u2013 CBS San Francisco",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "nwpb.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "KRFA \u2013 NPR \u2013 Moscow",
+        "feed_url": "https://www.nwpb.org/feed/"
+    },
+    {
+        "url_site": "ladepeche.fr",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "La D\u00e9p\u00eache du Midi",
+        "feed_url": "https://www.ladepeche.fr/rss.xml"
+    },
+    {
+        "url_site": "lemonde.fr",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Le Monde",
+        "feed_url": "https://www.lemonde.fr/actualite-medias/rss_full.xml"
+    },
+    {
+        "url_site": "marianne.net",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Marianne",
+        "feed_url": "https://www.marianne.net/rss.xml"
+    },
+    {
+        "url_site": "marketrealist.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Market Realist",
+        "feed_url": "https://marketrealist.com/home.rss/"
+    },
+    {
+        "url_site": "mediapart.fr",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Mediapart",
+        "feed_url": "https://www.mediapart.fr/articles/feed"
+    },
+    {
+        "url_site": "www.startribune.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Minneapolis Star-Tribune",
+        "feed_url": "https://www.startribune.com/local/index.rss2"
+    },
+    {
+        "url_site": "mississippitoday.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Mississippi Today",
+        "feed_url": "https://mississippitoday.org/feed/"
+    },
+    {
+        "url_site": "moonshot.news",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Moonshot News",
+        "feed_url": "https://moonshot.news/feed/"
+    },
+    {
+        "url_site": "www.motherjones.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Mother Jones",
+        "feed_url": "https://www.motherjones.com/feed/"
+    },
+    {
+        "url_site": "www.nakedcapitalism.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Naked Capitalism",
+        "feed_url": "https://www.nakedcapitalism.com/feed"
+    },
+    {
+        "url_site": "Necenzurirano.si",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Necenzurirano.si",
+        "feed_url": "https://necenzurirano.si/rss/najdisi.xml"
+    },
+    {
+        "url_site": "newslaundry.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "NewsLaundry",
+        "feed_url": "https://www.newslaundry.com/stories.rss?exclude-section-ids=15848,15817&amp;time-period=last-7-days"
+    },
+    {
+        "url_site": "niemanlab.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Nieman Journalism Lab",
+        "feed_url": "https://www.niemanlab.org/feed/"
+    },
+    {
+        "url_site": "nrc.nl",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "NRC",
+        "feed_url": "https://www.nrc.nl/rss/"
+    },
+    {
+        "url_site": "www.ocweekly.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "OCWeekly",
+        "feed_url": "https://www.ocweekly.com/feed/"
+    },
+    {
+        "url_site": "www.outsidethebeltway.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Outside The Beltway",
+        "feed_url": "https://www.outsidethebeltway.com/feed/"
+    },
+    {
+        "url_site": "www.propublica.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Propublica",
+        "feed_url": "https://www.propublica.org/feeds/main"
+    },
+    {
+        "url_site": "publicnewsservice.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Public News Service",
+        "feed_url": "https://2020talks.libsyn.com/rss"
+    },
+    {
+        "url_site": "radiotelevisionmarti.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Radio Television Marti",
+        "feed_url": "https://radiotelevisionmarti.com/api/"
+    },
+    {
+        "url_site": "www.revealnews.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Reveal",
+        "feed_url": "https://feeds.revealradio.org/revealpodcast"
+    },
+    {
+        "url_site": "www.spiegel.de",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Spiegel Online",
+        "feed_url": "https://www.spiegel.de/schlagzeilen/index.rss"
+    },
+    {
+        "url_site": "sueddeutsche.de",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "S\u00fcddeutsche Zeitung",
+        "feed_url": "https://rss.sueddeutsche.de/rss/Topthemen"
+    },
+    {
+        "url_site": "techcrunch.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "TechCrunch",
+        "feed_url": "https://techcrunch.com/feed/"
+    },
+    {
+        "url_site": "www.techdirt.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Techdirt",
+        "feed_url": "https://feeds.soundcloud.com/users/soundcloud:users:122508048/sounds.rss"
+    },
+    {
+        "url_site": "www.belfercenter.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Belfer Center for Science and International Affairs",
+        "feed_url": "https://www.belfercenter.org/rss/publication/998/feed"
+    },
+    {
+        "url_site": "coloradosun.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Colorado Sun",
+        "feed_url": "https://coloradosun.com/feed/"
+    },
+    {
+        "url_site": "www.ecfr.eu",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The European Council on Foreign Relations",
+        "feed_url": "https://ecfr.eu/feed/"
+    },
+    {
+        "url_site": "newsite.thehindu.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Hindu",
+        "feed_url": "https://www.thehindu.com/feeder/default.rss"
+    },
+    {
+        "url_site": "irishexaminer.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Irish Examiner",
+        "feed_url": "https://www.irishexaminer.com/feed/35-top_news.xml"
+    },
+    {
+        "url_site": "irishnews.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Irish News",
+        "feed_url": "https://www.irishnews.com/arc/outboundfeeds/rss/"
+    },
+    {
+        "url_site": "journalistsresource.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Journalist\u2019s Resource",
+        "feed_url": "https://journalistsresource.org/feed/?cat=-503%2C-504%2C-566%2C-415"
+    },
+    {
+        "url_site": "thelist.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The List",
+        "feed_url": "https://www.thelist.com/feed/"
+    },
+    {
+        "url_site": "themoderatevoice.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Moderate Voice",
+        "feed_url": "https://themoderatevoice.com/feed/"
+    },
+    {
+        "url_site": "www.alaraby.co.uk",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The New Arab",
+        "feed_url": "https://www.alaraby.co.uk/rss"
+    },
+    {
+        "url_site": "stanforddaily.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "The Stanford Daily",
+        "feed_url": "https://stanforddaily.com/feed/"
+    },
+    {
+        "url_site": "www.tomdispatch.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Tomdispatch.com",
+        "feed_url": "https://tomdispatch.com/feed/"
+    },
+    {
+        "url_site": "transittomorrow.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Transit Tomorrow",
+        "feed_url": "https://transittomorrow.com/feed/"
+    },
+    {
+        "url_site": "pravda.com.ua",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Ukrayinska Pravda",
+        "feed_url": "https://www.pravda.com.ua/rss/"
+    },
+    {
+        "url_site": "www.washingtonblade.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Washington Blade",
+        "feed_url": "https://www.washingtonblade.com/feed/"
+    },
+    {
+        "url_site": "chicago.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WBBM \u2013 CBS Chicago",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "minnesota.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WCCO \u2013 CBS Minnesota",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "miami.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WFOR \u2013 CBS Miami",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "whdh.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WHDH \u2013 Boston News",
+        "feed_url": "https://whdh.com/feed/"
+    },
+    {
+        "url_site": "www.wired.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "Wired Magazine",
+        "feed_url": "https://www.wired.com/feed/rss"
+    },
+    {
+        "url_site": "baltimore.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WJZ \u2013 CBS Baltimore",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "lakeshorepublicmedia.org",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WLPR \u2013 NPR \u2013 Lowell",
+        "feed_url": "https://www.lakeshorepublicmedia.org/feedback.rss"
+    },
+    {
+        "url_site": "wsvn.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WSVN",
+        "feed_url": "https://wsvn.com/feed/"
+    },
+    {
+        "url_site": "detroit.cbslocal.com",
+        "category": "politics",
+        "leaning": "left_center",
+        "name": "WWJ \u2013 CBS Detroit",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "biospace.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "BioSpace",
+        "feed_url": "https://app.newsloth.com/biospace-com/VlRSVw.rss"
+    },
+    {
+        "url_site": "climatefeedback.org",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Climate Feedback",
+        "feed_url": "https://science.feedback.org/feed/"
+    },
+    {
+        "url_site": "cshl.edu",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Cold Spring Harbor Laboratory",
+        "feed_url": "https://www.cshl.edu/feed/"
+    },
+    {
+        "url_site": "cosmosmagazine.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Cosmos Magazine",
+        "feed_url": "https://cosmosmagazine.com/feed/"
+    },
+    {
+        "url_site": "disabilityscoop.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Disability Scoop",
+        "feed_url": "https://www.disabilityscoop.com/feed/"
+    },
+    {
+        "url_site": "www.geneticliteracyproject.org",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Genetic Literacy Project",
+        "feed_url": "https://geneticliteracyproject.org/feed/"
+    },
+    {
+        "url_site": "healthfeedback.org",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Health Feedback",
+        "feed_url": "https://science.feedback.org/feed/"
+    },
+    {
+        "url_site": "mdpi.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "MDPI",
+        "feed_url": "https://www.mdpi.com/rss"
+    },
+    {
+        "url_site": "knowablemagazine.org",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Knowable Magazine",
+        "feed_url": "https://knowablemagazine.org/rss"
+    },
+    {
+        "url_site": "www.livescience.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Live Science",
+        "feed_url": "https://www.livescience.com/feeds/all"
+    },
+    {
+        "url_site": "www.technologyreview.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "MIT Technology Review",
+        "feed_url": "https://www.technologyreview.com/feed/"
+    },
+    {
+        "url_site": "nautil.us",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Nautilus Magazine",
+        "feed_url": "https://nautil.us/feed/"
+    },
+    {
+        "url_site": "newatlas.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "New Atlas",
+        "feed_url": "https://newatlas.com/rss.rss"
+    },
+    {
+        "url_site": "newhumanist.org.uk",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "New Humanist",
+        "feed_url": "https://feeds.feedburner.com/NewHumanistBlog"
+    },
+    {
+        "url_site": "www.newscientist.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "New Scientist",
+        "feed_url": "https://feeds.newscientist.com/home"
+    },
+    {
+        "url_site": "oceana.org",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Oceana",
+        "feed_url": "https://oceana.org/feed/"
+    },
+    {
+        "url_site": "www.popsci.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Popular Science",
+        "feed_url": "https://www.popsci.com/feed/"
+    },
+    {
+        "url_site": "www.quantamagazine.org",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Quanta Magazine",
+        "feed_url": "https://api.quantamagazine.org/feed/"
+    },
+    {
+        "url_site": "scienceillustrated.com.au",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Science Illustrated",
+        "feed_url": "https://scienceillustrated.com.au/blog/feed/"
+    },
+    {
+        "url_site": "www.sciencenews.org",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Science News",
+        "feed_url": "https://www.sciencenews.org/feed"
+    },
+    {
+        "url_site": "SciTechDaily.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "SciTechDaily.com",
+        "feed_url": "https://scitechdaily.com/feed/"
+    },
+    {
+        "url_site": "singularityhub.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "SingularityHub",
+        "feed_url": "https://singularityhub.com/feed/"
+    },
+    {
+        "url_site": "www.space.com",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "Space.com",
+        "feed_url": "https://www.space.com/feeds/all"
+    },
+    {
+        "url_site": "watchers.news",
+        "category": "politics",
+        "leaning": "pro_science",
+        "name": "The Watchers",
+        "feed_url": "https://watchers.news/feed/"
+    },
+    {
+        "url_site": "babylonbee.com",
+        "category": "politics",
+        "leaning": "satira",
+        "name": "Babylon Bee",
+        "feed_url": "https://babylonbee.com/feed/"
+    },
+    {
+        "url_site": "www.clickhole.com",
+        "category": "politics",
+        "leaning": "satira",
+        "name": "Clickhole",
+        "feed_url": "https://clickhole.com/feed/"
+    },
+    {
+        "url_site": "confederacyofdrones.com",
+        "category": "politics",
+        "leaning": "satira",
+        "name": "Confederacy of Drones",
+        "feed_url": "https://confederacyofdrones.com/feed/"
+    },
+    {
+        "url_site": "www.dailysquib.co.uk",
+        "category": "politics",
+        "leaning": "satira",
+        "name": "Daily Squib",
+        "feed_url": "https://www.dailysquib.co.uk/feed"
+    },
+    {
+        "url_site": "chronicle.su",
+        "category": "politics",
+        "leaning": "satira",
+        "name": "Internet Chronicle",
+        "feed_url": "https://chronicle.su/feed/"
+    },
+    {
+        "url_site": "www.thebeaverton.com",
+        "category": "politics",
+        "leaning": "satira",
+        "name": "The Beaverton",
+        "feed_url": "https://www.thebeaverton.com/feed/?q=1718782572"
+    },
+    {
+        "url_site": "www.anthropocenemagazine.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Anthropocene Magazine",
+        "feed_url": "https://www.anthropocenemagazine.org/feed/"
+    },
+    {
+        "url_site": "attackthesystem.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Attack the System",
+        "feed_url": "https://attackthesystem.com/feed/"
+    },
+    {
+        "url_site": "www.autostraddle.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "AutoStraddle",
+        "feed_url": "https://www.autostraddle.com/feed/"
+    },
+    {
+        "url_site": "ceasefiremagazine.co.uk",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Ceasefire Magazine",
+        "feed_url": "https://ceasefiremagazine.co.uk/feed/"
+    },
+    {
+        "url_site": "c4ss.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Center for a Stateless Society",
+        "feed_url": "https://c4ss.org/feed"
+    },
+    {
+        "url_site": "www.chicagoreader.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Chicago Reader",
+        "feed_url": "https://chicagoreader.com/feed/"
+    },
+    {
+        "url_site": "chicagoreporter.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Chicago Reporter",
+        "feed_url": "https://www.chicagoreporter.com/feed/"
+    },
+    {
+        "url_site": "climatechangenews.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Climate Home News",
+        "feed_url": "https://www.climatechangenews.com/feed/"
+    },
+    {
+        "url_site": "cpusa.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Communist Party USA",
+        "feed_url": "https://www.cpusa.org/feed/?post_type=article"
+    },
+    {
+        "url_site": "consortiumnews.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Consortium News",
+        "feed_url": "https://consortiumnews.com/feed/?1=2"
+    },
+    {
+        "url_site": "countervortex.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "CounterVortex",
+        "feed_url": "https://countervortex.org/feed/"
+    },
+    {
+        "url_site": "crimethinc.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "CrimethInc",
+        "feed_url": "https://exworker.libsyn.com/rss"
+    },
+    {
+        "url_site": "www.democracynow.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Democracy Now",
+        "feed_url": "https://www.democracynow.org/democracynow.rss"
+    },
+    {
+        "url_site": "egbertowillies.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Egberto Willies",
+        "feed_url": "https://egbertowillies.com/feed/"
+    },
+    {
+        "url_site": "electronicintifada.net",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Electronic Intifada",
+        "feed_url": "https://electronicintifada.net/rss.xml"
+    },
+    {
+        "url_site": "evonomics.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Evonomics",
+        "feed_url": "https://evonomics.com/feed/"
+    },
+    {
+        "url_site": "exposedbycmd.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Exposed by CMD",
+        "feed_url": "https://www.exposedbycmd.org/feed/"
+    },
+    {
+        "url_site": "fairplanet.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "FairPlanet",
+        "feed_url": "https://www.fairplanet.org/feed.xml"
+    },
+    {
+        "url_site": "freepress.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Free Press",
+        "feed_url": "https://freepress.org/rss"
+    },
+    {
+        "url_site": "globalvoices.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Global Voices",
+        "feed_url": "https://globalvoices.org/feed/"
+    },
+    {
+        "url_site": "www.greenleft.org.au",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Green Left Weekly",
+        "feed_url": "https://www.greenleft.org.au/rss.xml"
+    },
+    {
+        "url_site": "www.huffingtonpost.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Huffington Post",
+        "feed_url": "https://chaski.huffpost.com/us/auto/topic/buzzfeed"
+    },
+    {
+        "url_site": "www.juancole.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Informed Comment",
+        "feed_url": "https://www.juancole.com/feed"
+    },
+    {
+        "url_site": "jewishcurrents.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Jewish Currents",
+        "feed_url": "https://feeds.captivate.fm/on-the-nose/"
+    },
+    {
+        "url_site": "www.liberationnews.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Liberation News",
+        "feed_url": "https://www.liberationnews.org/feed/"
+    },
+    {
+        "url_site": "littlegreenfootballs.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Little Green Footballs",
+        "feed_url": "https://littlegreenfootballs.com/lgf.rss"
+    },
+    {
+        "url_site": "mashable.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Mashable",
+        "feed_url": "https://mashable.com/feeds/rss/all"
+    },
+    {
+        "url_site": "metroweekly.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Metro Weekly",
+        "feed_url": "https://www.metroweekly.com/feed/"
+    },
+    {
+        "url_site": "monthlyreview.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Monthly Review",
+        "feed_url": "https://mronline.org/feed/"
+    },
+    {
+        "url_site": "mronline.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "MR Online",
+        "feed_url": "https://monthlyreview.org/feed/"
+    },
+    {
+        "url_site": "www.nationofchange.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Nation of Change",
+        "feed_url": "https://www.nationofchange.org/feed/"
+    },
+    {
+        "url_site": "nd-aktuell.de",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Neues Deutschland",
+        "feed_url": "https://nd-aktuell.de/rss/neues-deutschland.xml"
+    },
+    {
+        "url_site": "newpol.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "New Politics Magazine",
+        "feed_url": "https://newpol.org/feed/"
+    },
+    {
+        "url_site": "www.newstatesman.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "New Statesman",
+        "feed_url": "https://www.newstatesman.com/feed"
+    },
+    {
+        "url_site": "www.newyorker.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "New Yorker",
+        "feed_url": "https://www.newyorker.com/feed/rss"
+    },
+    {
+        "url_site": "newscorpse.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "News Corpse",
+        "feed_url": "https://www.newscorpse.com/ncWP/?feed=rss2"
+    },
+    {
+        "url_site": "www.opednews.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "OpEdNews",
+        "feed_url": "https://www.opednews.com/podcasts_google.xml"
+    },
+    {
+        "url_site": "peoplespolicyproject.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "People\u2019s Policy Project",
+        "feed_url": "https://www.peoplespolicyproject.org/feed/"
+    },
+    {
+        "url_site": "peoplesworld.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "People\u2019s World",
+        "feed_url": "https://www.peoplesworld.org/feed/?post_type=article"
+    },
+    {
+        "url_site": "psyche.co",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Psyche",
+        "feed_url": "https://psyche.co/feed.rss"
+    },
+    {
+        "url_site": "therealnews.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Real News Network",
+        "feed_url": "https://therealnews.com/feed?partner-feed=the-real-news-network"
+    },
+    {
+        "url_site": "www.rightwingwatch.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Right Wing Watch",
+        "feed_url": "https://www.rightwingwatch.org/feed/"
+    },
+    {
+        "url_site": "shadowproof.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Shadow Proof",
+        "feed_url": "https://shadowproof.com/feed/"
+    },
+    {
+        "url_site": "www.worldsocialism.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Socialist Standard",
+        "feed_url": "https://www.worldsocialism.org/spgb/snippet/feed/"
+    },
+    {
+        "url_site": "prospect.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The American Prospect",
+        "feed_url": "https://prospect.org/api/rss/content.rss"
+    },
+    {
+        "url_site": "breachmedia.ca",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The Breach",
+        "feed_url": "https://breachmedia.ca/feed/"
+    },
+    {
+        "url_site": "www.themarysue.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The Mary Sue",
+        "feed_url": "https://www.themarysue.com/feed/?unified_experience=true&concat_css=false&concat_js=false&unified_author_drawer=true"
+    },
+    {
+        "url_site": "thenarwhal.ca",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The Narwhal",
+        "feed_url": "https://thenarwhal.ca/feed"
+    },
+    {
+        "url_site": "thenewinquiry.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The New Inquiry",
+        "feed_url": "https://thenewinquiry.com/feed/"
+    },
+    {
+        "url_site": "www.palestinechronicle.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The Palestine Chronicle",
+        "feed_url": "https://www.palestinechronicle.com/feed/"
+    },
+    {
+        "url_site": "www.progressive.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The Progressive",
+        "feed_url": "https://progressive.org/api/rss/content.rss"
+    },
+    {
+        "url_site": "thinkpol.ca",
+        "category": "politics",
+        "leaning": "left",
+        "name": "ThinkPol",
+        "feed_url": "https://thinkpol.ca/feed/"
+    },
+    {
+        "url_site": "truthout.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "TruthOut",
+        "feed_url": "https://truthout.org/latest/feed/"
+    },
+    {
+        "url_site": "truththeory.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Truth Theory",
+        "feed_url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC7pjcXDOGZ9uJlTJ8dIet5g"
+    },
+    {
+        "url_site": "www.unicornriot.ninja",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Unicorn Riot",
+        "feed_url": "https://unicornriot.ninja/feed/"
+    },
+    {
+        "url_site": "url-media.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "URL Media",
+        "feed_url": "https://epicenter-nyc.com/feed/"
+    },
+    {
+        "url_site": "washingtonian.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Washingtonian",
+        "feed_url": "https://www.washingtonian.com/feed/"
+    },
+    {
+        "url_site": "whowhatwhy.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Who.What.Why",
+        "feed_url": "https://whowhatwhy.org/feed/"
+    },
+    {
+        "url_site": "www.workers.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Workers World",
+        "feed_url": "https://www.workers.org/feed/"
+    },
+    {
+        "url_site": "xtramagazine.com",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Xtra Magazine",
+        "feed_url": "https://xtramagazine.com/feed"
+    },
+    {
+        "url_site": "www.yesmagazine.org",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Yes Magazine",
+        "feed_url": "https://www.yesmagazine.org/feed"
+    },
+    {
+        "url_site": "19fortyfive.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "1945",
+        "feed_url": "https://www.19fortyfive.com/feed/"
+    },
+    {
+        "url_site": "americanaffairsjournal.org",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "American Affairs Journal",
+        "feed_url": "https://americanaffairsjournal.org/feed/"
+    },
+    {
+        "url_site": "breakingdefense.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Breaking Defense",
+        "feed_url": "https://breakingdefense.com/full-rss-feed/?v=2"
+    },
+    {
+        "url_site": "campaignforliberty.org",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Campaign for Liberty",
+        "feed_url": "http://www.campaignforliberty.org/feed/"
+    },
+    {
+        "url_site": "elmundo.es",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "El Mundo",
+        "feed_url": "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml"
+    },
+    {
+        "url_site": "endtimeheadlines.org",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "End Time Headlines",
+        "feed_url": "https://endtimeheadlines.org/feed/"
+    },
+    {
+        "url_site": "longwarjournal.org",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "FDD\u2019s Long War Journal",
+        "feed_url": "https://www.longwarjournal.org/feed"
+    },
+    {
+        "url_site": "gp.se",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "G\u00f6teborgs-Posten",
+        "feed_url": "https://feeds.acast.com/public/shows/6436473f45d98d00115c64d0"
+    },
+    {
+        "url_site": "www.thehindubusinessline.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Hindu Business Line",
+        "feed_url": "https://www.thehindubusinessline.com/news/feeder/default.rss"
+    },
+    {
+        "url_site": "interfax.ru",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Interfax \u2013 Russia",
+        "feed_url": "https://www.interfax.ru/rss.asp"
+    },
+    {
+        "url_site": "lanacion.com.ar",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "La Nacion",
+        "feed_url": "https://www.lanacion.com.ar/arc/outboundfeeds/rss/"
+    },
+    {
+        "url_site": "www.reviewjournal.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Las Vegas Review Journal",
+        "feed_url": "https://www.reviewjournal.com/feed/"
+    },
+    {
+        "url_site": "listverse.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "ListVerse",
+        "feed_url": "https://listverse.com/feed/"
+    },
+    {
+        "url_site": "www.unionleader.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Manchester Union leader",
+        "feed_url": "https://www.unionleader.com/search/?q=&t=article&f=rss&bl=703809"
+    },
+    {
+        "url_site": "MEAWW.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "MEAWW.com",
+        "feed_url": "https://meaww.com/home.rss"
+    },
+    {
+        "url_site": "nationalinterest.org",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "National Interest",
+        "feed_url": "https://nationalinterest.org/feed"
+    },
+    {
+        "url_site": "observer.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "New York Observer",
+        "feed_url": "http://www.observer.com/feed"
+    },
+    {
+        "url_site": "noticias.r7.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Noticias R7",
+        "feed_url": "https://feedtv.news/feed/"
+    },
+    {
+        "url_site": "nyteknik.se",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Ny Teknik",
+        "feed_url": "https://www.nyteknik.se/index?lab_viewport=rss"
+    },
+    {
+        "url_site": "oilprice.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Oil Price",
+        "feed_url": "https://oilprice.com/rss/main"
+    },
+    {
+        "url_site": "reason.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Reason",
+        "feed_url": "https://reason.com/latest/feed/"
+    },
+    {
+        "url_site": "www.theaustralian.com.au",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "The Australian",
+        "feed_url": "https://www.theaustralian.com.au/feed/"
+    },
+    {
+        "url_site": "thefp.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "The Free Press",
+        "feed_url": "https://www.thefp.com/feed"
+    },
+    {
+        "url_site": "www.jewishpress.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "The Jewish Press",
+        "feed_url": "https://www.jewishpress.com/feed/"
+    },
+    {
+        "url_site": "newcriterion.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "The New Criterion",
+        "feed_url": "https://newcriterion.com/feed/"
+    },
+    {
+        "url_site": "thewest.com.au",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "The West Australian",
+        "feed_url": "https://thewest.com.au/rss"
+    },
+    {
+        "url_site": "thisismoney.co.uk",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "This is Money",
+        "feed_url": "https://www.dailymail.co.uk/home/index.rss"
+    },
+    {
+        "url_site": "www.rep-am.com",
+        "category": "politics",
+        "leaning": "right_center",
+        "name": "Waterbury Republican-American",
+        "feed_url": "https://www.rep-am.com/feed/"
+    },
+    {
+        "url_site": "americanpartisan.org",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "American Partisan",
+        "feed_url": "https://feeds.bbci.co.uk/news/world/rss.xml"
+    },
+    {
+        "url_site": "www.tfp.org",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "American Society for the Defense of Tradition, Family, and Property",
+        "feed_url": "https://www.tfp.org/feed/"
+    },
+    {
+        "url_site": "Amerika.org",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Amerika.org",
+        "feed_url": "https://www.amerika.org/feed/"
+    },
+    {
+        "url_site": "www.barenakedislam.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Bare Naked Islam",
+        "feed_url": "https://barenakedislam.com/feed/"
+    },
+    {
+        "url_site": "bitchute.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "BitChute",
+        "feed_url": "https://earthnewspaper.com/feed/"
+    },
+    {
+        "url_site": "Bongino.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Bongino.com",
+        "feed_url": "http://bongino.com/index.rss"
+    },
+    {
+        "url_site": "bostonbroadside.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Boston Broadside",
+        "feed_url": "https://media.rss.com/broadside/feed.xml"
+    },
+    {
+        "url_site": "bossip.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Bossip",
+        "feed_url": "https://bossip.com/feed/"
+    },
+    {
+        "url_site": "caixinglobal.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Caixin Global",
+        "feed_url": "https://feedly.com/new-features/feed.xml"
+    },
+    {
+        "url_site": "www.trueactivist.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Center for Immigration Studies",
+        "feed_url": "https://trueactivist.com/feed/"
+    },
+    {
+        "url_site": "creativedestructionmedia.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Creative Destruction Media \u2013 CD Media",
+        "feed_url": "https://creativedestructionmedia.com/feed/podcast"
+    },
+    {
+        "url_site": "www.dailymail.co.uk",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Daily Mail",
+        "feed_url": "https://www.dailymail.co.uk/home/index.rss"
+    },
+    {
+        "url_site": "deepleftfield.info",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Deep Left Field",
+        "feed_url": "https://deepleftfield.info/feed/"
+    },
+    {
+        "url_site": "defendingtherepublic.org",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Defending The Republic",
+        "feed_url": "https://defendingtherepublic.org/feed/"
+    },
+    {
+        "url_site": "dnyuz.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "DNyuz",
+        "feed_url": "https://dnyuz.com/feed/"
+    },
+    {
+        "url_site": "druthers.net",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Druthers",
+        "feed_url": "https://druthers.ca/feed/"
+    },
+    {
+        "url_site": "eviemagazine.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Evie Magazine",
+        "feed_url": "https://www.eviemagazine.com/rss.xml"
+    },
+    {
+        "url_site": "freewestmedia.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Free West Media",
+        "feed_url": "https://freewestmedia.com/feed/"
+    },
+    {
+        "url_site": "gbnews.uk",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "GB News UK",
+        "feed_url": "https://gbnews.uk/feeds/content-type.rss"
+    },
+    {
+        "url_site": "Grunge.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Grunge.com",
+        "feed_url": "https://www.grunge.com/feed/"
+    },
+    {
+        "url_site": "www.ihatethemedia.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "I Hate the Media",
+        "feed_url": "https://www.ihatethemedia.com/feed"
+    },
+    {
+        "url_site": "independentminute.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Independent Minute",
+        "feed_url": "https://independentminute.com/feed/"
+    },
+    {
+        "url_site": "instapundit.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Instapundit",
+        "feed_url": "https://instapundit.com/feed/"
+    },
+    {
+        "url_site": "lancastercourier.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Lancaster Courier",
+        "feed_url": "https://www.lancastercourier.com/feed/"
+    },
+    {
+        "url_site": "Lenta.ru",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Lenta.ru",
+        "feed_url": "http://lenta.ru/rss"
+    },
+    {
+        "url_site": "en.mercopress.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Mercopress",
+        "feed_url": "https://en.mercopress.com/rss/"
+    },
+    {
+        "url_site": "moonbattery.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "MoonBattery",
+        "feed_url": "https://moonbattery.com/feed/"
+    },
+    {
+        "url_site": "nrlc.org",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "National Right to Life Committee",
+        "feed_url": "https://nrlc.org/feed/?post_type=nrlnewstoday"
+    },
+    {
+        "url_site": "newsammo.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "NewsAmmo",
+        "feed_url": "https://rss.app/feeds/s6nTwaml485hdtbk.xml"
+    },
+    {
+        "url_site": "mydailyfreedom.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "My Daily Freedom",
+        "feed_url": "https://rawdogsports.com/feed/"
+    },
+    {
+        "url_site": "origo.hu",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Origo",
+        "feed_url": "https://www.origo.hu/publicapi/hu/rss/origo/articles"
+    },
+    {
+        "url_site": "politicalflare.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Political Flare",
+        "feed_url": "https://www.politicalflare.com/feed/"
+    },
+    {
+        "url_site": "presscorp.org",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Press Corp",
+        "feed_url": "http://presscorp.org/index.rss"
+    },
+    {
+        "url_site": "quillette.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Quillette",
+        "feed_url": "https://quillette.com/articles/rss/"
+    },
+    {
+        "url_site": "redvoicemedia.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Red Voice Media",
+        "feed_url": "https://www.rvmnews.com/feed/"
+    },
+    {
+        "url_site": "Revolver.News",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Revolver.News",
+        "feed_url": "https://revolver.news/feed/"
+    },
+    {
+        "url_site": "RushLimbaugh.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "RushLimbaugh.com",
+        "feed_url": "https://www.rushlimbaugh.com/feed/"
+    },
+    {
+        "url_site": "tass.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Russia News Agency-TASS",
+        "feed_url": "https://tass.com/rss/v2.xml"
+    },
+    {
+        "url_site": "www.smobserved.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Santa Monica Observer",
+        "feed_url": "https://www.smobserved.com/rss"
+    },
+    {
+        "url_site": "www.shtfplan.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "SHTFplan.com",
+        "feed_url": "https://www.shtfplan.com/feed"
+    },
+    {
+        "url_site": "www.skepticink.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "SkepticInk",
+        "feed_url": "https://skepticink.com/humesapprentice/feed/"
+    },
+    {
+        "url_site": "stoppingsocialism.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Stopping Socialism",
+        "feed_url": "https://stoppingsocialism.com/feed/"
+    },
+    {
+        "url_site": "takimag.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Taki\u2019s Magazine",
+        "feed_url": "https://www.takimag.com/feed/"
+    },
+    {
+        "url_site": "thelastamericanvagabond.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "The Last American Vagabond",
+        "feed_url": "https://www.thelastamericanvagabond.com/podcast"
+    },
+    {
+        "url_site": "publishedreporter.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "The Published Reporter",
+        "feed_url": "https://www.publishedreporter.com/feed/"
+    },
+    {
+        "url_site": "therightstuff.biz",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "The Right Stuff",
+        "feed_url": "https://therightstuff.biz/feed/"
+    },
+    {
+        "url_site": "thethinkingconservative.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "The Thinking Conservative",
+        "feed_url": "https://www.thethinkingconservative.com/feed/"
+    },
+    {
+        "url_site": "www.unz.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "The Unz Review",
+        "feed_url": "https://www.unz.com/xfeed/rss/all/"
+    },
+    {
+        "url_site": "tsarizm.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Tsarizm",
+        "feed_url": "https://tsarizm.com/feed/"
+    },
+    {
+        "url_site": "tsionizm.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Tsionizm",
+        "feed_url": "https://tsarizm.com/feed/"
+    },
+    {
+        "url_site": "UncoverDC.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "UncoverDC.com",
+        "feed_url": "http://uncoverdc.com/index.rss"
+    },
+    {
+        "url_site": "urdupoint.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Urdupoint",
+        "feed_url": "https://www.urdupoint.com/en/sitemap/news.rss"
+    },
+    {
+        "url_site": "ValeursActuelles.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "Valeurs Actuelles",
+        "feed_url": "https://www.valeursactuelles.com/feed"
+    },
+    {
+        "url_site": "WayneDupree.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "WayneDupree.com",
+        "feed_url": "http://waynedupree.com/index.rss"
+    },
+    {
+        "url_site": "wn.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "World News",
+        "feed_url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
+    },
+    {
+        "url_site": "xyz.net.au",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "xyz.net.au",
+        "feed_url": "https://xyz.net.au/feed/"
+    },
+    {
+        "url_site": "YourNews.com",
+        "category": "politics",
+        "leaning": "questionable_sources",
+        "name": "YourNews.com",
+        "feed_url": "https://yournews.com/feed/?post_type=article"
+    },
+    {
+        "url_site": "altCensored.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "altCensored.com",
+        "feed_url": "https://altCensored.com/feed"
+    },
+    {
+        "url_site": "althealthworks.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "AltHealth Works",
+        "feed_url": "https://althealthworks.com/feed/"
+    },
+    {
+        "url_site": "anti-empire.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Anti-Empire",
+        "feed_url": "https://anti-empire.com/feed/"
+    },
+    {
+        "url_site": "asia-pacificresearch.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Asia-Pacific Research",
+        "feed_url": "https://www.asia-pacificresearch.com/feed"
+    },
+    {
+        "url_site": "bestnewshere.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Best News Here",
+        "feed_url": "https://bestnewshere.com/feed/"
+    },
+    {
+        "url_site": "www.legitgov.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Citizens for Legitimate Government",
+        "feed_url": "https://legitgov.org/index.php/feed/"
+    },
+    {
+        "url_site": "judithcurry.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Climate Etc",
+        "feed_url": "https://judithcurry.com/feed/"
+    },
+    {
+        "url_site": "conspiracydailyupdate.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Conspiracy Daily Update",
+        "feed_url": "https://conspiracydailyupdate.com/feed/"
+    },
+    {
+        "url_site": "coreysdigs.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Corey\u2019s Digs",
+        "feed_url": "https://www.coreysdigs.com/feed/"
+    },
+    {
+        "url_site": "geopolitics.co",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Covert Geopolitics",
+        "feed_url": "https://geopolitics.co/feed/"
+    },
+    {
+        "url_site": "CrossExamined.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "CrossExamined.org",
+        "feed_url": "https://crossexamined.org/feed/"
+    },
+    {
+        "url_site": "billmuehlenberg.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "CultureWatch",
+        "feed_url": "https://billmuehlenberg.com/feed/"
+    },
+    {
+        "url_site": "dailyclout.io",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "DailyClout",
+        "feed_url": "https://dailyclout.io/feed/"
+    },
+    {
+        "url_site": "dailysceptic.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Daily Sceptic",
+        "feed_url": "https://dailysceptic.org/feed/"
+    },
+    {
+        "url_site": "dissidentvoice.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Dissident Voice",
+        "feed_url": "https://dissidentvoice.org/feed/"
+    },
+    {
+        "url_site": "friendsofscience.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Friends of Science",
+        "feed_url": "https://friendsofscience.org/foss-library-rss.rss"
+    },
+    {
+        "url_site": "www.globalresearch.ca",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Global Research",
+        "feed_url": "https://www.globalresearch.ca/feed"
+    },
+    {
+        "url_site": "gmwatch.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "GMWatch",
+        "feed_url": "https://gmwatch.org/en/?format=feed&type=rss"
+    },
+    {
+        "url_site": "www.godlikeproductions.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Godlike Productions",
+        "feed_url": "https://www.godlikeproductions.com/feeds/forums/1"
+    },
+    {
+        "url_site": "healthimpactnews.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Health Impact News",
+        "feed_url": "https://healthimpactnews.com/feed/"
+    },
+    {
+        "url_site": "healthrangerreport.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Health Ranger Report",
+        "feed_url": "https://healthrangerreport.com/rss"
+    },
+    {
+        "url_site": "www.infiniteunknown.net",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Infinite Unknown",
+        "feed_url": "https://infiniteunknown.net/feed/"
+    },
+    {
+        "url_site": "icic.law",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "International Crimes Investigative Committee",
+        "feed_url": "https://icic.law/feed/"
+    },
+    {
+        "url_site": "KLA.TV",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "KLA.TV",
+        "feed_url": "https://www.kla.tv/rss.php?lang=de"
+    },
+    {
+        "url_site": "lifeadvancer.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Life Advancer",
+        "feed_url": "https://www.lifeadvancer.com/feed/"
+    },
+    {
+        "url_site": "medicalkidnap.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Medical Kidnap",
+        "feed_url": "https://healthimpactnews.com/feed/"
+    },
+    {
+        "url_site": "nationalfile.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "National File",
+        "feed_url": "https://nationalfile.com/feed/"
+    },
+    {
+        "url_site": "naturallysavvy.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Naturally Savvy",
+        "feed_url": "https://naturallysavvy.com/feed/"
+    },
+    {
+        "url_site": "newsinsideout.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "News Inside Out",
+        "feed_url": "https://newsinsideout.com/feed/"
+    },
+    {
+        "url_site": "notrickszone.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "NoTricksZone",
+        "feed_url": "https://notrickszone.com/feed/"
+    },
+    {
+        "url_site": "nutritionfacts.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Nutritionfacts.org",
+        "feed_url": "https://nutritionfacts.org/feed/?post_type=video"
+    },
+    {
+        "url_site": "organicconsumers.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Organic Consumers Association",
+        "feed_url": "https://organicconsumers.org/feed/"
+    },
+    {
+        "url_site": "sanevax.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "SaneVax",
+        "feed_url": "https://sanevax.org/feed/"
+    },
+    {
+        "url_site": "santeplusmag.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Sante Plus Magazine",
+        "feed_url": "https://www.santeplusmag.com/feed/rss/"
+    },
+    {
+        "url_site": "shoebat.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Shoebat",
+        "feed_url": "https://shoebat.com/comments/feed/"
+    },
+    {
+        "url_site": "sustainablepulse.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Sustainable Pulse",
+        "feed_url": "https://sustainablepulse.com/feed/"
+    },
+    {
+        "url_site": "Technocracy.News",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Technocracy.News",
+        "feed_url": "https://www.technocracy.news/feed/"
+    },
+    {
+        "url_site": "www.corbettreport.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "The Corbett Report",
+        "feed_url": "https://corbettreport.com/feed/"
+    },
+    {
+        "url_site": "theorganicprepper.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "The Organic Prepper",
+        "feed_url": "https://www.theorganicprepper.com/feed/"
+    },
+    {
+        "url_site": "thephaser.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "The Phaser",
+        "feed_url": "https://thephaser.com/feed/"
+    },
+    {
+        "url_site": "therundownlive.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "The Rundown Live",
+        "feed_url": "https://TheRundownLive.com/feed/"
+    },
+    {
+        "url_site": "Truth11.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Truth11.com",
+        "feed_url": "https://www.truth11.com/rss/"
+    },
+    {
+        "url_site": "unlimitedhangout.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Unlimited Hangout",
+        "feed_url": "https://unlimitedhangout.com/feed/"
+    },
+    {
+        "url_site": "usawatchdog.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "USAWatchdog.com",
+        "feed_url": "https://usawatchdog.com/feed/"
+    },
+    {
+        "url_site": "vaccineimpact.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Vaccine Impact",
+        "feed_url": "https://healthimpactnews.com/feed/"
+    },
+    {
+        "url_site": "www.veteranstoday.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Veterans Today",
+        "feed_url": "https://www.vtforeignpolicy.com/feed/"
+    },
+    {
+        "url_site": "wattsupwiththat.com",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Watts Up with that",
+        "feed_url": "https://wattsupwiththat.com/feed/"
+    },
+    {
+        "url_site": "wearechange.org",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "We are Change",
+        "feed_url": "https://wearechange.org/feed/"
+    },
+    {
+        "url_site": "winterwatch.net",
+        "category": "politics",
+        "leaning": "conspiracy_pseudoscience",
+        "name": "Winter Watch",
+        "feed_url": "https://www.winterwatch.net/feed/"
+    },
+    {
+        "url_site": "securingdemocracy.gmfus.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Alliance For Securing Democracy",
+        "feed_url": "https://securingdemocracy.gmfus.org/feed/"
+    },
+    {
+        "url_site": "arstechnica.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Ars Technica",
+        "feed_url": "http://feeds.arstechnica.com/arstechnica/index"
+    },
+    {
+        "url_site": "aspentimes.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Aspen Times",
+        "feed_url": "https://www.aspentimes.com/feed/"
+    },
+    {
+        "url_site": "babnet.net",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Babnet Tunisia",
+        "feed_url": "https://www.babnet.net/feed.php"
+    },
+    {
+        "url_site": "benzinga.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Benzinga",
+        "feed_url": "https://www.benzinga.com/fintech/feed"
+    },
+    {
+        "url_site": "bocapost.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Boca Post",
+        "feed_url": "https://bocapost.com/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/bureau-county-republican/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Bureau County Republican",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "www.castanet.net",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Castanet",
+        "feed_url": "https://www.castanet.net/rss/topheadlines.xml"
+    },
+    {
+        "url_site": "philadelphia.cbslocal.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "CBS Philly",
+        "feed_url": "https://www.cbsnews.com/latest/rss/main"
+    },
+    {
+        "url_site": "calgary.citynews.ca",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "CityNews Calgary",
+        "feed_url": "https://www.rogerssportsandmedia.com/privacy-policy/feed/"
+    },
+    {
+        "url_site": "halifax.citynews.ca",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "CityNews Halifax",
+        "feed_url": "https://www.rogerssportsandmedia.com/privacy-policy/feed/"
+    },
+    {
+        "url_site": "kitchener.citynews.ca",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "CityNews Kitchener",
+        "feed_url": "https://www.rogerssportsandmedia.com/privacy-policy/feed/"
+    },
+    {
+        "url_site": "ottawa.citynews.ca",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "CityNews Ottawa",
+        "feed_url": "https://www.rogerssportsandmedia.com/privacy-policy/feed/"
+    },
+    {
+        "url_site": "toronto.citynews.ca",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "CityNews Toronto",
+        "feed_url": "https://www.rogerssportsandmedia.com/privacy-policy/feed/"
+    },
+    {
+        "url_site": "www.cpj.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Committee to Protect Journalists",
+        "feed_url": "https://cpj.org/feed/"
+    },
+    {
+        "url_site": "craigdailypress.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Craig Press",
+        "feed_url": "https://www.craigdailypress.com/feed/"
+    },
+    {
+        "url_site": "Crestonnews.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Creston News Advertiser",
+        "feed_url": "https://www.crestonnews.com/arcio/rss/"
+    },
+    {
+        "url_site": "cruxnow.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Crux",
+        "feed_url": "https://cruxnow.com/feed/"
+    },
+    {
+        "url_site": "dailycamera.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Daily Camera",
+        "feed_url": "https://www.dailycamera.com/feed/"
+    },
+    {
+        "url_site": "dailynk.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Daily NK",
+        "feed_url": "https://www.dailynk.com/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/daily-chronicle/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Dekalb Daily Chronicle",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "digitimes.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "DigiTimes Asia",
+        "feed_url": "https://www.digitimes.com/rss/daily.xml"
+    },
+    {
+        "url_site": "eastidahonews.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "East Idaho News",
+        "feed_url": "https://www.eastidahonews.com/feed/"
+    },
+    {
+        "url_site": "shawlocal.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Elburn Herald",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "www.factcheck.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Fact Check",
+        "feed_url": "https://www.factcheck.org/feed/"
+    },
+    {
+        "url_site": "federalnewsnetwork.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Federal News Network",
+        "feed_url": "https://federalnewsnetwork.com/feed/"
+    },
+    {
+        "url_site": "Fedscoop.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "FedScoop",
+        "feed_url": "https://fedscoop.com/feed/"
+    },
+    {
+        "url_site": "www.foreignaffairs.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Foreign Affairs",
+        "feed_url": "https://www.foreignaffairs.com/rss.xml"
+    },
+    {
+        "url_site": "shawlocal.com/ogle-county-news/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Forreston Journal",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "fortmorgantimes.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Fort Morgan Times",
+        "feed_url": "https://www.fortmorgantimes.com/feed/"
+    },
+    {
+        "url_site": "fullfact.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Full Fact UK",
+        "feed_url": "https://fullfact.org/feed/all/"
+    },
+    {
+        "url_site": "postindependent.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Glenwood Springs Post Independent",
+        "feed_url": "https://www.postindependent.com/feed/"
+    },
+    {
+        "url_site": "www.goodnewsnetwork.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "GoodNewsNetwork",
+        "feed_url": "https://www.goodnewsnetwork.org/feed/"
+    },
+    {
+        "url_site": "www.icij.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "International Consortium of Investigative Journalists",
+        "feed_url": "https://www.icij.org/feed/"
+    },
+    {
+        "url_site": "www.japantimes.co.jp",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Japan Times",
+        "feed_url": "https://www.japantimes.co.jp/feed/"
+    },
+    {
+        "url_site": "newtondailynews.com/jasper-county-tribune/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Jasper County Tribune",
+        "feed_url": "https://www.newtondailynews.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/kane-county-chronicle/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Kane County Chronicle",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "thedenverchannel.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KCDO \u2013 Denver News",
+        "feed_url": "https://www.denver7.com/news/rss.rss"
+    },
+    {
+        "url_site": "kdvr.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KDVR-TV",
+        "feed_url": "https://kdvr.com/news/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/kendall-county-now/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Kendall County Now",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "ourquadcities.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KLJB \u2013 Quad Cities News",
+        "feed_url": "https://www.ourquadcities.com/feed/"
+    },
+    {
+        "url_site": "thedenverchannel.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KMGH \u2013 Denver7",
+        "feed_url": "https://www.denver7.com/news/rss.rss"
+    },
+    {
+        "url_site": "knowyourmeme.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Know Your Meme",
+        "feed_url": "https://knowyourmeme.com/newsfeed.rss"
+    },
+    {
+        "url_site": "koaa.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KOAA \u2013 News5 \u2013 Pueblo",
+        "feed_url": "https://www.koaa.com/news/rss.rss"
+    },
+    {
+        "url_site": "fox2now.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KTVI \u2013 St. Louis",
+        "feed_url": "https://fox2now.com/feed/"
+    },
+    {
+        "url_site": "abc4.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KTVX \u2013 Salt Lake City News",
+        "feed_url": "https://www.abc4.com/news/top-stories/feed/"
+    },
+    {
+        "url_site": "valleycentral.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KVEO \u2013 Rio Grande Valley News",
+        "feed_url": "https://www.valleycentral.com/feed/"
+    },
+    {
+        "url_site": "kxan.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "KXAN \u2013 Austin News",
+        "feed_url": "https://www.kxan.com/feed/"
+    },
+    {
+        "url_site": "english.kyodonews.net",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Kyodo News Plus",
+        "feed_url": "https://english.kyodonews.net/rss/kyodonews-fzone.xml"
+    },
+    {
+        "url_site": "ledevoir.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "La Devoir",
+        "feed_url": "http://feeds2.feedburner.com/fluxdudevoir"
+    },
+    {
+        "url_site": "shawlocal.com/news-tribune/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "LaSalle News-Tribune",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/mywebtimes/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "LaSalle Times",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/lake-county-journal/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Lake County Journal",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "www.makeuseof.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "MakeUseOf",
+        "feed_url": "https://www.makeuseof.com/feed/"
+    },
+    {
+        "url_site": "marketbeat.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "MarketBeat",
+        "feed_url": "https://www.marketbeat.com/rss.ashx?type=headlines"
+    },
+    {
+        "url_site": "newsnationnow.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "NewsNation",
+        "feed_url": "https://www.newsnationnow.com/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/morris-herald-news/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Morris Herald-News",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/ogle-county-news/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Mt Morris Times",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "MyNewsLA.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "MyNewsLA.com",
+        "feed_url": "https://mynewsla.com/feed/"
+    },
+    {
+        "url_site": "natlawreview.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "National Law Review",
+        "feed_url": "https://natlawreview.com/recent-contributions/feed"
+    },
+    {
+        "url_site": "newsfactsnetwork.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "News Facts Network",
+        "feed_url": "https://newsfactsnetwork.com/feed/"
+    },
+    {
+        "url_site": "www.newsguardtech.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Newsguard",
+        "feed_url": "https://www.newsguardtech.com/feed/"
+    },
+    {
+        "url_site": "newtondailynews.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Newton Daily News",
+        "feed_url": "https://www.newtondailynews.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/northwest-herald/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Northwest Herald",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "open.online",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Open \u2013",
+        "feed_url": "https://www.open.online/feed/"
+    },
+    {
+        "url_site": "openmindmag.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "OpenMind Magazine",
+        "feed_url": "https://www.openmindmag.org/feed.rss"
+    },
+    {
+        "url_site": "shawlocal.com/ogle-county-news/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Oregon Republican Reporter",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/kendall-county-now/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Oswego Ledger",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "parkrecord.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Park Record",
+        "feed_url": "https://www.parkrecord.com/feed/"
+    },
+    {
+        "url_site": "www.patheos.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Patheos",
+        "feed_url": "https://www.patheos.com/blogs/freelancechristianity/feed/"
+    },
+    {
+        "url_site": "www.pewresearch.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Pew Research",
+        "feed_url": "https://www.pewresearch.org/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/kendall-county-now",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Plano Record",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "www.polygraph.info",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Polygraph.info",
+        "feed_url": "https://www.polygraph.info/api/"
+    },
+    {
+        "url_site": "shawlocal.com/prairie-advocate/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Prairie Advocate",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "www.prri.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Public Religion Research Institute",
+        "feed_url": "https://www.prri.org/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/putnam-county-record/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Putnam County Record",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "www.rferl.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Radio Free Europe / Radio Liberty",
+        "feed_url": "https://www.rferl.org/podcast/?count=50&daycount=3000&zoneId=21361"
+    },
+    {
+        "url_site": "shawlocal.com/kendall-county-now/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Sandwich Record",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/sauk-valley/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Sauk Valley Telegraph",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "shorensteincenter.org",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Shorenstein Center",
+        "feed_url": "https://shorensteincenter.org/feed/"
+    },
+    {
+        "url_site": "sierrasun.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Sierra Sun",
+        "feed_url": "https://www.sierrasun.com/feed/"
+    },
+    {
+        "url_site": "aspentimes.com/snowmass/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Snowmass Sun",
+        "feed_url": "https://www.aspentimes.com/snowmass/feed/"
+    },
+    {
+        "url_site": "www.ny1.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Spectrum News \u2013 NY1",
+        "feed_url": "http://www.ny1.com/services/contentfeed.nyc%7Call-boroughs%7Cnews.landing.rss"
+    },
+    {
+        "url_site": "steamboatpilot.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Steamboat Pilot & Today",
+        "feed_url": "https://www.steamboatpilot.com/feed/"
+    },
+    {
+        "url_site": "journal-advocate.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Sterling Journal-Advocate",
+        "feed_url": "https://www.journal-advocate.com/feed/"
+    },
+    {
+        "url_site": "summitdaily.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Summit Daily News",
+        "feed_url": "https://www.summitdaily.com/feed/"
+    },
+    {
+        "url_site": "tahoedailytribune.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Tahoe Daily Tribune",
+        "feed_url": "https://www.tahoedailytribune.com/feed/"
+    },
+    {
+        "url_site": "techspot.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "TechSpot",
+        "feed_url": "https://www.techspot.com/backend.xml"
+    },
+    {
+        "url_site": "daily-chronicle.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "The Daily Chronicle",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "dailynorthwestern.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "The Daily Northwestern",
+        "feed_url": "https://dailynorthwestern.com/feed/"
+    },
+    {
+        "url_site": "thediplomat.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "The Diplomat Magazine",
+        "feed_url": "https://thediplomat.com/feed/"
+    },
+    {
+        "url_site": "thefencepost.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "The Fence Post",
+        "feed_url": "https://www.thefencepost.com/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/midweek-news/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "The Midweek",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "thenevadaindependent.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "The Nevada Independent",
+        "feed_url": "https://thenevadaindependent.com/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/mywebtimes/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "The Times",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "timesofsandiego.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Times of San Diego",
+        "feed_url": "https://timesofsandiego.com/feed/"
+    },
+    {
+        "url_site": "www.todayifoundout.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Today I Found Out",
+        "feed_url": "http://www.todayifoundout.com/index.php/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/ogle-county-news/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Tri-County Press \u2013",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "www.upi.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "United Press International",
+        "feed_url": "https://rss.upi.com/news/news.rss"
+    },
+    {
+        "url_site": "uscourts.gov",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "United States Courts",
+        "feed_url": "http://news.uscourts.gov/feed"
+    },
+    {
+        "url_site": "vaildaily.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Vail Daily",
+        "feed_url": "https://www.vaildaily.com/feed/"
+    },
+    {
+        "url_site": "verdict.justia.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Verdict",
+        "feed_url": "https://verdict.justia.com/feed"
+    },
+    {
+        "url_site": "voachinese.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "VOA Chinese",
+        "feed_url": "https://voachinese.com/api/"
+    },
+    {
+        "url_site": "www.voanews.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Voice of America",
+        "feed_url": "https://www.voanews.com/api/"
+    },
+    {
+        "url_site": "wane.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WANE \u2013 Fort Wayne News",
+        "feed_url": "https://www.wane.com/feed/"
+    },
+    {
+        "url_site": "wtop.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Washington\u2019s Top News",
+        "feed_url": "https://wtop.com/feed/"
+    },
+    {
+        "url_site": "wavy.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WAVY \u2013 Norfolk News",
+        "feed_url": "https://www.wavy.com/feed/"
+    },
+    {
+        "url_site": "binghamtonhomepage.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WBGH \u2013 Binghamton News",
+        "feed_url": "https://www.binghamtonhomepage.com/news/up-to-the-minute/feed/"
+    },
+    {
+        "url_site": "wcax.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WCAX3",
+        "feed_url": "https://www.wcax.com/arcio/rss/"
+    },
+    {
+        "url_site": "wcpo.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WCPO \u2013 Cincinnati News",
+        "feed_url": "https://www.wcpo.com/about-us/rss.rss"
+    },
+    {
+        "url_site": "wegotthiscovered.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "We Got This Covered",
+        "feed_url": "https://wegotthiscovered.com/feed/"
+    },
+    {
+        "url_site": "mychamplainvalley.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WFFF \u2013 Burlington News",
+        "feed_url": "https://www.mychamplainvalley.com/feed/"
+    },
+    {
+        "url_site": "wgno.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WGNO \u2013 New Orleans News",
+        "feed_url": "https://wgno.com/feed/"
+    },
+    {
+        "url_site": "ourquadcities.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WHBF \u2013 Quad Cities News",
+        "feed_url": "https://www.ourquadcities.com/feed/"
+    },
+    {
+        "url_site": "shawlocal.com/whiteside-news-sentinel/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Whiteside News Sentinel",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "shawlocal.com/the-herald-news/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "Will County Herald- News",
+        "feed_url": "https://www.shawlocal.com/arcio/rss/"
+    },
+    {
+        "url_site": "fox6now.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WITI \u2013 Fox 6 \u2013 Milwaukee",
+        "feed_url": "https://www.fox6now.com/rss/category/news"
+    },
+    {
+        "url_site": "wivb.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WIVB \u2013 Buffalo",
+        "feed_url": "https://www.wivb.com/feed/"
+    },
+    {
+        "url_site": "fox8.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WJW \u2013 Cleveland News",
+        "feed_url": "https://fox8.com/feed/"
+    },
+    {
+        "url_site": "wkbn.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WKBN \u2013 Youngstown News",
+        "feed_url": "https://www.wkbn.com/feed/"
+    },
+    {
+        "url_site": "mypanhandle.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WMBB \u2013 Panama City News",
+        "feed_url": "https://www.mypanhandle.com/feed/"
+    },
+    {
+        "url_site": "wrbl.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WRBL \u2013 Columbus News",
+        "feed_url": "https://www.wrbl.com/feed/"
+    },
+    {
+        "url_site": "news10.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WTEN \u2013 Albany News",
+        "feed_url": "https://www.news10.com/feed/"
+    },
+    {
+        "url_site": "informnny.com",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WWTI \u2013 Watertown News",
+        "feed_url": "https://www.informnny.com/feed/"
+    },
+    {
+        "url_site": "news10.com/fox-23/",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "WXXA \u2013 Fox23",
+        "feed_url": "https://www.news10.com/feed/"
+    },
+    {
+        "url_site": "yle.fi",
+        "category": "politics",
+        "leaning": "unbiased",
+        "name": "YLE News",
+        "feed_url": "https://feeds.yle.fi/uutiset/v1/majorHeadlines/YLE_UUTISET.rss"
+    },
+    {
+        "url_site": "http://rss.cnn.com/rss/edition.rss",
+        "category": "politics",
+        "leaning": "left",
+        "name": "CNN",
+        "feed_url": "http://rss.cnn.com/rss/edition.rss"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "BBC",
+        "feed_url": "http://feeds.bbci.co.uk/news/rss.xml"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The New York Times",
+        "feed_url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The Washington Post",
+        "feed_url": "http://feeds.washingtonpost.com/rss/world"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "right",
+        "name": "The Wall Street Journal",
+        "feed_url": "https://feeds.a.dj.com/rss/RSSWorldNews.xml"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Fox News",
+        "feed_url": "http://feeds.foxnews.com/foxnews/world"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "right",
+        "name": "Breitbart",
+        "feed_url": "http://feeds.feedburner.com/breitbart"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "left",
+        "name": "The Huffington Post",
+        "feed_url": "https://www.huffpost.com/section/front-page/feedt"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "left",
+        "name": "Vox",
+        "feed_url": "https://www.vox.com/rss/index.xml"
+    },
+     {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "Politico",
+        "feed_url": "https://www.politico.com/rss/politics08.xml"
+    },
+     {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Hill",
+        "feed_url": "http://thehill.com/rss/syndicator/19110"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "Axios",
+        "feed_url": "https://www.axios.com/world/rss"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "NPR",
+        "feed_url": "https://www.npr.org/rss/rss.php?id=1001"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Atlantic",
+        "feed_url": "https://www.theatlantic.com/feed/all/"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Economist",
+        "feed_url": "https://www.economist.com/latest/rss.xml"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Financial Times",
+        "feed_url": "https://www.ft.com/?format=rss"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Independent",
+        "feed_url": "https://www.independent.co.uk/rss"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Telegraph",
+        "feed_url": "https://www.telegraph.co.uk/rss.xml"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Times",
+        "feed_url": "https://www.thetimes.co.uk/rss"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Sun",
+        "feed_url": "https://www.thesun.co.uk/feed/"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Daily Mail",
+        "feed_url": "https://www.dailymail.co.uk/news/index.rss"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Mirror",
+        "feed_url": "https://www.mirror.co.uk/news/?service=rss"
+    },
+    {
+        "url_site": "",
+        "category": "politics",
+        "leaning": "center",
+        "name": "The Express",
+        "feed_url": "https://www.express.co.uk/news/rss"
+    }
+]

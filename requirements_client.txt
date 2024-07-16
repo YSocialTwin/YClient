@@ -1,0 +1,8 @@
+tqdm
+feedparser
+faker
+pyautogen==0.2.31
+numpy
+requests
+tqdm
+bs4

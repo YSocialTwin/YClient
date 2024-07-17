@@ -110,7 +110,10 @@ If you use YSocial in your research, please cite the following paper:
 ```
 @article{rossetti2024ysocial,
   title={Y Social: an LLM-powered microblogging Digital Twin},
-  author={},
+  author={Rossetti, Giulio and Stella, Massimo and Cazabet, Rémy and 
+  Abramski, Katherine and Cau, Erica and Citraro, Salvatore and 
+  Failla, Andrea and Improta, Riccardo and Morini, Virginia and 
+  Pansanella, Virginia},
   year={2024}
 }
 ```

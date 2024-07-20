@@ -9,18 +9,39 @@ import datetime
 
 class News(object):
     def __init__(self, title, summary, link, published):
+        """
+        This class represents a news article.
+
+        :param title: the title of the article
+        :param summary: the summary of the article
+        :param link: the link to the article
+        :param published: the date the article was published
+        """
         self.title = title
         self.summary = summary
         self.link = link
         self.published = published
 
     def __str__(self):
+        """
+        String representation of the news article.
+        :return: a string representation of the news article
+        """
         return f"Title: {self.title}\nSummary: {self.summary}\nLink: {self.link}\nPublished: {self.published}"
 
     def __repr__(self):
+        """
+        Representation of the news article.
+        :return: the string representation of the news article
+        """
         return self.__str__()
 
     def to_dict(self):
+        """
+        Convert the news article to a dictionary.
+
+        :return: the dictionary representation of the news article
+        """
         return {
             "title": self.title,
             "summary": self.summary,
@@ -29,9 +50,20 @@ class News(object):
         }
 
     def to_json(self):
+        """
+        Convert the news article to a json string.
+
+        :return: a json string representation of the news article
+        """
         return json.dumps(self.to_dict())
 
     def save(self, name, rss):
+        """
+        Save the news article to the database.
+
+        :param name: the name of the website
+        :param rss: the rss feed of the website
+        """
         website_id = (
             session.query(Websites)
             .filter(Websites.name == name, Websites.rss == rss)
@@ -60,6 +92,17 @@ class NewsFeed(object):
         leaning=None,
         country=None,
     ):
+        """
+        This class represents a news feed.
+
+        :param name: the name of the website
+        :param feed_url: the rss feed url
+        :param url_site: the website url
+        :param category: the category of the website
+        :param language: the language of the website
+        :param leaning: the political leaning of the website
+        :param country: the country of the website
+        """
         self.feed_url = feed_url
         self.name = name
         self.url_site = url_site
@@ -70,6 +113,9 @@ class NewsFeed(object):
         self.news = []
 
     def read_feed(self):
+        """
+        Read the feed and store the news articles.
+        """
         today = datetime.datetime.now()
         today_morning = int(today.strftime("%Y%m%d"))
 
@@ -103,14 +149,28 @@ class NewsFeed(object):
                 self.news.append(News(art.title, art.summary, art.link, art.fetched_on))
 
     def get_random_news(self):
+        """
+        Get a random news article from the feed.
+
+        :return: a random news article
+        """
         if len(self.news) == 0:
             return "No news available"
         return np.random.choice(self.news)
 
     def get_news(self):
+        """
+        Get all the news articles from the feed.
+        :return: a list of news articles
+        """
         return self.news
 
     def to_dict(self):
+        """
+        Convert the news feed to a dictionary.
+
+        :return: the dictionary representation of the news feed
+        """
         return {
             "name": self.name,
             "feed_url": self.feed_url,
@@ -123,15 +183,30 @@ class NewsFeed(object):
         }
 
     def to_json(self):
+        """
+        Convert the news feed to a json string.
+
+        :return: a json string representation of the news feed
+        """
         return json.dumps(self.to_dict())
 
 
 class Feeds(object):
     def __init__(self):
+        """
+        This class represents a collection of news feeds.
+        """
         self.feeds = []
 
     @staticmethod
     def __not_in_db(name: str, url: str) -> object:
+        """
+        Check if the feed is not in the database.
+
+        :param name: the name of the website
+        :param url: the rss feed url
+        :return: whether the feed is not in the database
+        """
         res = (
             session.query(Websites)
             .filter(Websites.name == name, Websites.rss == url)
@@ -149,6 +224,17 @@ class Feeds(object):
         leaning=None,
         country=None,
     ):
+        """
+        Add a feed to the collection.
+
+        :param name: the name of the website
+        :param url_site: the website url
+        :param url_feed: the rss feed url
+        :param category: the category of the website
+        :param language: the language of the website
+        :param leaning: the political leaning of the website
+        :param country: the country of the website
+        """
         today = datetime.datetime.now()
         today_morning = int(today.strftime("%Y%m%d"))
 
@@ -236,10 +322,21 @@ class Feeds(object):
             print("Please provide a feed url or a site url")
 
     def get_feeds(self):
+        """
+        Get all the feeds in the collection.
+
+        :return: a list of feeds
+        """
         return self.feeds
 
     @staticmethod
     def __validate_feed(url):
+        """
+        Validate the rss feed.
+
+        :param url: the rss feed url
+        :return: whether the feed is valid
+        """
         try:
             feedparser.parse(url)
             return True
@@ -249,10 +346,18 @@ class Feeds(object):
 
 class FeedLinkExtractor(object):
     def __init__(self, url):
+        """
+        This class extracts rss feed urls from a website.
+
+        :param url: the website url
+        """
         self.url = url
         self.rss_urls = []
 
     def extract_rss_url(self):
+        """
+        Extract (or at least tries to) the rss feed urls from the website.
+        """
         try:
             page = requests.get(self.url, timeout=5).text
             soup = BeautifulSoup(page, features="html.parser")
@@ -284,10 +389,25 @@ class FeedLinkExtractor(object):
             pass
 
     def get_rss_urls(self):
+        """
+        Get the extracted rss feed urls.
+
+        :return: the extracted rss feed urls
+        """
         return self.rss_urls
 
     def to_dict(self):
+        """
+        Convert the rss feed urls to a dictionary.
+
+        :return: the dictionary representation of the rss feed urls
+        """
         return {"rss_urls": self.rss_urls}
 
     def to_json(self):
+        """
+        Convert the rss feed urls to a json string.
+
+        :return: the json string representation of the rss feed urls
+        """
         return json.dumps(self.to_dict())

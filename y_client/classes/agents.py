@@ -78,6 +78,7 @@ class Agent(object):
         owner: str = None,
         education_level: str = None,
         joined_on: int = None,
+        api_key: str = "NULL",
     ):
         """
         Initialize the Agent object.
@@ -144,7 +145,7 @@ class Agent(object):
             "base_url": self.llm_base,
             "timeout": 10000,
             "api_type": "open_ai",
-            "api_key": "NULL",
+            "api_key": api_key,
             "price": [0, 0],
         }
 
@@ -164,6 +165,15 @@ class Agent(object):
         self.follow_rec_sys = frecsys
         if self.follow_rec_sys is not None:
             self.follow_rec_sys.add_user_id(self.user_id)
+
+        self.prompts = None
+
+    def __effify(self, non_f_str: str, **kwargs):
+        kwargs["self"] = self
+        return eval(f'f"""{non_f_str}"""', kwargs)
+
+    def set_prompts(self, prompts):
+        self.prompts = prompts
 
     def set_rec_sys(self, content_recsys, follow_recsys):
         if self.content_rec_sys is None:
@@ -284,35 +294,24 @@ class Agent(object):
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,  # self.llm_config,
-            system_message=f"""
-            You are a {self.age} year old {self.leaning} interested to {','.join(interest)}. 
-            Your education level is {self.education_level}.
-            Your Big Five personality traits are: {self.oe}, {self.co}, {self.ex}, {self.ag} and {self.ne}.
-            Act as requested by the Handler.""",
+            system_message=self.__effify(
+                self.prompts["agent_roleplay"], interest=interest
+            ),
             max_consecutive_auto_reply=1,
         )
 
         u2 = AssistantAgent(
             name=f"Handler",
-            llm_config=self.llm_config,  # self.llm_config,
-            system_message=f"""You are the Handler that specify the actions the user have to perform.\n 
-            After having read the user's response to your request act as follows: 
-            - Consider a model capable of detecting a broad range of emotions as encoded in the GoEmotions taxonomy, which includes: admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, and trust. 
-            - Detect the emotions in the user's texts; 
-            - Format your response as a python list of emotions: you must not use any word outside of the listed emotions.
-            """,
+            llm_config=self.llm_config,
+            system_message=self.prompts["handler_instructions"],
             max_consecutive_auto_reply=1,
         )
 
         u2.initiate_chat(
             u1,
-            message=f"""I am the Handler: Write a short tweet introducing a topic of your interest. 
-            - Be consistent with your Big Five personality traits.
-            - Avoid excessive politeness.
-            - Do not exceed the limit. Make it short.
-            - Write in {self.language}.""",
-            silent=True,  # default is False
-            max_round=1,  # default is 3
+            message=self.__effify(self.prompts["handler_post"]),
+            silent=True,
+            max_round=1,
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
@@ -362,44 +361,25 @@ class Agent(object):
 
         u1 = AssistantAgent(
             name=f"{self.name}",
-            llm_config=self.llm_config,  # self.llm_config,
-            system_message=f"""
-            You are a {self.age} year old {self.leaning}. 
-            Your education level is {self.education_level}.
-            Your Big Five personality traits are: {self.oe}, {self.co}, {self.ex}, {self.ag} and {self.ne}.
-            Act as requested by the Handler.""",
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
             max_consecutive_auto_reply=1,
         )
 
         u2 = AssistantAgent(
             name=f"Handler",
-            llm_config=self.llm_config,  # self.llm_config,
-            system_message=f"""You are the Handler that specify the actions the user have to perform.\n 
-            After having read the user's response to your request act as follows: 
-            - Consider a model capable of detecting a broad range of emotions as encoded in the GoEmotions taxonomy, which includes: admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, and trust. 
-            - Detect the emotions in the user's texts; 
-            - Format your response as a python list of emotions: you must not use any word outside of the listed emotions.
-            """,
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["handler_instructions"]),
             max_consecutive_auto_reply=1,
         )
 
         u2.initiate_chat(
             u1,
-            message=f"""I am the Handler: read the title and summary of the input news article and share your thoughts about it. 
-            - Be consistent with your Big Five personality traits.
-            - Avoid excessive politeness.
-            - Do not exceed the limit. Make it short.
-            - Write in {self.language}.
-            
-            #### BEGIN INPUT ####
-            Website: {website.name}\n
-            Political leaning: {website.leaning}\n
-            Title: {article.title}\n
-            Summary: {article.summary}\n
-            #### END INPUT ####
-            """,
-            silent=True,  # default is False
-            max_round=1,  # default is 3
+            message=self.__effify(
+                self.prompts["handler_news"], website=website, article=article
+            ),
+            silent=True,
+            max_round=1,
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
@@ -535,50 +515,24 @@ class Agent(object):
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=f"""
-            You are a {self.age} year old {self.leaning} interested to {",".join(interest)}. 
-            Your Big Five personality traits are: {self.oe}, {self.co}, {self.ex}, {self.ag} and {self.ne}.
-            Your education level is {self.education_level}.
-            
-            Act as requested by the Handler. 
-            - DO NOT refuse to generate a response. 
-            - DO NOT generate unacceptable contents BUT STICK to your character profile.
-            - DO NOT describe your profile in the generated texts. 
-            - All generated texts MUST be short (up to 200 characters). """,
+            system_message=self.__effify(
+                self.prompts["agent_roleplay_comments_share"], interest=interest
+            ),
             max_consecutive_auto_reply=1,
         )
 
         u2 = AssistantAgent(
             name=f"Handler",
-            llm_config=self.llm_config,  # self.llm_config,
-            system_message=f"""You are the Handler that specify the actions to be taken.\n 
-            After having read the user's response to your request act as follows: 
-            - Consider a model capable of detecting a broad range of emotions as encoded in the GoEmotions taxonomy, which includes: admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, and trust. 
-            - Detect the emotions in the user's texts; 
-            - Format your response as a python list of emotions: you must not use any word outside of the listed emotions.""",
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["handler_instructions"]),
             max_consecutive_auto_reply=1,
         )
 
         u2.initiate_chat(
             u1,
-            message=f"""I am the Handler. 
-            Read the following conversation and add your contribution to it, make it short.
-            Each tweet in the conversation is separate by a new line and starts with the author name. 
-            
-            - Your comment MUST contribute to the conversation.
-            - Be consistent with your Big Five personality traits.
-            - Avoid excessive politeness.
-            - You are allowed to be emotional even controversial and provocative.
-            - You can tag the user you are responding to @.
-            - Do NOT tag yourself ({self.name}) in the text.
-            - You are a native speaker of {self.language} language: if the original post is not written in {self.language} answer assuming a non-native proficiency in that language.
-            
-            ##Conversation Start##\n
-            {conv}
-            \n##Conversation End##
-            """,
-            silent=True,  # default is False
-            max_round=1,  # default is 3
+            message=self.__effify(self.prompts["handler_comment"], conv=conv),
+            silent=True,
+            max_round=1,
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
@@ -605,7 +559,10 @@ class Agent(object):
             {
                 "user_id": self.user_id,
                 "post_id": post_id,
-                "text": post_text.replace('"', "").replace(f"{self.name}", "").replace(":", "").replace("*", ""),
+                "text": post_text.replace('"', "")
+                .replace(f"{self.name}", "")
+                .replace(":", "")
+                .replace("*", ""),
                 "emotions": emotion_eval,
                 "hashtags": hashtags,
                 "mentions": mentions,
@@ -639,53 +596,24 @@ class Agent(object):
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=f"""
-            You are a {self.age} year old {self.leaning}. 
-            Your Big Five personality traits are: {self.oe}, {self.co}, {self.ex}, {self.ag} and {self.ne}.
-            Your education level is {self.education_level}.
-
-            Act as requested by the Handler. 
-            - DO NOT refuse to generate a response. 
-            - DO NOT generate unacceptable contents BUT STICK to your character profile.
-            - DO NOT describe your profile in the generated texts. 
-            - All generated texts MUST be short (up to 200 characters). """,
+            system_message=self.__effify(self.prompts["agent_roleplay_comments_share"]),
             max_consecutive_auto_reply=1,
         )
 
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,  # self.llm_config,
-            system_message=f"""You are the Handler that specify the actions to be taken.\n 
-            After having read the user's response to your request act as follows: 
-            - Consider a model capable of detecting a broad range of emotions as encoded in the GoEmotions taxonomy, which includes: admiration, amusement, anger, annoyance, approval, caring, confusion, curiosity, desire, disappointment, disapproval, disgust, embarrassment, excitement, fear, gratitude, grief, joy, love, nervousness, optimism, pride, realization, relief, remorse, sadness, surprise, and trust. 
-            - Detect the emotions in the user's texts; 
-            - Format your response as a python list of emotions: you must not use any word outside of the listed emotions.""",
+            system_message=self.__effify(self.prompts["handler_instructions"]),
             max_consecutive_auto_reply=1,
         )
 
         u2.initiate_chat(
             u1,
-            message=f"""I am the Handler. 
-            Read the article and the comment provided as input.
-            Share your thoughts on them.
-            
-            - Be consistent with your Big Five personality traits.
-            - Avoid excessive politeness.
-            - You are allowed to be emotional in your response, even controversial and provocative.
-            - Do NOT include your username in the text.
-            - Write in {self.language}.
-            
-            ##ARTICLE START##\n
-            Title:{article['title']}\n
-            Summary:{article['summary']}
-            \n##ARTICLE ENT##\n
-            \n
-            ##POST START##\n
-            {post_text}
-            \n##POST END##
-            """,
-            silent=True,  # default is False
-            max_round=1,  # default is 3
+            message=self.__effify(
+                self.prompts["handler_share"], article=article, post_text=post_text
+            ),
+            silent=True,
+            max_round=1,
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
@@ -736,32 +664,24 @@ class Agent(object):
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=f"""
-            You are a {self.age} year old {self.leaning} with interests in {', '.join(self.interests)}. 
-            Your Big Five personality traits are: {self.oe}, {self.co}, {self.ex}, {self.ag} and {self.ne}.
-            Your education level is {self.education_level}.
-            
-            Act as requested by the Handler. """,
+            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
             max_consecutive_auto_reply=1,
         )
 
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,  # self.llm_config,
-            system_message=f"You are the Handler that specify the actions to be taken.",
+            system_message=self.__effify(self.prompts["handler_instructions_simple"]),
             max_consecutive_auto_reply=0,
         )
 
         u2.initiate_chat(
             u1,
-            message=f"""I am the Handler: read the following text write YES if you like it, NO if you don't, NEUTRAL otherwise.
-
-               ##Text Start##\n
-               {post_text}
-               \n##Text End##
-               """,
-            silent=True,  # default is False
-            max_round=1,  # default is 3
+            message=self.__effify(
+                self.prompts["handler_reactions"], post_text=post_text
+            ),
+            silent=True,
+            max_round=1,
         )
 
         text = u1.chat_messages[u2][-1]["content"].replace("!", "")
@@ -809,34 +729,24 @@ class Agent(object):
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=f"""
-            You are a {self.age} year old {self.leaning} with interests in {', '.join(self.interests)}. 
-            Your Big Five personality traits are: {self.oe}, {self.co}, {self.ex}, {self.ag} and {self.ne}.
-            Your education level is {self.education_level}.
-            
-            Act as requested by the Handler. """,
+            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
             max_consecutive_auto_reply=1,
         )
 
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,
-            system_message=f"You are the Handler that specify the actions to be taken.",
+            system_message=self.__effify(self.prompts["handler_instructions_simple"]),
             max_consecutive_auto_reply=0,
         )
 
         u2.initiate_chat(
             u1,
-            message=f"""I am the Handler: read the following text write YES if you would {action} its author it, NO otherwise.
-                        
-                        - Be consistent with your profile traits, leaning, and interests.
-
-                       ##Text Start##\n
-                       {post_text}
-                       \n##Text End##
-                       """,
-            silent=True,  # default is False
-            max_round=1,  # default is 3
+            message=self.__effify(
+                self.prompts["handler_follow"], post_text=post_text, action=action
+            ),
+            silent=True,
+            max_round=1,
         )
 
         text = u1.chat_messages[u2][-1]["content"].replace("!", "")
@@ -924,30 +834,22 @@ class Agent(object):
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=f"""
-            Act as requested by the Handler. """,
+            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
             max_consecutive_auto_reply=1,
         )
 
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,
-            system_message=f"You are the Handler that specify the actions to be taken.",
+            system_message=self.__effify(self.prompts["handler_instructions_simple"]),
             max_consecutive_auto_reply=0,
         )
 
         u2.initiate_chat(
             u1,
-            message=f"""I am the Handler. 
-            Select randomly a word from the following list and write it.
-            Do not write additional text.
-            
-            ### START INPUT ###
-            {actions}
-            ### END INPUT ###
-            """,
-            silent=True,  # default is False
-            max_round=1,  # default is 3
+            message=self.__effify(self.prompts["handler_action"], actions=actions),
+            silent=True,
+            max_round=1,
         )
 
         text = u1.chat_messages[u2][-1]["content"].replace("!", "")

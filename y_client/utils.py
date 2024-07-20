@@ -42,6 +42,8 @@ def generate_user(config, owner=None):
         elements=(config["agents"]["education_levels"])
     )
 
+    api_key = config["servers"]["llm_api_key"]
+
     agent = Agent(
         name=name.replace(" ", ""),
         pwd=pwd,
@@ -55,6 +57,32 @@ def generate_user(config, owner=None):
         language=language,
         education_level=education_level,
         owner=owner,
+        api_key=api_key,
     )
 
     return agent
+
+
+
+def generate_feed_data(keywords, suffix="", m=4):
+    """
+    Generate a fake feed data
+    :return:
+    """
+
+    feeds = []
+    for k in keywords:
+        k = k.replace(" ", "+")
+        for i in range(1, m):
+            rss_url = f"https://www.bing.com/news/search?format=RSS&q={k}+{suffix}&&first={i*11}"
+
+            feed = {
+                "url_site": "",
+                "category": "",
+                "leaning": "",
+                "name": f"Bing - {k}",
+                "feed_url": rss_url,
+            }
+
+            feeds.append(feed)
+    return feeds

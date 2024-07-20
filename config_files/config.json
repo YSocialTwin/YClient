@@ -1,7 +1,8 @@
 {
   "servers": {
     "llm": "http://127.0.0.1:11434/v1",
-    "api": "http://127.0.0.1:5000/"
+    "llm_api_key": "NULL",
+    "api": "http://127.0.0.1:5010/"
   },
   "simulation": {
     "days": 31,

@@ -15,6 +15,11 @@ __all__ = ["Agent", "Agents", "SimulationSlot"]
 
 class SimulationSlot(object):
     def __init__(self, config):
+        """
+        Initialize the SimulationSlot object.
+
+        :param config: the configuration dictionary
+        """
         self.base_url = config["servers"]["api"]
 
         api_url = f"{self.base_url}current_time"
@@ -31,6 +36,8 @@ class SimulationSlot(object):
     def get_current_slot(self):
         """
         Get the current slot.
+
+        :return: the current slot, day and id
         """
         return self.id, self.day, self.slot
 
@@ -83,8 +90,23 @@ class Agent(object):
         """
         Initialize the Agent object.
 
-        :param name: The name of the profile.
-        :param age: The age of the profile.
+        :param name: the name of the agent
+        :param email: the email of the agent
+        :param pwd: the password of the agent
+        :param age: the age of the agent
+        :param interests: the interests of the agent
+        :param leaning: the leaning of the agent
+        :param ag_type: the type of the agent
+        :param load: whether to load the agent from file or not
+        :param recsys: the content recommendation system
+        :param frecsys: the follow recommendation system
+        :param config: the configuration dictionary
+        :param big_five: the big five personality traits
+        :param language: the language of the agent
+        :param owner: the owner of the agent
+        :param education_level: the education level of the agent
+        :param joined_on: the joined on date of the agent
+        :param api_key: the LLM server api key, default is NULL (self-hosted)
         """
         self.emotions = config["posts"]["emotions"]
         self.base_url = config["servers"]["api"]
@@ -169,13 +191,31 @@ class Agent(object):
         self.prompts = None
 
     def __effify(self, non_f_str: str, **kwargs):
+        """
+        Effify the string.
+
+        :param non_f_str: the string to effify
+        :param kwargs: the keyword arguments
+        :return: the effified string
+        """
         kwargs["self"] = self
         return eval(f'f"""{non_f_str}"""', kwargs)
 
     def set_prompts(self, prompts):
+        """
+        Set the LLM prompts.
+
+        :param prompts: the prompts
+        """
         self.prompts = prompts
 
     def set_rec_sys(self, content_recsys, follow_recsys):
+        """
+        Set the recommendation systems.
+
+        :param content_recsys: the content recommendation system
+        :param follow_recsys: the follow recommendation system
+        """
         if self.content_rec_sys is None:
             self.content_rec_sys = content_recsys
             self.content_rec_sys.add_user_id(self.user_id)
@@ -211,6 +251,13 @@ class Agent(object):
         return {"status": 200}
 
     def __extract_components(self, text, c_type="hashtags"):
+        """
+        Extract the components from the text.
+
+        :param text: the text to extract the components from
+        :param c_type: the component type
+        :return: the extracted components
+        """
         # Define the regex pattern
         if c_type == "hashtags":
             pattern = re.compile(r"#\w+")
@@ -226,6 +273,7 @@ class Agent(object):
         """
         Get the user from the service.
 
+        :return: the user
         """
         res = json.loads(self._check_credentials())
         if res["status"] == 404:
@@ -242,6 +290,7 @@ class Agent(object):
         """
         Check if the credentials are correct.
 
+        :return: the response from the service
         """
         api_url = f"{self.base_url}user_exists"
 
@@ -255,6 +304,7 @@ class Agent(object):
         """
         Register the agent to the service.
 
+        :return: the response from the service
         """
 
         st = json.dumps(
@@ -287,6 +337,7 @@ class Agent(object):
         """
         Post a message to the service.
 
+        :param tid: the round id
         """
 
         interest = np.random.choice(self.interests, np.random.randint(1, 3))
@@ -357,6 +408,9 @@ class Agent(object):
         """
         Post a message to the service.
 
+        :param tid: the round id
+        :param article: the article
+        :param website: the website
         """
 
         u1 = AssistantAgent(
@@ -437,6 +491,7 @@ class Agent(object):
         Get the thread of a post.
 
         :param post_id: The post id to get the thread.
+        :param max_tweets: The maximum number of tweets to read for context.
         """
         api_url = f"{self.base_url}/post_thread"
 
@@ -457,6 +512,7 @@ class Agent(object):
         Get the user from a post.
 
         :param post_id: The post id to get the user.
+        :return: the user
         """
         api_url = f"{self.base_url}/get_user_from_post"
 
@@ -472,7 +528,8 @@ class Agent(object):
         """
         Get the article.
 
-        :param article_id: The article id to get the article.
+        :param post_id: The article id to get the article.
+        :return: the article
         """
         api_url = f"{self.base_url}/get_article"
 
@@ -490,6 +547,7 @@ class Agent(object):
         Get the thread of a post.
 
         :param post_id: The post id to get the thread.
+        :return: the post
         """
         api_url = f"{self.base_url}/get_post"
 
@@ -503,8 +561,11 @@ class Agent(object):
 
     def comment(self, post_id: int, tid, max_length_threads=None):
         """
-        Post a message to the service.
+        Generate a comment to an existing post
 
+        :param post_id: the post id
+        :param tid: the round id
+        :param max_length_threads: the maximum length of the thread to read for context
         """
 
         conversation = self.__get_thread(post_id, max_tweets=max_length_threads)
@@ -583,8 +644,11 @@ class Agent(object):
 
     def share(self, post_id: int, tid):
         """
-        Share a message to the service.
+        Share a post containing a news article.
 
+        :param post_id: the post id
+        :param tid: the round id
+        :return: the response from the service
         """
 
         article = self.__get_article(post_id)
@@ -655,8 +719,12 @@ class Agent(object):
 
     def reaction(self, post_id: int, tid: int, check_follow=True):
         """
-        Post a message to the service.
+        Generate a reaction to a post/comment.
 
+        :param post_id: the post id
+        :param tid: the round id
+        :param check_follow: whether to evaluate a follow cascade action
+        :return: the response from the service
         """
 
         post_text = self.__get_post(post_id)
@@ -725,6 +793,15 @@ class Agent(object):
             self.__evaluate_follow(post_text, post_id, flag, tid)
 
     def __evaluate_follow(self, post_text, post_id, action, tid):
+        """
+        Evaluate a follow action.
+
+        :param post_text: the post text
+        :param post_id: the post id
+        :param action: the action, either follow or unfollow
+        :param tid: the round id
+        :return: the response from the service
+        """
 
         u1 = AssistantAgent(
             name=f"{self.name}",
@@ -766,11 +843,11 @@ class Agent(object):
         """
         Follow a user
 
-        :param tid:
-        :param action:
-        :param post_id:
-        :param post_id:
-        :param target:
+        :param tid: the round id
+        :param action: the action, either follow or unfollow
+        :param post_id: the post id
+        :param post_id: the post id
+        :param target: the target user id
         """
 
         if post_id is not None:
@@ -794,7 +871,7 @@ class Agent(object):
         """
         Get the followers of the user.
 
-        :return:
+        :return: the response from the service
         """
 
         st = json.dumps({"user_id": self.user_id})
@@ -810,7 +887,7 @@ class Agent(object):
         """
         Get the timeline of the user.
 
-        :return:
+        :return: the response from the service
         """
 
         st = json.dumps({"user_id": self.user_id})
@@ -925,6 +1002,8 @@ class Agent(object):
         """
         Read n_posts from the service.
 
+        :param article: whether to read an article or not
+        :return: the response from the service
         """
         return self.content_rec_sys.read(self.base_url, article)
 
@@ -932,6 +1011,7 @@ class Agent(object):
         """
         Read n_posts from the service.
 
+        :return: the response from the service
         """
         return self.content_rec_sys.read_mentions(self.base_url)
 
@@ -939,21 +1019,23 @@ class Agent(object):
         """
         Read n_posts from the service.
 
+        :return: the response from the service
         """
         return self.content_rec_sys.search(self.base_url)
 
     def search_follow(self):
         """
+        Read n_posts from the service.
 
-        :return:
+        :return: the response from the service
         """
         return self.follow_rec_sys.follow_suggestions(self.base_url)
 
     def select_news(self):
         """
-        Select news for a given agent
-        :param agent:
-        :return:
+        Select a news article from the service.
+
+        :return: the response from the service
         """
 
         # Select websites with the same leaning of the agent
@@ -980,12 +1062,16 @@ class Agent(object):
     def __str__(self):
         """
         Return a string representation of the Agent object.
+
+        :return: the string representation
         """
         return f"Name: {self.name}, Age: {self.age}, Type: {self.type}, Leaning: {self.leaning}, Interests: {self.interests}"
 
     def __dict__(self):
         """
         Return a dictionary representation of the Agent object.
+
+        :return: the dictionary representation
         """
         return {
             "name": self.name,
@@ -1021,14 +1107,12 @@ class Agents(object):
         Add a profile to the Agents object.
 
         :param agent: The Profile object to add.
-
         """
         self.agents.append(agent)
 
     def agents_iter(self):
         """
         Iterate over the agents.
-
         """
         for agent in self.agents:
             yield agent
@@ -1036,12 +1120,16 @@ class Agents(object):
     def __str__(self):
         """
         Return a string representation of the Agents object.
+
+        :return: the string representation
         """
         return "".join([p.__str__() for p in self.agents])
 
     def __dict__(self):
         """
         Return a dictionary representation of the Agents object.
+
+        :return: the dictionary representation
         """
         return {"agents": [p.__dict__() for p in self.agents]}
 
@@ -1050,5 +1138,6 @@ class Agents(object):
         Return True if the Agents objects are equal.
 
         :param other: The other agent object to compare.
+        :return: True if the Agents objects are equal.
         """
         return self.__dict__() == other.__dict__()

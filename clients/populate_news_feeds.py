@@ -3,6 +3,13 @@ import json
 
 
 def generate_feed_data(filename, topics, suffix=""):
+    """
+    Generate topical rss feed using Bing search engine
+
+    :param filename: the file to save the feeds
+    :param topics: list of topics to generate feeds for
+    :param suffix: suffix to add to the research terms to specify a general context (e.g., 'Olympics')
+    """
     feeds = generate_feed_data(topics, suffix=suffix)
     json.dump(feeds, open(filename, "w"), indent=4)
 

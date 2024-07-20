@@ -4,6 +4,12 @@ from requests import post
 
 class ContentRecSys(object):
     def __init__(self, n_posts=10, visibility_rounds=36):
+        """
+        Content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
         self.name = "random"
         self.params = {
             "limit": n_posts,
@@ -12,12 +18,20 @@ class ContentRecSys(object):
         }
 
     def add_user_id(self, uid):
+        """
+        Add user id to the request.
+
+        :param uid: user id
+        """
         self.params["uid"] = uid
 
     def read(self, base_url, articles=False):
         """
         Read n_posts from the service.
 
+        :param base_url: the base url of the service
+        :param articles: whether to return articles or not
+        :return: the response from the service
         """
         api_url = f"{base_url}/read"
 
@@ -36,6 +50,8 @@ class ContentRecSys(object):
         """
         Read n_posts from the service.
 
+        :param base_url: the base url of the service
+        :return: the response from the service
         """
         api_url = f"{base_url}/read_mentions"
 
@@ -50,6 +66,8 @@ class ContentRecSys(object):
         """
         Search for a query.
 
+        :param base_url: the base url of the service
+        :return: the response from the service
         """
         api_url = f"{base_url}/search"
 
@@ -63,6 +81,12 @@ class ContentRecSys(object):
 
 class ReverseChrono(ContentRecSys):
     def __init__(self, n_posts=10, visibility_rounds=36):
+        """
+        Reverse chronological content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
         super(ReverseChrono, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
@@ -76,6 +100,12 @@ class ReverseChrono(ContentRecSys):
 
 class ReverseChronoPopularity(ContentRecSys):
     def __init__(self, n_posts=10, visibility_rounds=36):
+        """
+        Reverse chronological popularity content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
         super(ReverseChronoPopularity, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
@@ -89,6 +119,13 @@ class ReverseChronoPopularity(ContentRecSys):
 
 class ReverseChronoFollowers(ContentRecSys):
     def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
+        """
+        Reverse chronological followers content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param followers_ratio: the ratio posts from followers to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
         super(ReverseChronoFollowers, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
@@ -103,6 +140,13 @@ class ReverseChronoFollowers(ContentRecSys):
 
 class ReverseChronoFollowersPopularity(ContentRecSys):
     def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
+        """
+        Reverse chronological followers popularity content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param followers_ratio: the ratio posts from followers to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
         super(ReverseChronoFollowersPopularity, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )

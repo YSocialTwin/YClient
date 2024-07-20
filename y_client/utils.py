@@ -5,7 +5,9 @@ from y_client import Agent
 def generate_user(config, owner=None):
     """
     Generate a fake user
-    :return:
+    :param config: configuration dictionary
+    :param owner: owner of the user
+    :return: Agent object
     """
     fake = faker.Faker()
 
@@ -67,7 +69,10 @@ def generate_user(config, owner=None):
 def generate_feed_data(keywords, suffix="", m=4):
     """
     Generate a fake feed data
-    :return:
+    :param keywords: list of keywords to generate feeds for
+    :param suffix: suffix to add to the research terms to specify a general context (e.g., 'Olympics')
+    :param m: number of pages to search
+    :return: list of feeds
     """
 
     feeds = []

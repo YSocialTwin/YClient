@@ -21,6 +21,15 @@ class YClient(object):
         agents_output="agents.json",
         owner="admin",
     ):
+        """
+        Initialize the YClient object
+
+        :param config_filename: the configuration file for the simulation in JSON format
+        :param prompts_filename: the LLM prompts file for the simulation in JSON format
+        :param agents_filename: the file containing the agents in JSON format
+        :param agents_output: the file to save the generated agents in JSON format
+        :param owner: the owner of the simulation
+        """
         if prompts_filename is None:
             raise Exception("Prompts file not found")
 
@@ -55,11 +64,18 @@ class YClient(object):
 
     @staticmethod
     def reset_news_db():
+        """
+        Reset the news database
+        """
         session.query(Articles).delete()
         session.query(Websites).delete()
         session.commit()
 
     def reset_experiment(self):
+        """
+        Reset the experiment
+        Delete all agents and reset the server database
+        """
         api_url = f"{self.config['servers']['api']}reset"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -67,6 +83,11 @@ class YClient(object):
         post(f"{api_url}", headers=headers)
 
     def load_rrs_endpoints(self, filename):
+        """
+        Load rss feeds from a file
+
+        :param filename: the file containing the rss feeds
+        """
 
         data = json.load(open(filename))
         for f in tqdm.tqdm(data):
@@ -78,10 +99,21 @@ class YClient(object):
             )
 
     def set_recsys(self, c_recsys, f_recsys):
+        """
+        Set the recommendation systems
+
+        :param c_recsys: the content recommendation system
+        :param f_recsys: the follower recommendation system
+        """
         self.content_recsys = c_recsys
         self.follow_recsys = f_recsys
 
     def add_agent(self, agent=None):
+        """
+        Add an agent to the simulation
+
+        :param agent: the agent to add
+        """
         if agent is None:
             try:
                 agent = generate_user(self.config, owner=agents_owner)
@@ -93,6 +125,9 @@ class YClient(object):
             self.agents.add_agent(agent)
 
     def create_initial_population(self):
+        """
+        Create the initial population of agents
+        """
         if self.agents_filename is None:
             for _ in range(self.n_agents):
                 self.add_agent()
@@ -110,10 +145,17 @@ class YClient(object):
                 self.add_agent(agent)
 
     def save_agents(self):
+        """
+        Save the agents to a file
+        """
         res = self.agents.__dict__()
         json.dump(res, open(self.agents_output, "w"), indent=4)
 
     def load_existing_agents(self, a_file):
+        """
+        Load existing agents from a file
+        :param a_file: the JSON file containing the agents
+        """
         agents = json.load(open(a_file, "r"))
 
         for a in agents["agents"]:
@@ -128,6 +170,9 @@ class YClient(object):
                 print(f"Error loading agent: {a['name']}")
 
     def run_simulation(self):
+        """
+        Run the simulation
+        """
 
         for day in tqdm.tqdm(range(self.days)):
             print(f"\nDay {day} of simulation\n")

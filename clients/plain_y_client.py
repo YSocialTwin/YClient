@@ -88,7 +88,7 @@ class YClient(object):
                 agent.set_prompts(self.prompts)
                 agent.set_rec_sys(self.content_recsys, self.follow_recsys)
             except Exception:
-                print("User not found")
+                pass
         if agent is not None:
             self.agents.add_agent(agent)
 
@@ -106,8 +106,6 @@ class YClient(object):
                     load=True,
                 )
 
-                print(self.prompts)
-                exit()
                 agent.set_prompts(self.prompts)
                 self.add_agent(agent)
 
@@ -132,7 +130,7 @@ class YClient(object):
     def run_simulation(self):
 
         for day in tqdm.tqdm(range(self.days)):
-            print(f"Day {day} of simulation")
+            print(f"\nDay {day} of simulation\n")
             daily_active = {}
             tid, _, _ = self.sim_clock.get_current_slot()
 
@@ -172,8 +170,9 @@ class YClient(object):
                 self.sim_clock.increment_slot()
 
             # evaluate following and hashtag search (once per day, only for daily active agents)
-            da = [agent for agent in self.agents.agents if agent.name in daily_active]
-            print("Evaluating new friendship ties")
+            da = [agent for agent in self.agents.agents if agent.name in daily_active if
+                  random.random() < float(self.config["agents"]["probability_of_daily_follow"])]
+            print("\nEvaluating new friendship ties\n")
             for agent in tqdm.tqdm(da):
                 agent.select_action(tid=tid, actions=["FOLLOW", "SEARCH", "NONE"])
 

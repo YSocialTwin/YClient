@@ -2,6 +2,7 @@ import random
 import tqdm
 import sys
 import os
+import networkx as nx
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
@@ -18,6 +19,7 @@ class YClient(object):
         config_filename,
         prompts_filename=None,
         agents_filename=None,
+        graph_file=None,
         agents_output="agents.json",
         owner="admin",
     ):
@@ -27,6 +29,7 @@ class YClient(object):
         :param config_filename: the configuration file for the simulation in JSON format
         :param prompts_filename: the LLM prompts file for the simulation in JSON format
         :param agents_filename: the file containing the agents in JSON format
+        :param graph_file: the file containing the graph of the agents in CSV format, where the number of nodes is equal to the number of agents
         :param agents_output: the file to save the generated agents in JSON format
         :param owner: the owner of the simulation
         """
@@ -61,6 +64,13 @@ class YClient(object):
         self.feed = Feeds()
         self.content_recsys = None
         self.follow_recsys = None
+
+        if graph_file is not None:
+            self.g = nx.read_edgelist(graph_file, delimiter=",", nodetype=int)
+            # relabel nodes to start from 0 just in case
+            self.g = nx.convert_node_labels_to_integers(self.g, first_label=0)
+        else:
+            self.g = None
 
     @staticmethod
     def reset_news_db():
@@ -131,6 +141,21 @@ class YClient(object):
         if self.agents_filename is None:
             for _ in range(self.n_agents):
                 self.add_agent()
+
+            # if specified, create the initial friendship graph
+            if self.g is not None:
+                tid, _, _ = self.sim_clock.get_current_slot()
+
+                id_to_agent = {i: agent for i, agent in enumerate(self.agents.agents)}
+
+                for u, v in self.g.edges():
+                    try:
+                        fr_a = id_to_agent[u]
+                        to_a = id_to_agent[v]
+                        fr_a.follow(tid=tid, target=to_a.user_id)
+                    except Exception:
+                        pass
+
         else:
             ags = json.load(open(self.agents_filename))
             for data in ags:
@@ -279,6 +304,12 @@ if __name__ == "__main__":
         default="../config_files/agents.json",
         help="Name of the output file storing the generated agents",
     )
+    parser.add_argument(
+        "-g",
+        "--graph",
+        default=None,
+        help="Name of the graph file (CSV format, number of nodes equal to the starting agents) to be used for the simulation",
+    )
 
     args = parser.parse_args()
 
@@ -288,6 +319,7 @@ if __name__ == "__main__":
     rss_feeds = args.feeds
     output = args.write_output
     prompts_file = args.prompts
+    graph_file = args.graph
 
     content_recsys = getattr(y_client.recsys, args.crecsys)()
     follow_recsys = getattr(y_client.recsys, args.frecsys)(leaning_bias=1.5)
@@ -298,6 +330,7 @@ if __name__ == "__main__":
         agents_filename=agents_file,
         owner=agents_owner,
         agents_output=output,
+        graph_file=graph_file,
     )
 
     if args.reset:

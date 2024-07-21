@@ -120,7 +120,7 @@ class YClient(object):
                 agent.set_prompts(self.prompts)
                 agent.set_rec_sys(self.content_recsys, self.follow_recsys)
             except Exception:
-                pass
+                raise Exception("Error generating agent")
         if agent is not None:
             self.agents.add_agent(agent)
 
@@ -198,19 +198,16 @@ class YClient(object):
                 random.shuffle(sagents)
                 for g in tqdm.tqdm(sagents):
                     daily_active[g.name] = None
-                    # select action to be performed
-                    g.select_action(tid=tid, actions=["NEWS", "POST", "NONE"])
-                    g.select_action(
-                        tid=tid,
-                        actions=["COMMENT", "REPLY", "NONE"],
-                        max_length_thread_reading=self.max_length_thread_reading,
-                    )
-                    g.select_action(
-                        tid=tid,
-                        actions=["SHARE", "READ", "NONE"],
-                        max_length_thread_reading=self.max_length_thread_reading,
-                    )
 
+                    for _ in range(g.round_actions):
+                        # sample two elements from a list with replacement
+                        candidates = random.choices(["NEWS", "POST", "COMMENT", "REPLY",
+                                                     "SHARE", "READ", "SEARCH"], k=2)
+                        candidates.append("NONE")
+
+                        # select action to be performed
+                        g.select_action(tid=tid, actions=candidates,
+                                        max_length_thread_reading=self.max_length_thread_reading)
                 # increment slot
                 self.sim_clock.increment_slot()
 
@@ -219,7 +216,7 @@ class YClient(object):
                   random.random() < float(self.config["agents"]["probability_of_daily_follow"])]
             print("\nEvaluating new friendship ties\n")
             for agent in tqdm.tqdm(da):
-                agent.select_action(tid=tid, actions=["FOLLOW", "SEARCH", "NONE"])
+                agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
 
 
 if __name__ == "__main__":

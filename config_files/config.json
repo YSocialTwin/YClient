@@ -49,15 +49,20 @@
         "min": 18,
         "max": 80
     },
+    "daily_actions": {
+      "min": 1,
+      "max": 3
+    },
     "llm_agents": ["llama3"],
     "n_interests": {
         "min": 4,
         "max": 10
     },
-    "actions_per_round": {
+    "round_actions": {
       "min": 1,
       "max": 3
     },
+    "nationalities": ["American", "Italian", "Spanish"],
     "probability_of_daily_follow": 0.1,
     "interests": [
         "Animation", "Creative activities", "Creative writing", "Drawing", "Filmmaking",

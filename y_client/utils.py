@@ -1,6 +1,7 @@
+import random
+import json
 import faker
 from y_client import Agent
-
 
 def generate_user(config, owner=None):
     """
@@ -9,9 +10,22 @@ def generate_user(config, owner=None):
     :param owner: owner of the user
     :return: Agent object
     """
-    fake = faker.Faker()
 
-    name = fake.name()
+    locales = json.load(open("../config_files/nationality_locale.json"))
+    try:
+        nationality = random.sample(config["agents"]["nationalities"], 1)[0]
+    except:
+        nationality = "American"
+
+    gender = random.sample(["male", "female"], 1)[0]
+
+    fake = faker.Faker(locales[nationality])
+
+    if gender == "male":
+        name = fake.name_male()
+    else:
+        name = fake.name_female()
+
     email = f"{name.replace(' ', '.')}@{fake.free_email_domain()}"
     political_leaning = fake.random_element(
         elements=(config["agents"]["political_leanings"])
@@ -44,6 +58,13 @@ def generate_user(config, owner=None):
         elements=(config["agents"]["education_levels"])
     )
 
+    try:
+        round_actions = fake.random_int(
+            min=config["agents"]["round_actions"]["min"], max=config["agents"]["round_actions"]["max"]
+        )
+    except:
+        round_actions = 3
+
     api_key = config["servers"]["llm_api_key"]
 
     agent = Agent(
@@ -59,6 +80,9 @@ def generate_user(config, owner=None):
         language=language,
         education_level=education_level,
         owner=owner,
+        round_actions=round_actions,
+        gender=gender,
+        nationality=nationality,
         api_key=api_key,
     )
 

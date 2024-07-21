@@ -85,6 +85,9 @@ class Agent(object):
         owner: str = None,
         education_level: str = None,
         joined_on: int = None,
+        round_actions: int = 3,
+        gender: str = None,
+        nationality: str = None,
         api_key: str = "NULL",
     ):
         """
@@ -106,6 +109,9 @@ class Agent(object):
         :param owner: the owner of the agent
         :param education_level: the education level of the agent
         :param joined_on: the joined on date of the agent
+        :param round_actions: the number of daily actions
+        :param gender: the agent gender
+        :param nationality: the agent nationality
         :param api_key: the LLM server api key, default is NULL (self-hosted)
         """
         self.emotions = config["posts"]["emotions"]
@@ -134,12 +140,15 @@ class Agent(object):
             sc = SimulationSlot(config)
             sc.get_current_slot()
             self.joined_on = sc.id
+            self.round_actions = round_actions
+            self.gender = gender
+            self.nationality = nationality
 
             self.__register()
             try:
                 res = json.loads(self.__get_user())
             except:
-                raise Exception("User not found")
+                pass
 
             self.user_id = int(res["id"])
         else:
@@ -160,7 +169,10 @@ class Agent(object):
             self.language = us["language"]
             self.owner = us["owner"]
             self.education_level = us["education_level"]
+            self.round_actions = us["round_actions"]
             self.joined_on = us["joined_on"]
+            self.gender = us["gender"]
+            self.nationality = us['nationality']
 
         config_list = {
             "model": f"{self.type}",
@@ -324,6 +336,9 @@ class Agent(object):
                 "language": self.language,
                 "owner": self.owner,
                 "education_level": self.education_level,
+                "round_actions": self.round_actions,
+                "gender": self.gender,
+                "nationality": self.nationality,
                 "joined_on": self.joined_on,
             }
         )
@@ -1091,6 +1106,9 @@ class Agent(object):
             "language": self.language,
             "owner": self.owner,
             "education_level": self.education_level,
+            "round_actions": self.round_actions,
+            "gender": self.gender,
+            "nationality": self.nationality,
             "joined_on": self.joined_on,
         }
 

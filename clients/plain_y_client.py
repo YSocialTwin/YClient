@@ -226,26 +226,43 @@ class YClient(object):
 
                     for _ in range(g.round_actions):
                         # sample two elements from a list with replacement
-                        candidates = random.choices(["NEWS", "POST", "COMMENT", "REPLY",
-                                                     "SHARE", "READ", "SEARCH"], k=2)
+                        candidates = random.choices(
+                            [
+                                "NEWS",
+                                "POST",
+                                "COMMENT",
+                                "REPLY",
+                                "SHARE",
+                                "READ",
+                                "SEARCH",
+                            ],
+                            k=2,
+                        )
                         candidates.append("NONE")
 
                         # select action to be performed
-                        g.select_action(tid=tid, actions=candidates,
-                                        max_length_thread_reading=self.max_length_thread_reading)
+                        g.select_action(
+                            tid=tid,
+                            actions=candidates,
+                            max_length_thread_reading=self.max_length_thread_reading,
+                        )
                 # increment slot
                 self.sim_clock.increment_slot()
 
             # evaluate following and hashtag search (once per day, only for daily active agents)
-            da = [agent for agent in self.agents.agents if agent.name in daily_active if
-                  random.random() < float(self.config["agents"]["probability_of_daily_follow"])]
+            da = [
+                agent
+                for agent in self.agents.agents
+                if agent.name in daily_active
+                if random.random()
+                < float(self.config["agents"]["probability_of_daily_follow"])
+            ]
             print("\nEvaluating new friendship ties\n")
             for agent in tqdm.tqdm(da):
                 agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
 
 
 if __name__ == "__main__":
-
     from argparse import ArgumentParser
     import y_client.recsys
 

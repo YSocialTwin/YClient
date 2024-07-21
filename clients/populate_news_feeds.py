@@ -15,7 +15,6 @@ def generate_feed_data(filename, topics, suffix=""):
 
 
 if __name__ == "__main__":
-
     from argparse import ArgumentParser
 
     parser = ArgumentParser()

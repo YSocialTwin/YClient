@@ -3,6 +3,7 @@ import json
 import faker
 from y_client import Agent
 
+
 def generate_user(config, owner=None):
     """
     Generate a fake user
@@ -60,7 +61,8 @@ def generate_user(config, owner=None):
 
     try:
         round_actions = fake.random_int(
-            min=config["agents"]["round_actions"]["min"], max=config["agents"]["round_actions"]["max"]
+            min=config["agents"]["round_actions"]["min"],
+            max=config["agents"]["round_actions"]["max"],
         )
     except:
         round_actions = 3
@@ -87,7 +89,6 @@ def generate_user(config, owner=None):
     )
 
     return agent
-
 
 
 def generate_feed_data(keywords, suffix="", m=4):

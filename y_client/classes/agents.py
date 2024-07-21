@@ -172,7 +172,7 @@ class Agent(object):
             self.round_actions = us["round_actions"]
             self.joined_on = us["joined_on"]
             self.gender = us["gender"]
-            self.nationality = us['nationality']
+            self.nationality = us["nationality"]
 
         config_list = {
             "model": f"{self.type}",

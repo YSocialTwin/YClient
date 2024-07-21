@@ -249,7 +249,7 @@ class YClient(object):
                 # increment slot
                 self.sim_clock.increment_slot()
 
-            # evaluate following and hashtag search (once per day, only for daily active agents)
+            # evaluate following (once per day, only for a random sample of daily active agents)
             da = [
                 agent
                 for agent in self.agents.agents

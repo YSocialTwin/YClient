@@ -6,3 +6,4 @@ numpy
 requests
 tqdm
 bs4
+networkx

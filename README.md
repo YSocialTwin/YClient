@@ -87,6 +87,11 @@ Use the flags and their respective arguments as described below:
 - **Default:** `PreferentialAttachment`
 - **Description:** Name of the follower recommender system to be used. Options: `Random`, `PreferentialAttachment`, `AdamicAdar`, `Jaccard`, `CommonNeighbors`
 
+#### Initial Social Graph
+- **Flag:** `-g`, `--graph`
+- **Default:** `None`
+- **Description:** Name of the csv file (edgelist) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
+
 #### Output File
 - **Flag:** `-w`, `--write_output`
 - **Default:** `../config_files/agents.json`

@@ -672,10 +672,12 @@ class Agent(object):
 
         post_text = self.__get_post(post_id)
 
+        interest = np.random.choice(self.interests, np.random.randint(1, 3))
+
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["agent_roleplay_comments_share"]),
+            system_message=self.__effify(self.prompts["agent_roleplay_comments_share"], interest=interest),
             max_consecutive_auto_reply=1,
         )
 

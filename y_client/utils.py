@@ -12,7 +12,7 @@ def generate_user(config, owner=None):
     :return: Agent object
     """
 
-    locales = json.load(open("../config_files/nationality_locale.json"))
+    locales = json.load(open("config_files/nationality_locale.json"))
     try:
         nationality = random.sample(config["agents"]["nationalities"], 1)[0]
     except:

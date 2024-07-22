@@ -2,12 +2,20 @@ from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy as db
 import os.path
+import json
+import shutil
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(BASE_DIR, "database_client.db")
+
+# read the experiment configuration (hardcoded config filename is a big issue!)
+config = json.load(open("experiments/current_config.json"))
+
+if not os.path.exists(f"experiments/{config['simulation']['name']}.db"):
+    # copy the clean database to the experiments folder
+    shutil.copyfile(f"{BASE_DIR}/../../data_schema/database_clean_client.db", f"{BASE_DIR}/../../experiments/{config['simulation']['name']}.db")
 
 base = declarative_base()
-engine = db.create_engine(f"sqlite:///{db_path}")
+engine = db.create_engine(f"sqlite:///experiments/{config['simulation']['name']}.db")
 base.metadata.bind = engine
 session = orm.scoped_session(orm.sessionmaker())(bind=engine)
 

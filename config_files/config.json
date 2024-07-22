@@ -5,6 +5,8 @@
     "api": "http://127.0.0.1:5010/"
   },
   "simulation": {
+    "name": "simulation",
+    "client": "YClientBase",
     "days": 31,
     "slots": 24,
     "starting_agents": 100,

@@ -147,10 +147,10 @@ class Agent(object):
             self.__register()
             try:
                 res = json.loads(self.__get_user())
+                self.user_id = int(res["id"])
             except:
                 pass
 
-            self.user_id = int(res["id"])
         else:
             us = json.loads(self.__get_user())
             self.user_id = us["id"]

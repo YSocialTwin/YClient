@@ -33,6 +33,8 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 
 *Step 2:* Configure the simulation by editing the file `/config_files/config.json`: it allows to specify several parameters, such as the number of agents, the LLM model to be used, the length of the simulation.
 
+*Step 2a:* Configure the RSS feeds by editing the file `/config_files/rss_feeds.json`: it allows to specify the RSS feeds to be used in the simulation (use `pupulate_news_feeds.py` to automatically generate it from a list of keywords).
+
 *Step 3:* Make sure the y_server is running.
 
 *Step 4:* Run the client to interact with the server.
@@ -40,16 +42,15 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 Under the folder clients, you can find a simple client that interacts with the server.
 
 ```bash
-cd clients
-python plain_y_client.py 
+python y_client.py 
 ```
 
-Several parameters can be specified while launching `plain_y_client.py`. 
+Several parameters can be specified while launching `y_client.py`. 
 Use the flags and their respective arguments as described below:
 
 #### Configuration File
 - **Flag:** `-c`, `--config_file`
-- **Default:** `../config_files/config_politics.json`
+- **Default:** `config_files/config_politics.json`
 - **Description:** JSON file describing the simulation configuration.
 
 #### Agents
@@ -59,7 +60,7 @@ Use the flags and their respective arguments as described below:
 
 #### Feeds
 - **Flag:** `-f`, `--feeds`
-- **Default:** `../config_files/rss_feeds_politics.json`
+- **Default:** `config_files/rss_feeds_politics.json`
 - **Description:** JSON file containing RSS feed categorized.
 
 #### Owner
@@ -92,10 +93,6 @@ Use the flags and their respective arguments as described below:
 - **Default:** `None`
 - **Description:** Name of the csv file (edgelist) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
 
-#### Output File
-- **Flag:** `-w`, `--write_output`
-- **Default:** `../config_files/agents.json`
-- **Description:** Name of the output file storing the generated agents.
 
 For a description of the available recommender systems, please refer to the Y paper.
 

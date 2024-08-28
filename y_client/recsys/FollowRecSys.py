@@ -37,7 +37,11 @@ class FollowRecSys(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         st = json.dumps(self.params)
         response = post(f"{api_url}", headers=headers, data=st)
-        return response.json()
+
+        try:
+            return response.json()
+        except:
+            return json.dumps({})
 
 
 class CommonNeighbors(FollowRecSys):

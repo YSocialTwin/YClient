@@ -1020,7 +1020,7 @@ class Agent(object):
         elif "FOLLOW" in text.split():
             candidates = self.search_follow()
             if len(candidates) > 0:
-                tot = sum(candidates.values())
+                tot = sum([float(v) for v in candidates.values()])
                 probs = [v / tot for v in candidates.values()]
                 selected = np.random.choice(
                     [int(c) for c in candidates],

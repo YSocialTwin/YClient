@@ -2,7 +2,7 @@ from y_client.utils import *
 import json
 
 
-def generate_feed_data(filename, topics, suffix=""):
+def generate_feed(filename, topics, suffix=""):
     """
     Generate topical rss feed using Bing search engine
 
@@ -38,8 +38,9 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    topics = args.topics.split(",")
+    topics = args.topics.replace("_", " ").split(",")
     suffix = args.suffix
     out_file = args.out_file
 
-    generate_feed_data(out_file, topics, suffix=suffix)
+    generate_feed(out_file, topics=topics, suffix=suffix)
+

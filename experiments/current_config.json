@@ -1,0 +1,153 @@
+{
+  "servers": {
+    "llm": "http://127.0.0.1:11434/v1",
+    "llm_api_key": "NULL",
+    "api": "http://127.0.0.1:5010/"
+  },
+  "simulation": {
+    "name": "simulation",
+    "client": "YClientBase",
+    "days": 31,
+    "slots": 24,
+    "starting_agents": 100,
+    "new_agents_iteration": 1,
+    "hourly_activity": {
+       "10": 0.021,
+       "16": 0.032,
+       "8": 0.020,
+       "12": 0.024,
+       "15": 0.032,
+       "17": 0.032,
+       "23": 0.025,
+       "6": 0.017,
+       "18": 0.032,
+       "11": 0.022,
+       "13": 0.027,
+       "14": 0.030,
+       "20": 0.030,
+       "21": 0.029,
+       "7": 0.018,
+       "22": 0.027,
+       "9": 0.020,
+       "3": 0.020,
+       "5": 0.017,
+       "4": 0.018,
+       "1": 0.021,
+       "2": 0.020,
+       "0": 0.023,
+       "19": 0.031
+    }
+  },
+  "agents": {
+    "languages": ["english", "italian"],
+    "education_levels": ["high school", "bachelor", "master", "phd"],
+    "max_length_thread_reading": 5,
+    "reading_from_follower_ratio": 0.6,
+    "political_leanings": [
+      "Democrat", "Republican", "Libertarian", "Green",
+      "Independent", "Alt-Right", "Alt-Left","Anarchist", "Centrist"
+      ],
+    "age": {
+        "min": 18,
+        "max": 80
+    },
+    "daily_actions": {
+      "min": 1,
+      "max": 3
+    },
+    "llm_agents": ["llama3"],
+    "n_interests": {
+        "min": 4,
+        "max": 10
+    },
+    "round_actions": {
+      "min": 1,
+      "max": 3
+    },
+    "nationalities": ["American", "Italian", "Spanish"],
+    "probability_of_daily_follow": 0.1,
+    "interests": [
+        "Animation", "Creative activities", "Creative writing", "Drawing", "Filmmaking",
+        "Flower arranging", "Furniture building", "Furniture restoration", "Illustration",
+        "Knitting", "Painting", "Photography", "Pottery", "Quilting", "Restoring Furniture",
+        "Woodworking", "Blogging", "Copywriting", "Essay writing", "Fan fiction", "Fiction writing",
+        "Journaling", "Memoir writing", "Poetry writing", "Screenwriting", "Travel writing",
+        "Bullet journaling", "Budgeting", "Calendar syncing", "Digital organizing", "DIY projects",
+        "Event planning", "Feng Shui", "Gardening", "Home organizing", "KonMari method", "Meal planning",
+        "Organizing local meetups", "Personal inventory", "Attending literary events", "Book clubs",
+        "Book collecting", "Book reviewing", "Book swaps", "Literary analysis", "Reading challenges",
+        "Reading different genres", "Reading for education", "Translating books", "Action figures",
+        "Comic books", "LEGO sets", "Record albums", "Sports memorabilia", "Stamps", "Stickers",
+        "Vintage collectibles", "Animal rescue", "Community gardening", "Conservation", "Disaster relief",
+        "Elderly support", "Fundraising events", "Habitat for Humanity", "Homelessness support",
+        "International service", "Literacy support", "Mentoring", "Teaching assistant", "Youth sports coaching",
+        "Content creation", "Creative writing", "Data analysis", "Exercise", "Photography", "Podcasting",
+        "Reading marketing books", "SEO", "Social media", "Videography", "Acting", "Composing music",
+        "Dancing", "DJing", "Juggling", "Poetry", "Playing a musical instrument", "Magic tricks",
+        "Singing", "Songwriting", "Standup comedy", "Bargain shopping", "Budgeting", "Computer programs",
+        "Investing", "Learning languages", "Participation in investment clubs", "Reading financial news and market reports",
+        "Trading", "Volunteer work", "Acting", "Building relationships", "Cold calling", "Networking events",
+        "Persuasion and influencing skills", "Practicing negotiation", "Role-playing games", "Team sports",
+        "Traveling", "Window shopping", "Backpacking", "Baseball", "Basketball", "Bodybuilding", "Canoeing",
+        "Car racing", "Coaching", "Boating", "Bowling", "Football", "Fantasy football", "Fantasy baseball",
+        "Golf", "Hiking", "Individual sports", "Kayaking", "Martial arts", "Mountain biking", "Mountain climbing",
+        "Paintball", "Pickleball", "Pilates", "Rock climbing", "Running", "Sailing", "Scuba diving",
+        "Skydiving", "Snowboarding", "Skiing", "Tennis", "Whitewater rafting", "Yoga", "3-D printing", "App building",
+        "Artificial Intelligence", "Computer programming", "Podcasting", "Robotics", "Social media", "Virtual reality",
+        "Web design", "Web development", "Astronomy", "Astrology", "Building models", "Car restoration",
+        "Community activities", "Cooking classes", "Genealogy", "Historic preservation", "Learning languages",
+        "Networking groups", "Personal development", "RV traveling", "Sign language", "Stamp collecting",
+        "Traveling", "Vintage shopping", "Accidents", "Adventure", "Advertising", "Advice", "Africa", "Age",
+        "Airports", "Anger", "Animals", "Appearance", "Appliances", "Art", "Artificial Intelligence", "Asia",
+        "Australia", "Banks", "Beach", "Beauty", "Bees", "Birds", "Birthdays", "Body language", "Books and reading",
+        "Boredom", "Brain", "Bread", "Breakfast", "Bucket list", "Camping", "Cars", "Cats", "Change", "Charity",
+        "Childhood", "Chocolate", "Chores", "Christmas", "Cinema", "Cities", "Clothing", "Coffee", "Colors", "Cooking",
+        "Comfort", "Communication", "Comparatives", "Complaints", "Computers", "Construction and building", "Consumerism",
+        "Corn", "Countries", "COVID", "Crime", "Culture", "Daily Routines", "Danger", "Dating", "Decisions and choices",
+        "Dentists", "Desert Island", "Dessert", "Diving", "DIY", "Dogs", "Dreams", "Drinks", "Driving", "Drought", "Easter",
+        "Electricity", "Elephants", "England", "Entertainment", "Environment", "Exercise", "Extinction", "Extreme sports",
+        "Fall and Autumn", "Family", "Farming", "Fashion", "Fast Food", "Fears", "Feelings", "Fire", "Fish", "Fishing",
+        "Flowers", "Flying", "Football", "Freedom", "Friendship", "Fruit", "Furniture", "Future", "Gadgets", "Gambling",
+        "Gardening", "Ghosts", "Gifts", "Global warming", "Goals", "Going to", "Gold", "Habits", "Halloween", "Hair",
+        "Happiness", "Health and sickness", "Healthy living", "Hiking", "History", "Hobbies", "Holidays", "Home", "Hometowns",
+        "Honesty and lies", "Hope", "Horses", "Hotels", "Housing", "How much how many", "Hunting", "Insects", "Internet",
+        "Inventions", "Jail", "Japan", "Jobs", "Jungles", "Kindness", "Kitchens", "Languages", "Law", "Laziness", "Logging",
+        "Loneliness", "Loss", "Love", "Luck", "Manners", "Meat", "Medicine", "Memory", "Migration", "Milk", "Mining",
+        "Money", "Moon", "Morning", "Mosquitos", "Motivation", "Motorcycles", "Mountains", "Moving", "Music", "Natural disasters",
+        "Natural wonders", "Nature", "Neighbors", "News", "New Year", "Noise", "Nuclear energy", "Numbers", "Nutrition",
+        "Ocean", "Obesity", "Oil", "Past continuous", "Past simple", "Patience", "People", "Personality", "Pets", "Phones",
+        "Photography", "Phrasal verbs", "Picnics", "Pirates", "Pizza", "Police", "Pollution", "Poverty", "Predictions",
+        "Present perfect", "Privacy", "Rain", "Recycling", "Reptiles", "Restaurants", "Rice", "Rivers", "Robots", "Safety",
+        "Salt", "Sailing", "Saving", "School", "Science", "Seafood", "Secrets", "Senses", "Sharks", "Shopping", "Sleep",
+        "Smoking", "Social Media", "South America", "Space", "Spices", "Sports", "Spring", "Stress", "Study", "Success",
+        "Summer", "Superlatives", "Superstition", "Swimming", "Tattoos", "Tea", "Television", "Thanksgiving", "Tigers",
+        "Time", "Tourism", "Trade", "Trains", "Transport", "Trash", "Travel", "Trees", "Trust", "UFOs", "Unemployment",
+        "Vegetables", "Video games", "Volcanoes", "Walking", "War", "Water", "Waterfalls", "Water Sports", "Wealth", "Weather",
+        "Weekends", "Whales", "Winter", "Wind", "Work", "Would you rather", "Zero conditional", "Zoos", "Guns", "Airplanes",
+        "Cats", "Scifi", "Soccer", "Gym", "Fitness", "Family Values", "Politics", "Economy", "Science", "Technology",
+        "Music", "Movies", "Books", "Astronomy", "Mental Health", "Health", "Philosophy", "Religion", "Sport", "War", "Fencing",
+        "Photography", "Gardening", "Cooking", "Hiking", "Cars", "Medicine", "Conspiracy Theories", "Mistery", "Writing"
+    ],
+    "big_five": {
+      "oe": ["inventive/curious", "consistent/cautious"],
+      "co": ["efficient/organized", "extravagant/careless"],
+      "ex": ["outgoing/energetic", "solitary/reserved"],
+      "ag": ["friendly/compassionate", "critical/judgmental"],
+      "ne": ["sensitive/nervous", "resilient/confident"]
+    }
+  },
+  "posts": {
+    "visibility_rounds": 36,
+    "emotions": {
+      "admiration": null, "amusement": null, "anger": null, "annoyance": null,
+      "approval": null, "caring": null, "confusion": null, "curiosity": null,
+      "desire": null, "disappointment": null, "disapproval": null, "disgust": null,
+      "embarrassment": null, "excitement": null, "fear": null, "gratitude": null,
+      "grief": null, "joy": null, "love": null, "nervousness": null, "optimism": null,
+      "pride": null, "realization": null, "relief": null, "remorse": null, "sadness": null,
+      "surprise": null, "trust": null
+    }
+  }
+
+
+}

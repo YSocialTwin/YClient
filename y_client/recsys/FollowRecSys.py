@@ -41,7 +41,7 @@ class FollowRecSys(object):
         try:
             return response.json()
         except:
-            return json.dumps({})
+            return {}
 
 
 class CommonNeighbors(FollowRecSys):

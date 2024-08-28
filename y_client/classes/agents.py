@@ -9,7 +9,6 @@ from autogen import AssistantAgent
 import numpy as np
 import re
 
-
 __all__ = ["Agent", "Agents", "SimulationSlot"]
 
 
@@ -39,6 +38,18 @@ class SimulationSlot(object):
 
         :return: the current slot, day and id
         """
+
+        api_url = f"{self.base_url}current_time"
+
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        response = get(f"{api_url}", headers=headers)
+        data = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        self.day = data["day"]
+        self.slot = data["round"]
+        self.id = data["id"]
+
         return self.id, self.day, self.slot
 
     def increment_slot(self):
@@ -56,39 +67,42 @@ class SimulationSlot(object):
             slot = 0
             day = self.day + 1
 
-        params = {"day": day, "round": slot}
-        st = json.dumps(params)
-        response = post(f"{api_url}", headers=headers, data=st)
-        data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        _, day_c, slot_c = self.get_current_slot()
 
-        self.day = int(data["day"])
-        self.slot = int(data["round"])
-        self.id = int(data["id"])
+        if day >= day_c and slot > slot_c:
+            params = {"day": day, "round": slot}
+            st = json.dumps(params)
+            response = post(f"{api_url}", headers=headers, data=st)
+            data = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+            self.day = int(data["day"])
+            self.slot = int(data["round"])
+            self.id = int(data["id"])
 
 
 class Agent(object):
     def __init__(
-        self,
-        name: str,
-        email: str,
-        pwd: str = None,
-        age: int = None,
-        interests: list = None,
-        leaning: str = None,
-        ag_type="llama3",
-        load: bool = False,
-        recsys: ContentRecSys = None,
-        frecsys: FollowRecSys = None,
-        config: dict = None,
-        big_five: dict = None,
-        language: str = None,
-        owner: str = None,
-        education_level: str = None,
-        joined_on: int = None,
-        round_actions: int = 3,
-        gender: str = None,
-        nationality: str = None,
-        api_key: str = "NULL",
+            self,
+            name: str,
+            email: str,
+            pwd: str = None,
+            age: int = None,
+            interests: list = None,
+            leaning: str = None,
+            ag_type="llama3",
+            load: bool = False,
+            recsys: ContentRecSys = None,
+            frecsys: FollowRecSys = None,
+            config: dict = None,
+            big_five: dict = None,
+            language: str = None,
+            owner: str = None,
+            education_level: str = None,
+            joined_on: int = None,
+            round_actions: int = 3,
+            gender: str = None,
+            nationality: str = None,
+            api_key: str = "NULL",
     ):
         """
         Initialize the Agent object.
@@ -855,7 +869,7 @@ class Agent(object):
             return None
 
     def follow(
-        self, tid: int, target: int = None, post_id: int = None, action="follow"
+            self, tid: int, target: int = None, post_id: int = None, action="follow"
     ):
         """
         Follow a user
@@ -1007,7 +1021,7 @@ class Agent(object):
             candidates = self.search_follow()
             if len(candidates) > 0:
                 tot = sum(candidates.values())
-                probs = [v/tot for v in candidates.values()]
+                probs = [v / tot for v in candidates.values()]
                 selected = np.random.choice(
                     [int(c) for c in candidates],
                     p=probs,

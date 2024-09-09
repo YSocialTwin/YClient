@@ -9,7 +9,7 @@
     "client": "YClientBase",
     "days": 31,
     "slots": 24,
-    "starting_agents": 100,
+    "starting_agents": 10,
     "new_agents_iteration": 1,
     "hourly_activity": {
        "10": 0.021,
@@ -36,10 +36,20 @@
        "2": 0.020,
        "0": 0.023,
        "19": 0.031
+    },
+    "actions_likelihood": {
+      "post": 0.2,
+      "comment": 0,
+      "read": 0,
+      "share": 0,
+      "reply": 0,
+      "search": 0,
+      "news": 0,
+      "cast": 0.8
     }
   },
   "agents": {
-    "languages": ["english", "italian"],
+    "languages": ["english"],
     "education_levels": ["high school", "bachelor", "master", "phd"],
     "max_length_thread_reading": 5,
     "reading_from_follower_ratio": 0.6,

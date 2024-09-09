@@ -69,7 +69,7 @@ class SimulationSlot(object):
 
         _, day_c, slot_c = self.get_current_slot()
 
-        if day >= day_c and slot > slot_c:
+        if day >= day_c or slot > slot_c:
             params = {"day": day, "round": slot}
             st = json.dumps(params)
             response = post(f"{api_url}", headers=headers, data=st)
@@ -129,6 +129,7 @@ class Agent(object):
         :param api_key: the LLM server api key, default is NULL (self-hosted)
         """
         self.emotions = config["posts"]["emotions"]
+        self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
         self.llm_base = config["servers"]["llm"]
         self.content_rec_sys_name = None
@@ -930,6 +931,72 @@ class Agent(object):
 
         return response.__dict__["_content"].decode("utf-8")
 
+    def cast(self, post_id: int, tid: int):
+        """
+        Cast a voting intention (political simulation)
+
+        :param post_id: the post id
+        :param tid: the round id
+        :return: the response from the service
+        """
+
+        post_text = self.__get_post(post_id)
+
+        u1 = AssistantAgent(
+            name=f"{self.name}",
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
+            max_consecutive_auto_reply=1,
+        )
+
+        u2 = AssistantAgent(
+            name=f"Handler",
+            llm_config=self.llm_config,  # self.llm_config,
+            system_message=self.__effify(self.prompts["handler_instructions_simple"]),
+            max_consecutive_auto_reply=0,
+        )
+
+        u2.initiate_chat(
+            u1,
+            message=self.__effify(
+                self.prompts["handler_cast"], post_text=post_text
+            ),
+            silent=True,
+            max_round=1,
+        )
+
+        text = u1.chat_messages[u2][-1]["content"].replace("!", "").upper()
+
+        u1.reset()
+        u2.reset()
+
+        data = {
+                    "user_id": self.user_id,
+                    "post_id": post_id,
+                    "content_type": "Post",
+                    "tid": tid,
+                    "content_id": post_id,
+                }
+
+        if "RIGHT" in text.split():
+            data ["vote"] = "R"
+            st = json.dumps(data)
+
+        elif "LEFT" in text.split():
+            data["vote"] = "D"
+            st = json.dumps(data)
+
+        elif "NONE" in text.split():
+            data["vote"] = "U"
+            st = json.dumps(data)
+        else:
+            return
+
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        api_url = f"{self.base_url}/cast_preference"
+        post(f"{api_url}", headers=headers, data=st)
+
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """
         Post a message to the service.
@@ -939,10 +1006,12 @@ class Agent(object):
         :param max_length_thread_reading: The maximum length of the thread to read.
         """
         np.random.shuffle(actions)
+        acts = ",".join(actions)
+
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
+            system_message=self.__effify(self.prompts["agent_roleplay_base"]),
             max_consecutive_auto_reply=1,
         )
 
@@ -955,12 +1024,12 @@ class Agent(object):
 
         u2.initiate_chat(
             u1,
-            message=self.__effify(self.prompts["handler_action"], actions=actions),
+            message=self.__effify(self.prompts["handler_action"], actions=acts),
             silent=True,
             max_round=1,
         )
 
-        text = u1.chat_messages[u2][-1]["content"].replace("!", "")
+        text = u1.chat_messages[u2][-1]["content"].replace("!", "").upper()
         u1.reset()
         u2.reset()
 
@@ -1006,17 +1075,6 @@ class Agent(object):
                 )
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
-        elif "NEWS" in text.split():
-            news, website = self.select_news()
-            if not isinstance(news, str):
-                self.news(tid=tid, article=news, website=website)
-
-        elif "SHARE" in text.split():
-            candidates = json.loads(self.read(article=True))
-            if len(candidates) > 0:
-                selected_post = random.sample(candidates, 1)
-                self.share(int(selected_post[0]), tid=tid)
-
         elif "FOLLOW" in text.split():
             candidates = self.search_follow()
             if len(candidates) > 0:
@@ -1029,6 +1087,24 @@ class Agent(object):
                 )[0]
                 self.follow(tid=tid, target=selected, action="follow")
 
+        elif "NEWS" in text.split():
+            news, website = self.select_news()
+            if not isinstance(news, str):
+                self.news(tid=tid, article=news, website=website)
+
+        elif "SHARE" in text.split():
+            candidates = json.loads(self.read(article=True))
+            if len(candidates) > 0:
+                selected_post = random.sample(candidates, 1)
+                self.share(int(selected_post[0]), tid=tid)
+
+        elif "CAST" in text.split():
+            candidates = json.loads(self.read())
+            try:
+                selected_post = random.sample(candidates, 1)
+                self.cast(int(selected_post[0]), tid=tid)
+            except:
+                pass
         return
 
     def read(self, article=False):

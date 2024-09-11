@@ -39,14 +39,14 @@
     },
     "actions_likelihood": {
       "post": 0.2,
-      "comment": 0,
+      "comment": 0.8,
       "read": 0,
       "share": 0,
       "reply": 0,
       "search": 0,
       "news": 0,
-      "cast": 0.8
-  }
+      "cast": 0
+    }
   },
   "agents": {
     "languages": ["english"],
@@ -138,6 +138,7 @@
         "Music", "Movies", "Books", "Astronomy", "Mental Health", "Health", "Philosophy", "Religion", "Sport", "War", "Fencing",
         "Photography", "Gardening", "Cooking", "Hiking", "Cars", "Medicine", "Conspiracy Theories", "Mistery", "Writing"
     ],
+    "attention_window": 336,
     "big_five": {
       "oe": ["inventive/curious", "consistent/cautious"],
       "co": ["efficient/organized", "extravagant/careless"],

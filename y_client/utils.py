@@ -88,7 +88,7 @@ def generate_user(config, owner=None):
         api_key=api_key,
     )
 
-    if not hasattr(agent, 'user_id'):
+    if not hasattr(agent, "user_id"):
         return None
 
     return agent

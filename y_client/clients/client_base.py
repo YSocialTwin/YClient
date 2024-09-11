@@ -47,10 +47,14 @@ class YClientBase(object):
         self.n_agents = self.config["simulation"]["starting_agents"]
         self.new_agents_iteration = self.config["simulation"]["new_agents_iteration"]
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
-        self.actions_likelihood = {a.upper(): float(v) for a, v in
-                                   self.config["simulation"]["actions_likelihood"].items()}
+        self.actions_likelihood = {
+            a.upper(): float(v)
+            for a, v in self.config["simulation"]["actions_likelihood"].items()
+        }
         tot = sum(self.actions_likelihood.values())
-        self.actions_likelihood = {k: v / tot for k, v in self.actions_likelihood.items()}
+        self.actions_likelihood = {
+            k: v / tot for k, v in self.actions_likelihood.items()
+        }
 
         # users' parameters
         self.fratio = self.config["agents"]["reading_from_follower_ratio"]
@@ -112,6 +116,18 @@ class YClientBase(object):
                 leaning=f["leaning"],
             )
 
+    def set_interests(self):
+        """
+        Set the interests of the agents
+        """
+        api_url = f"{self.config['servers']['api']}set_interests"
+
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        data = self.config["agents"]["interests"]
+
+        post(f"{api_url}", headers=headers, data=json.dumps(data))
+
     def set_recsys(self, c_recsys, f_recsys):
         """
         Set the recommendation systems
@@ -144,6 +160,9 @@ class YClientBase(object):
         """
         Create the initial population of agents
         """
+        # setting global interests
+        self.set_interests()
+
         if self.agents_filename is None:
             for _ in range(self.n_agents):
                 self.add_agent()
@@ -220,9 +239,9 @@ class YClientBase(object):
                 tid, _, h = self.sim_clock.get_current_slot()
 
                 # get expected active users for this time slot (at least 1)
-                expected_active_users = max(int(
-                    len(self.agents.agents) * self.hourly_activity[str(h)]
-                ), 1)
+                expected_active_users = max(
+                    int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1
+                )
                 sagents = random.sample(self.agents.agents, expected_active_users)
 
                 # available actions
@@ -237,7 +256,8 @@ class YClientBase(object):
                         # sample two elements from a list with replacement
                         candidates = random.choices(
                             acts,
-                            k=2, weights=[self.actions_likelihood[a] for a in acts]
+                            k=2,
+                            weights=[self.actions_likelihood[a] for a in acts],
                         )
                         candidates.append("NONE")
 

@@ -452,6 +452,19 @@ class Agent(object):
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
+        post_text = (
+            post_text.split(":")[-1]
+            .split("-")[-1]
+            .replace("@ ", "")
+            .replace("  ", " ")
+            .replace(". ", ".")
+            .replace(" ,", ",")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("@,", "")
+        )
+        post_text = post_text.replace(f"@{self.name}", "")
+
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
 
@@ -528,6 +541,19 @@ class Agent(object):
             emotion_eval = []
 
         post_text = u2.chat_messages[u1][-2]["content"]
+
+        post_text = (
+            post_text.split(":")[-1]
+            .split("-")[-1]
+            .replace("@ ", "")
+            .replace("  ", " ")
+            .replace(". ", ".")
+            .replace(" ,", ",")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("@,", "")
+        )
+        post_text = post_text.replace(f"@{self.name}", "")
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -819,6 +845,19 @@ class Agent(object):
             emotion_eval = []
 
         post_text = u2.chat_messages[u1][-2]["content"]
+
+        post_text = (
+            post_text.split(":")[-1]
+            .split("-")[-1]
+            .replace("@ ", "")
+            .replace("  ", " ")
+            .replace(". ", ".")
+            .replace(" ,", ",")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("@,", "")
+        )
+        post_text = post_text.replace(f"@{self.name}", "")
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")

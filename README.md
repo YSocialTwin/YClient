@@ -1,6 +1,7 @@
 ![img_1.png](docs/Ysocial.png)
 
-YSocial is a client-server application that implements a digital twin of a microblogging platform using Large Language Models (LLMs). This project simulates a social media-like environment where agents are represented by LLMs, allowing for realistic and efficient interactions.
+YSocial is a client-server application that implements a digital twin of an online social media platform using Large Language Models (LLMs). 
+This project simulates a social media-like environment where agents are represented by LLMs, allowing for realistic and efficient interactions.
 
 This repository contains the code for the **client-side** of the application. 
 
@@ -9,9 +10,10 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 #### Features
 
 - Realistic agent simulations using LLMs
-- Microblogging platform with posting, commenting, and liking capabilities
+- Posting, commenting, and liking capabilities (and many more!)
+- News outlet access via RSS feeds
+- Dynamic agents' interests and preferences
 - Client-server architecture for scalability and flexibility
-- Support for various user interactions (e.g., posting, commenting, liking)
 - Ability to simulate a wide range of scenarios and use cases
 
 ## Technical Details
@@ -29,6 +31,8 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 
 ### Usage
 
+Refer to the official [documentation](https://ysocialtwin.github.io/) for a detailed guide on how to use YSocial.
+
 *Step 1:* Make sure to have access (either locally or remotely) to an LLM model compatible with OpenAI's API. 
 
 *Step 2:* Configure the simulation by editing the file `/config_files/config.json`: it allows to specify several parameters, such as the number of agents, the LLM model to be used, the length of the simulation.
@@ -38,8 +42,6 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 *Step 3:* Make sure the y_server is running.
 
 *Step 4:* Run the client to interact with the server.
-
-Under the folder clients, you can find a simple client that interacts with the server.
 
 ```bash
 python y_client.py 

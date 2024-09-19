@@ -42,6 +42,8 @@ def generate_user(config, owner=None):
         ),
     )
 
+    toxicity = fake.random_element(elements=(config["agents"]["toxicity_levels"]))
+
     language = fake.random_element(elements=(config["agents"]["languages"]))
 
     ag_type = fake.random_element(elements=(config["agents"]["llm_agents"]))
@@ -85,10 +87,12 @@ def generate_user(config, owner=None):
         round_actions=round_actions,
         gender=gender,
         nationality=nationality,
+        toxicity=toxicity,
         api_key=api_key,
     )
 
-    if not hasattr(agent, 'user_id'):
+    if not hasattr(agent, "user_id"):
+        print("here")
         return None
 
     return agent

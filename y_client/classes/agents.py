@@ -82,27 +82,28 @@ class SimulationSlot(object):
 
 class Agent(object):
     def __init__(
-            self,
-            name: str,
-            email: str,
-            pwd: str = None,
-            age: int = None,
-            interests: list = None,
-            leaning: str = None,
-            ag_type="llama3",
-            load: bool = False,
-            recsys: ContentRecSys = None,
-            frecsys: FollowRecSys = None,
-            config: dict = None,
-            big_five: dict = None,
-            language: str = None,
-            owner: str = None,
-            education_level: str = None,
-            joined_on: int = None,
-            round_actions: int = 3,
-            gender: str = None,
-            nationality: str = None,
-            api_key: str = "NULL",
+        self,
+        name: str,
+        email: str,
+        pwd: str = None,
+        age: int = None,
+        interests: list = None,
+        leaning: str = None,
+        ag_type="llama3",
+        load: bool = False,
+        recsys: ContentRecSys = None,
+        frecsys: FollowRecSys = None,
+        config: dict = None,
+        big_five: dict = None,
+        language: str = None,
+        owner: str = None,
+        education_level: str = None,
+        joined_on: int = None,
+        round_actions: int = 3,
+        gender: str = None,
+        nationality: str = None,
+        toxicity: str = "no",
+        api_key: str = "NULL",
     ):
         """
         Initialize the Agent object.
@@ -126,6 +127,7 @@ class Agent(object):
         :param round_actions: the number of daily actions
         :param gender: the agent gender
         :param nationality: the agent nationality
+        :param toxicity: the toxicity level of the agent, default is "no"
         :param api_key: the LLM server api key, default is NULL (self-hosted)
         """
         self.emotions = config["posts"]["emotions"]
@@ -136,6 +138,7 @@ class Agent(object):
         self.follow_rec_sys_name = None
         self.name = name
         self.email = email
+        self.attention_window = int(config["agents"]["attention_window"])
 
         if not load:
             self.language = language
@@ -158,13 +161,13 @@ class Agent(object):
             self.round_actions = round_actions
             self.gender = gender
             self.nationality = nationality
+            self.toxicity = toxicity
 
-            self.__register()
-            try:
-                res = json.loads(self.__get_user())
-                self.user_id = int(res["id"])
-            except:
+            uid = self.__register()
+            if uid is None:
                 pass
+            else:
+                self.user_id = uid
 
         else:
             us = json.loads(self.__get_user())
@@ -187,6 +190,7 @@ class Agent(object):
             self.round_actions = us["round_actions"]
             self.joined_on = us["joined_on"]
             self.gender = us["gender"]
+            self.toxicity = us["toxicity"]
             self.nationality = us["nationality"]
 
         config_list = {
@@ -342,7 +346,6 @@ class Agent(object):
                 "leaning": self.leaning,
                 "age": self.age,
                 "user_type": self.type,
-                "interests": self.interests,
                 "oe": self.oe,
                 "co": self.co,
                 "ex": self.ex,
@@ -354,6 +357,7 @@ class Agent(object):
                 "round_actions": self.round_actions,
                 "gender": self.gender,
                 "nationality": self.nationality,
+                "toxicity": self.toxicity,
                 "joined_on": self.joined_on,
             }
         )
@@ -363,6 +367,46 @@ class Agent(object):
         api_url = f"{self.base_url}/register"
         post(f"{api_url}", headers=headers, data=st)
 
+        try:
+            res = json.loads(self.__get_user())
+            uid = int(res["id"])
+        except:
+            return None
+
+        api_url = f"{self.base_url}/set_user_interests"
+        data = {"user_id": uid, "interests": self.interests, "round": self.joined_on}
+
+        post(f"{api_url}", headers=headers, data=json.dumps(data))
+
+        return uid
+
+    def __get_interests(self, tid):
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        # current round
+        if tid == -1:
+            # get last round id
+            api_url = f"{self.base_url}/current_time"
+            response = get(f"{api_url}", headers=headers)
+            data = json.loads(response.__dict__["_content"].decode("utf-8"))
+            tid = int(data["id"])
+
+        api_url = f"{self.base_url}/get_user_interests"
+        data = {
+            "user_id": self.user_id,
+            "round_id": tid,
+            "n_interests": len(self.interests),
+            "time_window": self.attention_window,
+        }
+        response = get(f"{api_url}", headers=headers, data=json.dumps(data))
+        data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        selected = np.random.choice(range(len(data)), np.random.randint(1, 3))
+
+        interests = [data[i]["topic"] for i in selected]
+        interests_id = [data[i]["id"] for i in selected]
+
+        return interests, interests_id
+
     def post(self, tid):
         """
         Post a message to the service.
@@ -370,13 +414,14 @@ class Agent(object):
         :param tid: the round id
         """
 
-        interest = np.random.choice(self.interests, np.random.randint(1, 3))
+        # obtain the most recent (and frequent) interests of the agent
+        interests, interests_id = self.__get_interests(tid)
 
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,  # self.llm_config,
             system_message=self.__effify(
-                self.prompts["agent_roleplay"], interest=interest
+                self.prompts["agent_roleplay"], interest=interests
             ),
             max_consecutive_auto_reply=1,
         )
@@ -412,6 +457,12 @@ class Agent(object):
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
+        post_text = self.__clean_text(post_text)
+
+        # avoid posting empty messages
+        if len(post_text) < 3:
+            return
+
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
 
@@ -423,6 +474,7 @@ class Agent(object):
                 "hashtags": hashtags,
                 "mentions": mentions,
                 "tid": tid,
+                "topics": interests_id,
             }
         )
 
@@ -433,6 +485,11 @@ class Agent(object):
 
         api_url = f"{self.base_url}/post"
         post(f"{api_url}", headers=headers, data=st)
+
+        # update topic of interest with the ones used to generate the post
+        api_url = f"{self.base_url}/set_user_interests"
+        data = {"user_id": self.user_id, "interests": interests, "round": tid}
+        post(f"{api_url}", headers=headers, data=json.dumps(data))
 
     def news(self, tid, article, website):
         """
@@ -482,6 +539,19 @@ class Agent(object):
             emotion_eval = []
 
         post_text = u2.chat_messages[u1][-2]["content"]
+
+        post_text = (
+            post_text.split(":")[-1]
+            .split("-")[-1]
+            .replace("@ ", "")
+            .replace("  ", " ")
+            .replace(". ", ".")
+            .replace(" ,", ",")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("@,", "")
+        )
+        post_text = post_text.replace(f"@{self.name}", "")
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -601,13 +671,14 @@ class Agent(object):
         conversation = self.__get_thread(post_id, max_tweets=max_length_threads)
         conv = "".join(conversation)
 
-        interest = np.random.choice(self.interests, np.random.randint(1, 3))
+        # obtain the most recent (and frequent) interests of the agent
+        interests, _ = self.__get_interests(tid)
 
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
             system_message=self.__effify(
-                self.prompts["agent_roleplay_comments_share"], interest=interest
+                self.prompts["agent_roleplay_comments_share"], interest=interests
             ),
             max_consecutive_auto_reply=1,
         )
@@ -643,6 +714,13 @@ class Agent(object):
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
+        # cleaning the post text of some unwanted characters
+        post_text = self.__clean_text(post_text)
+
+        # avoid posting empty messages
+        if len(post_text) < 3:
+            return
+
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
 
@@ -662,15 +740,39 @@ class Agent(object):
         )
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
         api_url = f"{self.base_url}/comment"
         post(f"{api_url}", headers=headers, data=st)
-
         res = self.__evaluate_follow(post_text, post_id, "follow", tid)
+
+        # update topic of interest with the ones from the post
+        # get the root post id
+        api_url = f"{self.base_url}/get_thread_root"
+        response = get(
+            f"{api_url}", headers=headers, data=json.dumps({"post_id": post_id})
+        )
+        data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        self.__update_user_interests(data, tid)
 
         # if not followed, test unfollow
         if res is None:
             self.__evaluate_follow(post_text, post_id, "unfollow", tid)
+
+    def __update_user_interests(self, post_id, tid):
+        """
+        Update the user interests based on the post topics.
+
+        :param post_id: id of the post
+        :param tid: round id
+        """
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        api_url = f"{self.base_url}/get_post_topics"
+        data = {"post_id": post_id}
+        response = get(f"{api_url}", headers=headers, data=json.dumps(data))
+        data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        if len(data) > 0:
+            api_url = f"{self.base_url}/set_user_interests"
+            data = {"user_id": self.user_id, "interests": data, "round": tid}
+            post(f"{api_url}", headers=headers, data=json.dumps(data))
 
     def share(self, post_id: int, tid):
         """
@@ -687,12 +789,15 @@ class Agent(object):
 
         post_text = self.__get_post(post_id)
 
-        interest = np.random.choice(self.interests, np.random.randint(1, 3))
+        # obtain the most recent (and frequent) interests of the agent
+        interests, _ = self.__get_interests(tid)
 
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["agent_roleplay_comments_share"], interest=interest),
+            system_message=self.__effify(
+                self.prompts["agent_roleplay_comments_share"], interest=interests
+            ),
             max_consecutive_auto_reply=1,
         )
 
@@ -728,6 +833,19 @@ class Agent(object):
             emotion_eval = []
 
         post_text = u2.chat_messages[u1][-2]["content"]
+
+        post_text = (
+            post_text.split(":")[-1]
+            .split("-")[-1]
+            .replace("@ ", "")
+            .replace("  ", " ")
+            .replace(". ", ".")
+            .replace(" ,", ",")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("@,", "")
+        )
+        post_text = post_text.replace(f"@{self.name}", "")
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -824,6 +942,9 @@ class Agent(object):
         if check_follow and flag == "follow":
             self.__evaluate_follow(post_text, post_id, flag, tid)
 
+        # update user interests after reaction
+        self.__update_user_interests(post_id, tid)
+
     def __evaluate_follow(self, post_text, post_id, action, tid):
         """
         Evaluate a follow action.
@@ -870,7 +991,7 @@ class Agent(object):
             return None
 
     def follow(
-            self, tid: int, target: int = None, post_id: int = None, action="follow"
+        self, tid: int, target: int = None, post_id: int = None, action="follow"
     ):
         """
         Follow a user
@@ -958,9 +1079,7 @@ class Agent(object):
 
         u2.initiate_chat(
             u1,
-            message=self.__effify(
-                self.prompts["handler_cast"], post_text=post_text
-            ),
+            message=self.__effify(self.prompts["handler_cast"], post_text=post_text),
             silent=True,
             max_round=1,
         )
@@ -971,15 +1090,15 @@ class Agent(object):
         u2.reset()
 
         data = {
-                    "user_id": self.user_id,
-                    "post_id": post_id,
-                    "content_type": "Post",
-                    "tid": tid,
-                    "content_id": post_id,
-                }
+            "user_id": self.user_id,
+            "post_id": post_id,
+            "content_type": "Post",
+            "tid": tid,
+            "content_id": post_id,
+        }
 
         if "RIGHT" in text.split():
-            data ["vote"] = "R"
+            data["vote"] = "R"
             st = json.dumps(data)
 
         elif "LEFT" in text.split():
@@ -1174,7 +1293,7 @@ class Agent(object):
 
         :return: the string representation
         """
-        return f"Name: {self.name}, Age: {self.age}, Type: {self.type}, Leaning: {self.leaning}, Interests: {self.interests}"
+        return f"Name: {self.name}, Age: {self.age}, Type: {self.type}, Leaning: {self.leaning}"
 
     def __dict__(self):
         """
@@ -1182,6 +1301,9 @@ class Agent(object):
 
         :return: the dictionary representation
         """
+
+        interests = self.__get_interests(-1)
+
         return {
             "name": self.name,
             "email": self.email,
@@ -1189,7 +1311,7 @@ class Agent(object):
             "age": self.age,
             "type": self.type,
             "leaning": self.leaning,
-            "interests": self.interests,
+            "interests": interests,
             "oe": self.oe,
             "co": self.co,
             "ex": self.ex,
@@ -1203,8 +1325,25 @@ class Agent(object):
             "round_actions": self.round_actions,
             "gender": self.gender,
             "nationality": self.nationality,
+            "toxicity": self.toxicity,
             "joined_on": self.joined_on,
         }
+
+    def __clean_text(self, text):
+        text = (
+            text.split(":")[-1]
+            .split("-")[-1]
+            .replace("@ ", "")
+            .replace("  ", " ")
+            .replace(". ", ".")
+            .replace(" ,", ",")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("@,", "")
+            .strip("()[]{}'")
+        )
+        text = text.replace(f"@{self.name}", "")
+        return text
 
 
 class Agents(object):

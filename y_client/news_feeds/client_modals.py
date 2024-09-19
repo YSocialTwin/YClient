@@ -12,7 +12,10 @@ config = json.load(open("experiments/current_config.json"))
 
 if not os.path.exists(f"experiments/{config['simulation']['name']}.db"):
     # copy the clean database to the experiments folder
-    shutil.copyfile(f"{BASE_DIR}/../../data_schema/database_clean_client.db", f"{BASE_DIR}/../../experiments/{config['simulation']['name']}.db")
+    shutil.copyfile(
+        f"{BASE_DIR}/../../data_schema/database_clean_client.db",
+        f"{BASE_DIR}/../../experiments/{config['simulation']['name']}.db",
+    )
 
 base = declarative_base()
 engine = db.create_engine(f"sqlite:///experiments/{config['simulation']['name']}.db")

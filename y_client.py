@@ -1,7 +1,6 @@
 import os, sys, json, shutil
 
 if __name__ == "__main__":
-
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     sys.path.append(os.path.dirname(SCRIPT_DIR))
 
@@ -63,7 +62,7 @@ if __name__ == "__main__":
         "--graph",
         default=None,
         help="Name of the graph file (CSV format, number of nodes equal to the starting agents) "
-             "to be used for the simulation",
+        "to be used for the simulation",
     )
 
     args = parser.parse_args()
@@ -84,14 +83,13 @@ if __name__ == "__main__":
     output = f"experiments/{simulation_name}_agents.json"
 
     # set the current config file (needed to generate the database)
-    shutil.copyfile(config_file,
-                    f"experiments/current_config.json")
+    shutil.copyfile(config_file, f"experiments/current_config.json")
 
     import y_client.recsys
     import y_client.clients
 
-    if not os.path.exists('./experiments'):
-        os.mkdir('./experiments')
+    if not os.path.exists("./experiments"):
+        os.mkdir("./experiments")
 
     # get recommender systems
     content_recsys = getattr(y_client.recsys, args.crecsys)()

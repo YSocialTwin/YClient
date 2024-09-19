@@ -102,6 +102,7 @@ class Agent(object):
         round_actions: int = 3,
         gender: str = None,
         nationality: str = None,
+        toxicity: str = "no",
         api_key: str = "NULL",
     ):
         """
@@ -126,6 +127,7 @@ class Agent(object):
         :param round_actions: the number of daily actions
         :param gender: the agent gender
         :param nationality: the agent nationality
+        :param toxicity: the toxicity level of the agent, default is "no"
         :param api_key: the LLM server api key, default is NULL (self-hosted)
         """
         self.emotions = config["posts"]["emotions"]
@@ -159,6 +161,7 @@ class Agent(object):
             self.round_actions = round_actions
             self.gender = gender
             self.nationality = nationality
+            self.toxicity = toxicity
 
             uid = self.__register()
             if uid is None:
@@ -187,6 +190,7 @@ class Agent(object):
             self.round_actions = us["round_actions"]
             self.joined_on = us["joined_on"]
             self.gender = us["gender"]
+            self.toxicity = us["toxicity"]
             self.nationality = us["nationality"]
 
         config_list = {
@@ -353,6 +357,7 @@ class Agent(object):
                 "round_actions": self.round_actions,
                 "gender": self.gender,
                 "nationality": self.nationality,
+                "toxicity": self.toxicity,
                 "joined_on": self.joined_on,
             }
         )
@@ -452,18 +457,11 @@ class Agent(object):
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
-        post_text = (
-            post_text.split(":")[-1]
-            .split("-")[-1]
-            .replace("@ ", "")
-            .replace("  ", " ")
-            .replace(". ", ".")
-            .replace(" ,", ",")
-            .replace("[", "")
-            .replace("]", "")
-            .replace("@,", "")
-        )
-        post_text = post_text.replace(f"@{self.name}", "")
+        post_text = self.__clean_text(post_text)
+
+        # avoid posting empty messages
+        if len(post_text) < 3:
+            return
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -717,19 +715,9 @@ class Agent(object):
         post_text = u2.chat_messages[u1][-2]["content"]
 
         # cleaning the post text of some unwanted characters
-        post_text = (
-            post_text.split(":")[-1]
-            .split("-")[-1]
-            .replace("@ ", "")
-            .replace("  ", " ")
-            .replace(". ", ".")
-            .replace(" ,", ",")
-            .replace("[", "")
-            .replace("]", "")
-            .replace("@,", "")
-        )
-        post_text = post_text.replace(f"@{self.name}", "")
+        post_text = self.__clean_text(post_text)
 
+        # avoid posting empty messages
         if len(post_text) < 3:
             return
 
@@ -1337,8 +1325,25 @@ class Agent(object):
             "round_actions": self.round_actions,
             "gender": self.gender,
             "nationality": self.nationality,
+            "toxicity": self.toxicity,
             "joined_on": self.joined_on,
         }
+
+    def __clean_text(self, text):
+        text = (
+            text.split(":")[-1]
+            .split("-")[-1]
+            .replace("@ ", "")
+            .replace("  ", " ")
+            .replace(". ", ".")
+            .replace(" ,", ",")
+            .replace("[", "")
+            .replace("]", "")
+            .replace("@,", "")
+            .strip("()[]{}'")
+        )
+        text = text.replace(f"@{self.name}", "")
+        return text
 
 
 class Agents(object):

@@ -147,6 +147,7 @@ class YClientBase(object):
         if agent is None:
             try:
                 agent = generate_user(self.config, owner=self.agents_owner)
+
                 if agent is None:
                     return
                 agent.set_prompts(self.prompts)

@@ -38,14 +38,15 @@
        "19": 0.031
     },
     "actions_likelihood": {
-      "post": 0.2,
-      "comment": 0.25,
-      "read": 0.1,
-      "share": 0.1,
-      "reply": 0.2,
-      "search": 0.05,
-      "news": 0.1,
-      "cast": 0
+      "post": 0,
+      "comment": 0,
+      "read": 0,
+      "share": 0,
+      "reply": 0,
+      "search": 0,
+      "news": 0,
+      "cast": 0,
+      "image": 1
     }
   },
   "agents": {

@@ -1,6 +1,8 @@
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
-from y_client.news_feeds.client_modals import Websites, session
+from y_client.news_feeds.client_modals import Websites, Images, Articles, session
+from y_client.classes.annotator import Annotator
+from sqlalchemy.sql.expression import func
 from y_client.news_feeds.feed_reader import NewsFeed
 import random
 from requests import get, post
@@ -139,6 +141,11 @@ class Agent(object):
         self.name = name
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
+        self.llm_v_config = {
+            "url": config["servers"]["llm_v"],
+            "api_key": config["servers"]["llm_v_api_key"],
+            "model": config["agents"]["llm_v_model"],
+        }
 
         if not load:
             self.language = language
@@ -400,10 +407,12 @@ class Agent(object):
         }
         response = get(f"{api_url}", headers=headers, data=json.dumps(data))
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
-        selected = np.random.choice(range(len(data)), np.random.randint(1, 3))
-
-        interests = [data[i]["topic"] for i in selected]
-        interests_id = [data[i]["id"] for i in selected]
+        try:
+            selected = np.random.choice(range(len(data)), np.random.randint(1, 3))
+            interests = [data[i]["topic"] for i in selected]
+            interests_id = [data[i]["id"] for i in selected]
+        except:
+            return [], []
 
         return interests, interests_id
 
@@ -567,7 +576,6 @@ class Agent(object):
                 "title": article.title,
                 "summary": article.summary,
                 "link": article.link,
-                "published": article.published,
                 "publisher": website.name,
                 "rss": website.rss,
                 "leaning": website.leaning,
@@ -584,7 +592,8 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         api_url = f"{self.base_url}/news"
-        post(f"{api_url}", headers=headers, data=st)
+        res = post(f"{api_url}", headers=headers, data=st)
+        return res
 
     def __get_thread(self, post_id: int, max_tweets=None):
         """
@@ -1224,6 +1233,12 @@ class Agent(object):
                 self.cast(int(selected_post[0]), tid=tid)
             except:
                 pass
+
+        elif "IMAGE" in text.split():
+            image, article_id = self.select_image(tid=tid)
+            if image is not None:
+                self.comment_image(image, tid=tid, article_id=article_id)
+
         return
 
     def read(self, article=False):
@@ -1286,6 +1301,188 @@ class Agent(object):
         website_feed.read_feed()
         article = website_feed.get_random_news()
         return article, website
+
+    def select_image(self, tid, article_id=None):
+        """
+        Select an image
+
+        :return: the response from the service
+        """
+
+        # randomly select an image from database
+        image = session.query(Images).order_by(func.random()).first()
+
+        # no image available, select a news article and extract image from it
+        # @Todo: add the case of no news sharing enabled
+        if image is None:
+            news, website = self.select_news()
+            res = self.news(tid=tid, article=news, website=website)
+            article_id = int(
+                json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
+            )
+
+            # get image given article id and set the remote id
+            image = (
+                session.query(Images).filter(Images.article_id == article_id).first()
+            )
+
+            if image is None:
+                return None, None
+            else:
+                image.remote_article_id = article_id
+                session.commit()
+
+                # annotate the image with a description
+                an = Annotator(self.llm_v_config)
+                description = an.annotate(image.url)
+                image.description = description
+                session.commit()
+
+                return image, article_id
+
+        # images available, check if they have a description
+        else:
+            # check if the image has a remote article id
+            if image.remote_article_id is None:
+                # get local article linked to the image
+                article = (
+                    session.query(Articles)
+                    .filter(Articles.id == image.article_id)
+                    .first()
+                )
+                # get the website linked to the article
+                website = (
+                    session.query(Websites)
+                    .filter(Websites.id == article.website_id)
+                    .first()
+                )
+
+                # save the website and article on the server
+                st = json.dumps(
+                    {
+                        "user_id": self.user_id,
+                        "tweet": "",
+                        "emotions": [],
+                        "hashtags": [],
+                        "mentions": [],
+                        "tid": tid,
+                        "title": article.title,
+                        "summary": article.summary,
+                        "link": article.link,
+                        "publisher": website.name,
+                        "rss": website.rss,
+                        "leaning": website.leaning,
+                        "country": website.country,
+                        "language": website.language,
+                        "category": website.category,
+                        "fetched_on": website.last_fetched,
+                    }
+                )
+
+                headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+                api_url = f"{self.base_url}/news"
+                res = post(f"{api_url}", headers=headers, data=st)
+                remote_article_id = int(
+                    json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
+                )
+                image.remote_article_id = remote_article_id
+                session.commit()
+
+            if image.description is not None:
+                return image, image.remote_article_id
+
+            else:
+                # annotate the image with a description
+                an = Annotator()
+                description = an.annotate(image.url)
+                image.description = description
+                session.commit()
+
+                return image, image.remote_article_id
+
+    def comment_image(self, image: object, tid: int, article_id: int = None):
+        """
+        Comment on an image
+
+        :param image:
+        :param tid:
+        :param article_id:
+        :return:
+        """
+        # obtain the most recent (and frequent) interests of the agent
+        interests, _ = self.__get_interests(tid)
+
+        u1 = AssistantAgent(
+            name=f"{self.name}",
+            llm_config=self.llm_config,
+            system_message=self.__effify(
+                self.prompts["agent_roleplay_comments_share"], interest=[]  # interests
+            ),
+            max_consecutive_auto_reply=1,
+        )
+
+        u2 = AssistantAgent(
+            name=f"Handler",
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["handler_instructions"]),
+            max_consecutive_auto_reply=1,
+        )
+
+        u2.initiate_chat(
+            u1,
+            message=self.__effify(
+                self.prompts["handler_comment_image"], descr=image.description
+            ),
+            silent=True,
+            max_round=1,
+        )
+
+        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        try:
+            emotion_eval = [
+                e.strip()
+                for e in emotion_eval.replace("'", "")
+                .replace('"', "")
+                .split(":")[-1]
+                .split("[")[1]
+                .split("]")[0]
+                .split(",")
+                if e.strip() in self.emotions
+            ]
+        except:
+            emotion_eval = []
+
+        post_text = u2.chat_messages[u1][-2]["content"]
+
+        # cleaning the post text of some unwanted characters
+        # post_text = self.__clean_text(post_text)
+
+        # avoid posting empty messages
+        if len(post_text) < 3:
+            return
+
+        hashtags = self.__extract_components(post_text, c_type="hashtags")
+
+        st = json.dumps(
+            {
+                "user_id": self.user_id,
+                "text": post_text.replace('"', "")
+                .replace(f"{self.name}", "")
+                .replace(":", "")
+                .replace("*", ""),
+                "emotions": emotion_eval,
+                "hashtags": hashtags,
+                "tid": tid,
+                "image_url": image.url,
+                "image_description": image.description,
+                "article_id": article_id,
+            }
+        )
+
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        api_url = f"{self.base_url}/comment_image"
+        post(f"{api_url}", headers=headers, data=st)
 
     def __str__(self):
         """

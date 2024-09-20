@@ -43,3 +43,12 @@ class Websites(base):
     leaning = db.Column(db.String(50), nullable=False)
     category = db.Column(db.String(50), nullable=False)
     last_fetched = db.Column(db.Integer, nullable=False)
+
+
+class Images(base):
+    __tablename__ = "images"
+    id = db.Column(db.Integer, primary_key=True)
+    url = db.Column(db.String(200), nullable=True)
+    description = db.Column(db.String(400), nullable=True)
+    article_id = db.Column(db.Integer, db.ForeignKey("articles.id"), nullable=True)
+    remote_article_id = db.Column(db.Integer, nullable=True)

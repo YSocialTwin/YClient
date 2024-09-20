@@ -3,12 +3,12 @@ import numpy as np
 import json
 import requests, re
 from bs4 import BeautifulSoup
-from .client_modals import Websites, Articles, session
+from .client_modals import Websites, Articles, Images, session
 import datetime
 
 
 class News(object):
-    def __init__(self, title, summary, link, published):
+    def __init__(self, title, summary, link, published, image_url=None):
         """
         This class represents a news article.
 
@@ -16,11 +16,13 @@ class News(object):
         :param summary: the summary of the article
         :param link: the link to the article
         :param published: the date the article was published
+        :param image_url: the url of the image in the article
         """
         self.title = title
         self.summary = summary
         self.link = link
         self.published = published
+        self.image_url = image_url
 
     def __str__(self):
         """
@@ -70,15 +72,27 @@ class News(object):
             .first()
             .id
         )
-        art = Articles(
-            title=self.title,
-            summary=self.summary,
-            website_id=website_id,
-            fetched_on=self.published,
-            link=self.link,
+        # check if article exists
+        if session.query(Articles).filter(Articles.link == self.link).first() is None:
+            art = Articles(
+                title=self.title,
+                summary=self.summary,
+                website_id=website_id,
+                fetched_on=self.published,
+                link=self.link,
+            )
+            session.add(art)
+            session.commit()
+
+        # get the article id
+        article_id = (
+            session.query(Articles).filter(Articles.link == self.link).first().id
         )
-        session.add(art)
-        session.commit()
+
+        if self.image_url is not None:
+            img = Images(url=self.image_url, article_id=article_id)
+            session.add(img)
+            session.commit()
 
 
 class NewsFeed(object):
@@ -141,12 +155,39 @@ class NewsFeed(object):
                 try:
                     art = News(entry.title, entry.summary, entry.link, today_morning)
                     art.save(name=self.name, rss=self.feed_url)
+
+                    # get article id to save image
+                    article_id = (
+                        session.query(Articles)
+                        .filter(Articles.link == entry.link)
+                        .first()
+                        .id
+                    )
+
+                    if "media_content" in entry:
+                        img = entry.media_content[0]["url"].split("?")[0]
+                        if img is not None:
+                            # check if image is already in the database
+                            if (
+                                session.query(Images).filter(Images.url == img).first()
+                                is None
+                            ):
+                                img = Images(url=img, article_id=article_id)
+                                session.add(img)
+                                session.commit()
+
                     self.news.append(art)
                 except:
                     pass
         else:
             for art in articles:
                 self.news.append(News(art.title, art.summary, art.link, art.fetched_on))
+
+    def __extract_image_url(self, art):
+        if "media_content" in art:
+            image = art.media_content[0]["url"].split("?")[0]
+            return image
+        return None
 
     def get_random_news(self):
         """
@@ -252,6 +293,8 @@ class Feeds(object):
                             country,
                         )
                     )
+
+                    # check if website exists
                     web = Websites(
                         name=name,
                         rss=url_feed,

@@ -7,3 +7,4 @@ requests
 tqdm
 bs4
 networkx
+pillow

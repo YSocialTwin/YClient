@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 from y_client import Agent, Agents, SimulationSlot
 from y_client.recsys import *
 from y_client.utils import generate_user
-from y_client.news_feeds import Feeds, session, Websites, Articles
+from y_client.news_feeds import Feeds, session, Websites, Articles, Images
 
 
 class YClientBase(object):
@@ -87,6 +87,7 @@ class YClientBase(object):
         """
         session.query(Articles).delete()
         session.query(Websites).delete()
+        session.query(Images).delete()
         session.commit()
 
     def reset_experiment(self):

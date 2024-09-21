@@ -164,6 +164,7 @@ class NewsFeed(object):
                         .id
                     )
 
+                    # check if there is an image in the article
                     if "media_content" in entry:
                         img = entry.media_content[0]["url"].split("?")[0]
                         if img is not None:
@@ -184,6 +185,12 @@ class NewsFeed(object):
                 self.news.append(News(art.title, art.summary, art.link, art.fetched_on))
 
     def __extract_image_url(self, art):
+        """
+        Extract the image url from the article.
+
+        :param art:
+        :return: img url
+        """
         if "media_content" in art:
             image = art.media_content[0]["url"].split("?")[0]
             return image

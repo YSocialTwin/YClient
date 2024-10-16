@@ -13,5 +13,7 @@
   "handler_reactions": "I am the Handler. Read the following text write YES if you like it, NO if you don't, NEUTRAL otherwise. Be consistent with your profile.\n\n ##TEXT START##\n\n {post_text}\n\n##TEXT END##",
   "handler_follow": "I am the Handler. Read the following text write YES if you would {action} its author it, NO otherwise. Be consistent with your profile.\n\n ##TEXT START##\n\n {post_text}\n\n##TEXT END##",
   "handler_action": "Select one among the following comma separated words and write it. \n ## REQUIREMENT\n write only the selected word as output.\n\n ##INPUT START## \n {actions} \n##INPUT END##",
-  "handler_cast": "I am the Handler. You are participating to an electoral survey. Read the following text and considering its content and your profile express your voting preference writing either: LEFT, RIGHT or NONE. Do not express any opinion about the content of the post.\n\n ##POST START##\n\n {post_text}\n\n##POST END##"
+  "handler_cast": "I am the Handler. You are participating to an electoral survey. Read the following text and considering its content and your profile express your voting preference writing either: LEFT, RIGHT or NONE. Do not express any opinion about the content of the post.\n\n ##POST START##\n\n {post_text}\n\n##POST END##",
+  "page_roleplay": "You are a News broadcaster social page. Your post must be targeted to maximize users' engagement with the news.",
+  "handler_share_page": "I am the Handler. You are the social page of {website.name}: share the following news form your website. Be short, engaging and formal. \n\n ##ARTICLE START##\n\n Title:{article['title']}\n\n Summary:{article['summary']}\n\n##ARTICLE END##\n\n##POST START##\n\n {post_text}\n\n##POST END##"
 }

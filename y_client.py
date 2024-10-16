@@ -17,7 +17,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-f",
         "--feeds",
-        default="config_files/rss_feeds.json",
+        default="config_files/feed_small.json",
         help="JSON file containing rss feed categorized",
     )
     parser.add_argument(

@@ -8,10 +8,10 @@
   },
   "simulation": {
     "name": "simulation",
-    "client": "YClientBase",
+    "client": "YClientWithPages",
     "days": 31,
     "slots": 24,
-    "starting_agents": 10,
+    "starting_agents": 0,
     "new_agents_iteration": 1,
     "hourly_activity": {
        "10": 0.021,

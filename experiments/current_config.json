@@ -2,14 +2,16 @@
   "servers": {
     "llm": "http://127.0.0.1:11434/v1",
     "llm_api_key": "NULL",
+    "llm_v": "http://127.0.0.1:11434/v1",
+    "llm_v_api_key": "NULL",
     "api": "http://127.0.0.1:5010/"
   },
   "simulation": {
     "name": "simulation",
-    "client": "YClientBase",
+    "client": "YClientWithPages",
     "days": 31,
     "slots": 24,
-    "starting_agents": 10,
+    "starting_agents": 0,
     "new_agents_iteration": 1,
     "hourly_activity": {
        "10": 0.021,
@@ -38,15 +40,15 @@
        "19": 0.031
     },
     "actions_likelihood": {
-      "post": 0,
-      "comment": 0,
-      "read": 0,
-      "share": 0,
-      "reply": 0,
-      "search": 0,
-      "news": 0,
-      "cast": 0,
-      "image": 1
+      "post": 0.1,
+      "image": 0.1,
+      "news": 0.1,
+      "comment": 0.25,
+      "read": 0.05,
+      "share": 0.1,
+      "reply": 0.2,
+      "search": 0.05,
+      "cast": 0.05
     }
   },
   "agents": {
@@ -59,13 +61,14 @@
       ],
     "age": {
         "min": 18,
-        "max": 80
+        "max": 60
     },
     "daily_actions": {
       "min": 1,
       "max": 3
     },
     "llm_agents": ["dolphin-llama3"],
+    "llm_v_agent": ["minicpm-v"],
     "n_interests": {
         "min": 4,
         "max": 10
@@ -77,7 +80,21 @@
     "nationalities": ["American"],
     "probability_of_daily_follow": 0.1,
     "interests": [
-        "politics", "electoral campaign", "voting"
+      "Weakening democracy",
+      "Freedom of expression",
+      "Political corruption",
+      "Climate change",
+      "Immigration",
+      "Economic inequality",
+      "Gender inequality",
+      "Reproductive justice",
+      "Public health",
+      "Systemic racism",
+      "False information",
+      "Mass surveillance",
+      "Labor rights",
+      "Housing",
+      "Violence"
     ],
     "toxicity_levels": ["no", "low", "average", "high", "extreme"],
     "attention_window": 336,

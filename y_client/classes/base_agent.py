@@ -16,6 +16,7 @@ __all__ = ["Agent", "Agents"]
 
 
 class Agent(object):
+
     def __init__(
         self,
         name: str,
@@ -39,6 +40,7 @@ class Agent(object):
         nationality: str = None,
         toxicity: str = "no",
         api_key: str = "NULL",
+        *args, **kwargs
     ):
         """
         Initialize the Agent object.
@@ -77,7 +79,7 @@ class Agent(object):
         self.llm_v_config = {
             "url": config["servers"]["llm_v"],
             "api_key": config["servers"]["llm_v_api_key"],
-            "model": config["agents"]["llm_v_model"],
+            "model": config["agents"]["llm_v_agent"],
         }
 
         if not load:
@@ -1235,7 +1237,7 @@ class Agent(object):
         article = website_feed.get_random_news()
         return article, website
 
-    def select_image(self, tid, article_id=None):
+    def select_image(self, tid):
         """
         Select an image
 
@@ -1245,94 +1247,113 @@ class Agent(object):
         # randomly select an image from database
         image = session.query(Images).order_by(func.random()).first()
 
-        # no image available, select a news article and extract image from it
         # @Todo: add the case of no news sharing enabled
-        if image is None:
-            news, website = self.select_news()
-            res = self.news(tid=tid, article=news, website=website)
-            article_id = int(
-                json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
-            )
-
-            # get image given article id and set the remote id
-            image = (
-                session.query(Images).filter(Images.article_id == article_id).first()
-            )
-
+        if "news" not in self.actions_likelihood or self.actions_likelihood["news"] == 0:
             if image is None:
+                # where to get the image from??
                 return None, None
             else:
-                image.remote_article_id = article_id
-                session.commit()
+                if image.description is not None:
+                    return image, None
 
-                # annotate the image with a description
-                an = Annotator(self.llm_v_config)
-                description = an.annotate(image.url)
-                image.description = description
-                session.commit()
+                else:
+                    # annotate the image with a description
+                    an = Annotator()
+                    description = an.annotate(image.url)
+                    image.description = description
+                    session.commit()
 
-                return image, article_id
+                    return image, None
 
-        # images available, check if they have a description
+        # the news module is active: images will be selected among RSS shared articles
         else:
-            # check if the image has a remote article id
-            if image.remote_article_id is None:
-                # get local article linked to the image
-                article = (
-                    session.query(Articles)
-                    .filter(Articles.id == image.article_id)
-                    .first()
-                )
-                # get the website linked to the article
-                website = (
-                    session.query(Websites)
-                    .filter(Websites.id == article.website_id)
-                    .first()
-                )
-
-                # save the website and article on the server
-                st = json.dumps(
-                    {
-                        "user_id": self.user_id,
-                        "tweet": "",
-                        "emotions": [],
-                        "hashtags": [],
-                        "mentions": [],
-                        "tid": tid,
-                        "title": article.title,
-                        "summary": article.summary,
-                        "link": article.link,
-                        "publisher": website.name,
-                        "rss": website.rss,
-                        "leaning": website.leaning,
-                        "country": website.country,
-                        "language": website.language,
-                        "category": website.category,
-                        "fetched_on": website.last_fetched,
-                    }
-                )
-
-                headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-                api_url = f"{self.base_url}/news"
-                res = post(f"{api_url}", headers=headers, data=st)
-                remote_article_id = int(
+            # no image available, select a news article and extract image from it
+            if image is None:
+                news, website = self.select_news()
+                res = self.news(tid=tid, article=news, website=website)
+                article_id = int(
                     json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
                 )
-                image.remote_article_id = remote_article_id
-                session.commit()
 
-            if image.description is not None:
-                return image, image.remote_article_id
+                # get image given article id and set the remote id
+                image = (
+                    session.query(Images).filter(Images.article_id == article_id).first()
+                )
 
+                if image is None:
+                    return None, None
+                else:
+                    image.remote_article_id = article_id
+                    session.commit()
+
+                    # annotate the image with a description
+                    an = Annotator(self.llm_v_config)
+                    description = an.annotate(image.url)
+                    image.description = description
+                    session.commit()
+
+                    return image, article_id
+
+            # images available, check if they have a description
             else:
-                # annotate the image with a description
-                an = Annotator()
-                description = an.annotate(image.url)
-                image.description = description
-                session.commit()
+                # check if the image has a remote article id
+                if image.remote_article_id is None:
+                    # get local article linked to the image
+                    article = (
+                        session.query(Articles)
+                        .filter(Articles.id == image.article_id)
+                        .first()
+                    )
+                    # get the website linked to the article
+                    website = (
+                        session.query(Websites)
+                        .filter(Websites.id == article.website_id)
+                        .first()
+                    )
 
-                return image, image.remote_article_id
+                    # save the website and article on the server
+                    st = json.dumps(
+                        {
+                            "user_id": self.user_id,
+                            "tweet": "",
+                            "emotions": [],
+                            "hashtags": [],
+                            "mentions": [],
+                            "tid": tid,
+                            "title": article.title,
+                            "summary": article.summary,
+                            "link": article.link,
+                            "publisher": website.name,
+                            "rss": website.rss,
+                            "leaning": website.leaning,
+                            "country": website.country,
+                            "language": website.language,
+                            "category": website.category,
+                            "fetched_on": website.last_fetched,
+                        }
+                    )
+
+                    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+                    api_url = f"{self.base_url}/news"
+                    res = post(f"{api_url}", headers=headers, data=st)
+                    remote_article_id = int(
+                        json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
+                    )
+                    image.remote_article_id = remote_article_id
+                    session.commit()
+
+                if image.description is not None:
+                    return image, image.remote_article_id
+
+                else:
+                    # annotate the image with a description
+                    an = Annotator()
+                    description = an.annotate(image.url)
+                    image.description = description
+                    session.commit()
+
+                    return image, image.remote_article_id
 
     def comment_image(self, image: object, tid: int, article_id: int = None):
         """
@@ -1490,6 +1511,9 @@ class Agents(object):
         :param agent: The Profile object to add.
         """
         self.agents.append(agent)
+
+    def get_agents(self):
+        return self.agents
 
     def agents_iter(self):
         """

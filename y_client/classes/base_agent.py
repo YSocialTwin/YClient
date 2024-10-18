@@ -1258,7 +1258,7 @@ class Agent(object):
 
                 else:
                     # annotate the image with a description
-                    an = Annotator()
+                    an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
                     image.description = description
                     session.commit()
@@ -1348,7 +1348,7 @@ class Agent(object):
 
                 else:
                     # annotate the image with a description
-                    an = Annotator()
+                    an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
                     image.description = description
                     session.commit()

@@ -70,7 +70,7 @@ class PageAgent(Agent):
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
+            system_message=self.__effify(self.prompts["handler_instructions_topics"]),
             max_consecutive_auto_reply=1,
         )
 
@@ -83,34 +83,12 @@ class PageAgent(Agent):
             max_round=1,
         )
 
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        try:
-            emotion_eval = [
-                e.strip()
-                for e in emotion_eval.replace("'", "")
-                .replace('"', "")
-                .split(":")[-1]
-                .split("[")[1]
-                .split("]")[0]
-                .split(",")
-                if e.strip() in self.emotions
-            ]
-        except:
-            emotion_eval = []
+        topic_eval = u2.chat_messages[u1][-1]["content"]
+
+        topics = re.findall(r'[#T]: \w+ \w+', topic_eval)
+        topics = [x.split(": ")[1] for x in topics if "Topic" not in x]
 
         post_text = u2.chat_messages[u1][-2]["content"]
-
-        #post_text = (
-        #    post_text.split(":")[-1]
-        #    .split("-")[-1]
-        #    .replace("@ ", "")
-        #    .replace("  ", " ")
-        #    .replace(". ", ".")
-        #    .replace(" ,", ",")
-        #    .replace("[", "")
-        #    .replace("]", "")
-        #    .replace("@,", "")
-        #)
         post_text = post_text.replace(f"@{self.name}", "")
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
@@ -120,7 +98,7 @@ class PageAgent(Agent):
             {
                 "user_id": self.user_id,
                 "tweet": post_text.replace('"', ""),
-                "emotions": emotion_eval,
+                "emotions": [],
                 "hashtags": hashtags,
                 "mentions": mentions,
                 "tid": tid,
@@ -134,6 +112,7 @@ class PageAgent(Agent):
                 "language": website.language,
                 "category": website.category,
                 "fetched_on": website.last_fetched,
+                "topics": topics
             }
         )
 

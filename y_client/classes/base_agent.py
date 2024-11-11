@@ -1483,8 +1483,8 @@ class Agent(object):
 
     def __clean_text(self, text):
         text = (
-            text.split(":")[-1]
-            .split("-")[-1]
+            #text.split(":")[-1]
+            text.replace("-", "")
             .replace("@ ", "")
             .replace("  ", " ")
             .replace(". ", ".")

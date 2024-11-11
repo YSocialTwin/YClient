@@ -11,9 +11,9 @@
     "client": "YClientWithPages",
     "days": 31,
     "slots": 24,
-    "starting_agents": 10,
-    "new_agents_iteration": 1,
-    "percentage_removed_agents_iteration": 0.5,
+    "starting_agents": 73,
+    "new_agents_iteration": 12,
+    "percentage_removed_agents_iteration": 0.1,
     "hourly_activity": {
        "10": 0.021,
        "16": 0.032,
@@ -41,15 +41,15 @@
        "19": 0.031
     },
     "actions_likelihood": {
-      "post": 0.1,
-      "image": 0.1,
+      "post": 0.2,
+      "image": 0,
       "news": 0,
-      "comment": 0.25,
-      "read": 0.05,
-      "share": 0.1,
-      "reply": 0.2,
+      "comment": 0.4,
+      "read": 0.1,
+      "share": 0.0,
+      "reply": 0.25,
       "search": 0.05,
-      "cast": 0.05
+      "cast": 0.0
     }
   },
   "agents": {
@@ -81,23 +81,10 @@
     "nationalities": ["American"],
     "probability_of_daily_follow": 0.1,
     "interests": [
-      "Weakening democracy",
-      "Freedom of expression",
-      "Political corruption",
-      "Climate change",
-      "Immigration",
-      "Economic inequality",
-      "Gender inequality",
-      "Reproductive justice",
-      "Public health",
-      "Systemic racism",
-      "False information",
-      "Mass surveillance",
-      "Labor rights",
-      "Housing",
-      "Violence"
+      "sport", "tv series", "music", "science", "conspiracy theories",
+      "books", "politics", "gardening", "travel"
     ],
-    "toxicity_levels": ["no", "low", "average", "high", "extreme"],
+    "toxicity_levels": ["no", "low", "average"],
     "attention_window": 336,
     "big_five": {
       "oe": ["inventive/curious", "consistent/cautious"],

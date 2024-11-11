@@ -8,6 +8,7 @@ class YClientWithPages(YClientBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pages = []
+        self.page = None
 
     def add_page_agent(self, agent=None, name=None, feed_url=None):
         """

@@ -11,8 +11,9 @@
     "client": "YClientWithPages",
     "days": 31,
     "slots": 24,
-    "starting_agents": 0,
+    "starting_agents": 10,
     "new_agents_iteration": 1,
+    "percentage_removed_agents_iteration": 0.5,
     "hourly_activity": {
        "10": 0.021,
        "16": 0.032,
@@ -42,7 +43,7 @@
     "actions_likelihood": {
       "post": 0.1,
       "image": 0.1,
-      "news": 0.1,
+      "news": 0,
       "comment": 0.25,
       "read": 0.05,
       "share": 0.1,

@@ -47,6 +47,7 @@ class YClientBase(object):
         self.n_agents = self.config["simulation"]["starting_agents"]
         self.new_agents_iteration = self.config["simulation"]["new_agents_iteration"]
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
+        self.percentage_removed_agents_iteration = float(self.config["simulation"]["percentage_removed_agents_iteration"])
         self.actions_likelihood = {
             a.upper(): float(v)
             for a, v in self.config["simulation"]["actions_likelihood"].items()
@@ -79,6 +80,8 @@ class YClientBase(object):
             self.g = nx.convert_node_labels_to_integers(self.g, first_label=0)
         else:
             self.g = None
+
+        self.pages = []
 
     @staticmethod
     def reset_news_db():
@@ -221,6 +224,21 @@ class YClientBase(object):
             except Exception:
                 print(f"Error loading agent: {a['name']}")
 
+    def churn(self):
+        """
+        Evaluate churn
+        """
+        # sample agents to remove
+        to_remove = random.sample(
+            self.agents.agents,
+            int(len(self.agents.agents) * self.percentage_removed_agents_iteration),
+        )
+
+        # remove agents from the simulation
+        for agent in to_remove:
+            if agent not in self.pages:
+                self.agents.remove_agent(agent)
+
     def run_simulation(self):
         """
         Run the simulation
@@ -280,6 +298,12 @@ class YClientBase(object):
                 if random.random()
                 < float(self.config["agents"]["probability_of_daily_follow"])
             ]
+
             print("\nEvaluating new friendship ties\n")
             for agent in tqdm.tqdm(da):
                 agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
+
+            print("\nEvaluate Churn\n")
+            self.churn()
+
+            print(f"Users at the end of the day: {len(self.agents.agents)}")

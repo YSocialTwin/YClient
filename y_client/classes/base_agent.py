@@ -1150,10 +1150,11 @@ class Agent(object):
                 )[0]
                 self.follow(tid=tid, target=selected, action="follow")
 
-        elif "NEWS" in text.split():
-            news, website = self.select_news()
-            if not isinstance(news, str):
-                self.news(tid=tid, article=news, website=website)
+        # demanded to page agents
+        #elif "NEWS" in text.split():
+        #    news, website = self.select_news()
+        #    if not isinstance(news, str):
+        #        self.news(tid=tid, article=news, website=website)
 
         elif "SHARE" in text.split():
             candidates = json.loads(self.read(article=True))
@@ -1511,6 +1512,14 @@ class Agents(object):
         :param agent: The Profile object to add.
         """
         self.agents.append(agent)
+
+    def remove_agent(self, agent: Agent):
+        """
+        Remove a profile from the Agents object.
+
+        :param agent: The Profile object to remove.
+        """
+        self.agents.remove(agent)
 
     def get_agents(self):
         return self.agents

@@ -3,12 +3,11 @@ from y_client.utils import generate_page
 import tqdm
 
 
-
 class YClientWithPages(YClientBase):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.page = None
+        self.pages = []
 
     def add_page_agent(self, agent=None, name=None, feed_url=None):
         """
@@ -24,6 +23,8 @@ class YClientWithPages(YClientBase):
 
         if agent is not None:
             self.agents.add_agent(agent)
+
+        self.pages.append(agent)
 
     def run_simulation(self):
         """

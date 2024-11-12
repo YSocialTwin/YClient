@@ -389,21 +389,7 @@ class Agent(object):
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        try:
-            emotion_eval = [
-                e.strip()
-                for e in emotion_eval.replace("'", " ")
-                .replace('"', " ")
-                .replace("*", "")
-                .replace(":", " ")
-                .replace("[", " ")
-                .replace("]", " ")
-                .replace(",", " ")
-                .split(" ")
-                if e.strip() in self.emotions
-            ]
-        except:
-            emotion_eval = []
+        emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -474,21 +460,7 @@ class Agent(object):
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        try:
-            emotion_eval = [
-                e.strip()
-                for e in emotion_eval.replace("'", " ")
-                .replace('"', " ")
-                .replace("*", "")
-                .replace(":", " ")
-                .replace("[", " ")
-                .replace("]", " ")
-                .replace(",", " ")
-                .split(" ")
-                if e.strip() in self.emotions
-            ]
-        except:
-            emotion_eval = []
+        emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -650,21 +622,7 @@ class Agent(object):
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        try:
-            emotion_eval = [
-                e.strip()
-                for e in emotion_eval.replace("'", " ")
-                .replace('"', " ")
-                .replace("*", "")
-                .replace(":", " ")
-                .replace("[", " ")
-                .replace("]", " ")
-                .replace(",", " ")
-                .split(" ")
-                if e.strip() in self.emotions
-            ]
-        except:
-            emotion_eval = []
+        emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -772,21 +730,7 @@ class Agent(object):
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        try:
-            emotion_eval = [
-                e.strip()
-                for e in emotion_eval.replace("'", " ")
-                .replace('"', " ")
-                .replace("*", "")
-                .replace(":", " ")
-                .replace("[", " ")
-                .replace("]", " ")
-                .replace(",", " ")
-                .split(" ")
-                if e.strip() in self.emotions
-            ]
-        except:
-            emotion_eval = []
+        emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -1430,21 +1374,8 @@ class Agent(object):
         )
 
         emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        try:
-            emotion_eval = [
-                e.strip()
-                for e in emotion_eval.replace("'", " ")
-                .replace('"', " ")
-                .replace("*", "")
-                .replace(":", " ")
-                .replace("[", " ")
-                .replace("]", " ")
-                .replace(",", " ")
-                .split(" ")
-                if e.strip() in self.emotions
-            ]
-        except:
-            emotion_eval = []
+
+        emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -1519,6 +1450,24 @@ class Agent(object):
             "joined_on": self.joined_on,
             "is_page": self.is_page,
         }
+
+    def __clean_emotion(self, text):
+        try:
+            emotion_eval = [
+                e.strip()
+                for e in text.replace("'", " ")
+                .replace('"', " ")
+                .replace("*", "")
+                .replace(":", " ")
+                .replace("[", " ")
+                .replace("]", " ")
+                .replace(",", " ")
+                .split(" ")
+                if e.strip() in self.emotions
+            ]
+        except:
+            emotion_eval = []
+        return emotion_eval
 
     def __clean_text(self, text):
         text = (

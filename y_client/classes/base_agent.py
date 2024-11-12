@@ -16,7 +16,6 @@ __all__ = ["Agent", "Agents"]
 
 
 class Agent(object):
-
     def __init__(
         self,
         name: str,
@@ -40,7 +39,9 @@ class Agent(object):
         nationality: str = None,
         toxicity: str = "no",
         api_key: str = "NULL",
-        *args, **kwargs
+        is_page: int = 0,
+        *args,
+        **kwargs,
     ):
         """
         Initialize the Agent object.
@@ -81,6 +82,7 @@ class Agent(object):
             "api_key": config["servers"]["llm_v_api_key"],
             "model": config["agents"]["llm_v_agent"],
         }
+        self.is_page = is_page
 
         if not load:
             self.language = language
@@ -134,6 +136,7 @@ class Agent(object):
             self.gender = us["gender"]
             self.toxicity = us["toxicity"]
             self.nationality = us["nationality"]
+            self.is_page = us["is_page"]
 
         config_list = {
             "model": f"{self.type}",
@@ -301,6 +304,7 @@ class Agent(object):
                 "nationality": self.nationality,
                 "toxicity": self.toxicity,
                 "joined_on": self.joined_on,
+                "is_page": self.is_page,
             }
         )
 
@@ -388,12 +392,14 @@ class Agent(object):
         try:
             emotion_eval = [
                 e.strip()
-                for e in emotion_eval.replace("'", "")
-                .replace('"', "")
-                .split(":")[-1]
-                .split("[")[1]
-                .split("]")[0]
-                .split(",")
+                for e in emotion_eval.replace("'", " ")
+                .replace('"', " ")
+                .replace("*", "")
+                .replace(":", " ")
+                .replace("[", " ")
+                .replace("]", " ")
+                .replace(",", " ")
+                .split(" ")
                 if e.strip() in self.emotions
             ]
         except:
@@ -471,12 +477,14 @@ class Agent(object):
         try:
             emotion_eval = [
                 e.strip()
-                for e in emotion_eval.replace("'", "")
-                .replace('"', "")
-                .split(":")[-1]
-                .split("[")[1]
-                .split("]")[0]
-                .split(",")
+                for e in emotion_eval.replace("'", " ")
+                .replace('"', " ")
+                .replace("*", "")
+                .replace(":", " ")
+                .replace("[", " ")
+                .replace("]", " ")
+                .replace(",", " ")
+                .split(" ")
                 if e.strip() in self.emotions
             ]
         except:
@@ -645,12 +653,14 @@ class Agent(object):
         try:
             emotion_eval = [
                 e.strip()
-                for e in emotion_eval.replace("'", "")
-                .replace('"', "")
-                .split(":")[-1]
-                .split("[")[1]
-                .split("]")[0]
-                .split(",")
+                for e in emotion_eval.replace("'", " ")
+                .replace('"', " ")
+                .replace("*", "")
+                .replace(":", " ")
+                .replace("[", " ")
+                .replace("]", " ")
+                .replace(",", " ")
+                .split(" ")
                 if e.strip() in self.emotions
             ]
         except:
@@ -765,12 +775,14 @@ class Agent(object):
         try:
             emotion_eval = [
                 e.strip()
-                for e in emotion_eval.replace("'", "")
-                .replace('"', "")
-                .split(":")[-1]
-                .split("[")[1]
-                .split("]")[0]
-                .split(",")
+                for e in emotion_eval.replace("'", " ")
+                .replace('"', " ")
+                .replace("*", "")
+                .replace(":", " ")
+                .replace("[", " ")
+                .replace("]", " ")
+                .replace(",", " ")
+                .split(" ")
                 if e.strip() in self.emotions
             ]
         except:
@@ -1118,14 +1130,14 @@ class Agent(object):
             except:
                 pass
 
-        elif "REPLY" in text.split():
-            selected_post = json.loads(self.read_mentions())
-            if "status" not in selected_post:
-                self.comment(
-                    int(selected_post[0]),
-                    max_length_threads=max_length_thread_reading,
-                    tid=tid,
-                )
+        # elif "REPLY" in text.split():
+        #    selected_post = json.loads(self.read_mentions())
+        #    if "status" not in selected_post:
+        #        self.comment(
+        #            int(selected_post[0]),
+        #            max_length_threads=max_length_thread_reading,
+        #            tid=tid,
+        #        )
 
         elif "SEARCH" in text.split():
             candidates = json.loads(self.search())
@@ -1151,7 +1163,7 @@ class Agent(object):
                 self.follow(tid=tid, target=selected, action="follow")
 
         # demanded to page agents
-        #elif "NEWS" in text.split():
+        # elif "NEWS" in text.split():
         #    news, website = self.select_news()
         #    if not isinstance(news, str):
         #        self.news(tid=tid, article=news, website=website)
@@ -1177,6 +1189,23 @@ class Agent(object):
 
         return
 
+    def reply(self, tid: int, max_length_thread_reading: int = 5):
+        """
+        Reply to a mention.
+
+        :param tid:
+        :param max_length_thread_reading:
+        :return:
+        """
+        selected_post = json.loads(self.read_mentions())
+        if "status" not in selected_post:
+            self.comment(
+                int(selected_post[0]),
+                max_length_threads=max_length_thread_reading,
+                tid=tid,
+            )
+        return
+
     def read(self, article=False):
         """
         Read n_posts from the service.
@@ -1184,7 +1213,7 @@ class Agent(object):
         :param article: whether to read an article or not
         :return: the response from the service
         """
-        return self.content_rec_sys.read(self.base_url, article)
+        return self.content_rec_sys.read(self.base_url, self.user_id, article)
 
     def read_mentions(self):
         """
@@ -1249,7 +1278,10 @@ class Agent(object):
         image = session.query(Images).order_by(func.random()).first()
 
         # @Todo: add the case of no news sharing enabled
-        if "news" not in self.actions_likelihood or self.actions_likelihood["news"] == 0:
+        if (
+            "news" not in self.actions_likelihood
+            or self.actions_likelihood["news"] == 0
+        ):
             if image is None:
                 # where to get the image from??
                 return None, None
@@ -1278,7 +1310,9 @@ class Agent(object):
 
                 # get image given article id and set the remote id
                 image = (
-                    session.query(Images).filter(Images.article_id == article_id).first()
+                    session.query(Images)
+                    .filter(Images.article_id == article_id)
+                    .first()
                 )
 
                 if image is None:
@@ -1339,7 +1373,9 @@ class Agent(object):
                     api_url = f"{self.base_url}/news"
                     res = post(f"{api_url}", headers=headers, data=st)
                     remote_article_id = int(
-                        json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
+                        json.loads(res.__dict__["_content"].decode("utf-8"))[
+                            "article_id"
+                        ]
                     )
                     image.remote_article_id = remote_article_id
                     session.commit()
@@ -1397,12 +1433,14 @@ class Agent(object):
         try:
             emotion_eval = [
                 e.strip()
-                for e in emotion_eval.replace("'", "")
-                .replace('"', "")
-                .split(":")[-1]
-                .split("[")[1]
-                .split("]")[0]
-                .split(",")
+                for e in emotion_eval.replace("'", " ")
+                .replace('"', " ")
+                .replace("*", "")
+                .replace(":", " ")
+                .replace("[", " ")
+                .replace("]", " ")
+                .replace(",", " ")
+                .split(" ")
                 if e.strip() in self.emotions
             ]
         except:
@@ -1445,7 +1483,7 @@ class Agent(object):
 
         :return: the string representation
         """
-        return f"Name: {self.name}, Age: {self.age}, Type: {self.type}, Leaning: {self.leaning}"
+        return f"Name: {self.name}, Age: {self.age}, Type: {self.type}"
 
     def __dict__(self):
         """
@@ -1479,12 +1517,13 @@ class Agent(object):
             "nationality": self.nationality,
             "toxicity": self.toxicity,
             "joined_on": self.joined_on,
+            "is_page": self.is_page,
         }
 
     def __clean_text(self, text):
         text = (
-            #text.split(":")[-1]
-            text.replace("-", "")
+            text.split("##")[-1]
+            .replace("-", "")
             .replace("@ ", "")
             .replace("  ", " ")
             .replace(". ", ".")
@@ -1493,6 +1532,7 @@ class Agent(object):
             .replace("]", "")
             .replace("@,", "")
             .strip("()[]{}'")
+            .lstrip()
         )
         text = text.replace(f"@{self.name}", "")
         return text

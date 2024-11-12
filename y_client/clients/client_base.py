@@ -47,7 +47,9 @@ class YClientBase(object):
         self.n_agents = self.config["simulation"]["starting_agents"]
         self.new_agents_iteration = self.config["simulation"]["new_agents_iteration"]
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
-        self.percentage_removed_agents_iteration = float(self.config["simulation"]["percentage_removed_agents_iteration"])
+        self.percentage_removed_agents_iteration = float(
+            self.config["simulation"]["percentage_removed_agents_iteration"]
+        )
         self.actions_likelihood = {
             a.upper(): float(v)
             for a, v in self.config["simulation"]["actions_likelihood"].items()
@@ -252,7 +254,10 @@ class YClientBase(object):
             for _ in range(self.new_agents_iteration):
                 self.add_agent()
 
-            if self.new_agents_iteration != 0:
+            if (
+                self.new_agents_iteration != 0
+                or self.percentage_removed_agents_iteration != 0
+            ):
                 self.save_agents()
 
             for _ in tqdm.tqdm(range(self.slots)):
@@ -281,6 +286,10 @@ class YClientBase(object):
                         )
                         candidates.append("NONE")
 
+                        # reply to received mentions
+                        if g not in self.pages:
+                            g.reply(tid=tid)
+
                         # select action to be performed
                         g.select_action(
                             tid=tid,
@@ -295,15 +304,16 @@ class YClientBase(object):
                 agent
                 for agent in self.agents.agents
                 if agent.name in daily_active
-                if random.random()
+                and agent not in self.pages
+                and random.random()
                 < float(self.config["agents"]["probability_of_daily_follow"])
             ]
 
             print("\nEvaluating new friendship ties\n")
             for agent in tqdm.tqdm(da):
-                agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
+                if agent not in self.pages:
+                    agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
 
-            print("\nEvaluate Churn\n")
+            print("\nEvaluate Churn:")
             self.churn()
-
-            print(f"Users at the end of the day: {len(self.agents.agents)}")
+            print(f"Users at the end of the day: {len(self.agents.agents)}\n")

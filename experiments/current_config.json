@@ -47,7 +47,7 @@
       "comment": 0.4,
       "read": 0.1,
       "share": 0.0,
-      "reply": 0.25,
+      "reply": 0,
       "search": 0.05,
       "cast": 0.0
     }
@@ -81,8 +81,8 @@
     "nationalities": ["American"],
     "probability_of_daily_follow": 0.1,
     "interests": [
-      "sport", "tv series", "music", "science", "conspiracy theories",
-      "books", "politics", "gardening", "travel"
+      "improbable sports", "bad tv shows", "niche music", "surreal science fiction", "smurfs habits",
+      "books without readers", "silly political facts", "extreme gardening", "travel nightmares", "eccentric hobbies"
     ],
     "toxicity_levels": ["no", "low", "average"],
     "attention_window": 336,

@@ -89,6 +89,7 @@ def generate_user(config, owner=None):
         nationality=nationality,
         toxicity=toxicity,
         api_key=api_key,
+        is_page=0,
     )
 
     if not hasattr(agent, "user_id"):
@@ -148,7 +149,7 @@ def generate_page(config, owner=None, name=None, feed_url=None):
         toxicity=None,
         api_key=api_key,
         feed_url=feed_url,
+        is_page=1,
     )
 
     return page
-

@@ -8,11 +8,10 @@ import re
 
 
 class PageAgent(Agent):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.feed_url = kwargs.get('feed_url')
-        self.name = kwargs.get('name')
+        self.feed_url = kwargs.get("feed_url")
+        self.name = kwargs.get("name")
 
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """
@@ -38,9 +37,7 @@ class PageAgent(Agent):
         """
 
         # Select websites with the same name of the page
-        website = (
-            session.query(Websites).filter(Websites.name == self.name).first()
-        )
+        website = session.query(Websites).filter(Websites.name == self.name).first()
 
         if website is None:
             return "", ""
@@ -85,7 +82,7 @@ class PageAgent(Agent):
 
         topic_eval = u2.chat_messages[u1][-1]["content"]
 
-        topics = re.findall(r'[#T]: \w+ \w+', topic_eval)
+        topics = re.findall(r"[#T]: \w+ \w+", topic_eval)
         topics = [x.split(": ")[1] for x in topics if "Topic" not in x]
 
         post_text = u2.chat_messages[u1][-2]["content"]
@@ -112,7 +109,7 @@ class PageAgent(Agent):
                 "language": website.language,
                 "category": website.category,
                 "fetched_on": website.last_fetched,
-                "topics": topics
+                "topics": topics,
             }
         )
 

@@ -11,8 +11,8 @@
     "client": "YClientWithPages",
     "days": 3,
     "slots": 24,
-    "starting_agents": 730,
-    "percentage_new_agents_iteration": 0.02,
+    "starting_agents": 180,
+    "percentage_new_agents_iteration": 0.07,
     "percentage_removed_agents_iteration": 0.014,
     "hourly_activity": {
        "10": 0.021,

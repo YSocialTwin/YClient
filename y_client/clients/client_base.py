@@ -247,18 +247,9 @@ class YClientBase(object):
         """
 
         for day in tqdm.tqdm(range(self.days)):
-            print(f"\nDay {day} of simulation\n")
+            print(f"\n\nDay {day} of simulation\n")
             daily_active = {}
             tid, _, _ = self.sim_clock.get_current_slot()
-
-            for _ in range(self.new_agents_iteration):
-                self.add_agent()
-
-            if (
-                self.new_agents_iteration != 0
-                or self.percentage_removed_agents_iteration != 0
-            ):
-                self.save_agents()
 
             for _ in tqdm.tqdm(range(self.slots)):
                 tid, _, h = self.sim_clock.get_current_slot()
@@ -309,11 +300,25 @@ class YClientBase(object):
                 < float(self.config["agents"]["probability_of_daily_follow"])
             ]
 
-            print("\nEvaluating new friendship ties\n")
+            print("\n\nEvaluating new friendship ties")
             for agent in tqdm.tqdm(da):
                 if agent not in self.pages:
                     agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
 
-            print("\nEvaluate Churn:")
+            total_users = len(self.agents.agents)
+            
+            # daily churn
             self.churn()
-            print(f"Users at the end of the day: {len(self.agents.agents)}\n")
+
+            # daily new agents
+            for _ in range(self.new_agents_iteration):
+                self.add_agent()
+
+            # saving "living" agents at the end of the day
+            if (
+                self.new_agents_iteration != 0
+                or self.percentage_removed_agents_iteration != 0
+            ):
+                self.save_agents()
+
+            print(f"\n\nTotal Users: {total_users}\nActive users: {len(daily_active)}\nUsers at the end of the day: {len(self.agents.agents)}\n")

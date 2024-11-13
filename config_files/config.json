@@ -44,11 +44,11 @@
       "post": 0.2,
       "image": 0,
       "news": 0,
-      "comment": 0.4,
-      "read": 0.1,
+      "comment": 0.5,
+      "read": 0.2,
       "share": 0.0,
       "reply": 0,
-      "search": 0.05,
+      "search": 0.1,
       "cast": 0.0
     }
   },
@@ -68,7 +68,7 @@
       "min": 1,
       "max": 3
     },
-    "llm_agents": ["llama3.2"],
+    "llm_agents": ["llama3"],
     "llm_v_agent": ["minicpm-v"],
     "n_interests": {
         "min": 4,

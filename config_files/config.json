@@ -9,11 +9,11 @@
   "simulation": {
     "name": "simulation",
     "client": "YClientWithPages",
-    "days": 31,
+    "days": 3,
     "slots": 24,
-    "starting_agents": 73,
-    "new_agents_iteration": 12,
-    "percentage_removed_agents_iteration": 0.1,
+    "starting_agents": 730,
+    "percentage_new_agents_iteration": 0.02,
+    "percentage_removed_agents_iteration": 0.014,
     "hourly_activity": {
        "10": 0.021,
        "16": 0.032,

@@ -45,7 +45,7 @@ class YClientBase(object):
         self.days = self.config["simulation"]["days"]
         self.slots = self.config["simulation"]["slots"]
         self.n_agents = self.config["simulation"]["starting_agents"]
-        self.new_agents_iteration = self.config["simulation"]["new_agents_iteration"]
+        self.percentage_new_agents_iteration = self.config["simulation"]["percentage_new_agents_iteration"]
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
         self.percentage_removed_agents_iteration = float(
             self.config["simulation"]["percentage_removed_agents_iteration"]
@@ -311,12 +311,12 @@ class YClientBase(object):
             self.churn()
 
             # daily new agents
-            for _ in range(self.new_agents_iteration):
+            for _ in range(int(len(self.agents.agents) * self.percentage_new_agents_iteration)):
                 self.add_agent()
 
             # saving "living" agents at the end of the day
             if (
-                self.new_agents_iteration != 0
+                self.percentage_removed_agents_iteration != 0
                 or self.percentage_removed_agents_iteration != 0
             ):
                 self.save_agents()

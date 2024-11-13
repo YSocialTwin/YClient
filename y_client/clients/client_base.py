@@ -226,20 +226,22 @@ class YClientBase(object):
             except Exception:
                 print(f"Error loading agent: {a['name']}")
 
-    def churn(self):
+    def churn(self, tid):
         """
         Evaluate churn
         """
         # sample agents to remove
-        to_remove = random.sample(
-            self.agents.agents,
-            int(len(self.agents.agents) * self.percentage_removed_agents_iteration),
-        )
+        if self.percentage_removed_agents_iteration > 0:
+            to_remove = random.sample(
+                self.agents.agents,
+                max(1, int(len(self.agents.agents) * self.percentage_removed_agents_iteration)),
+            )
 
-        # remove agents from the simulation
-        for agent in to_remove:
-            if agent not in self.pages:
-                self.agents.remove_agent(agent)
+            # remove agents from the simulation
+            for agent in to_remove:
+                if agent not in self.pages:
+                    agent.churn_system(tid=tid)
+                    self.agents.remove_agent(agent)
 
     def run_simulation(self):
         """
@@ -308,11 +310,12 @@ class YClientBase(object):
             total_users = len(self.agents.agents)
             
             # daily churn
-            self.churn()
+            self.churn(tid)
 
             # daily new agents
-            for _ in range(int(len(self.agents.agents) * self.percentage_new_agents_iteration)):
-                self.add_agent()
+            if self.percentage_new_agents_iteration > 0:
+                for _ in range(max(1, int(len(self.agents.agents) * self.percentage_new_agents_iteration))):
+                    self.add_agent()
 
             # saving "living" agents at the end of the day
             if (

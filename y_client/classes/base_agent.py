@@ -1016,6 +1016,21 @@ class Agent(object):
         api_url = f"{self.base_url}/cast_preference"
         post(f"{api_url}", headers=headers, data=st)
 
+    def churn_system(self, tid):
+        """
+        Leave the system.
+
+        :return:
+        """
+        st = json.dumps({"user_id": self.user_id, "left_on": tid})
+
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        api_url = f"{self.base_url}/churn"
+        response = post(f"{api_url}", headers=headers, data=st)
+
+        return response.__dict__["_content"].decode("utf-8")
+
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """
         Post a message to the service.

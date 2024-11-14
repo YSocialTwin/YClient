@@ -1525,6 +1525,16 @@ class Agents(object):
         """
         self.agents.remove(agent)
 
+    def remove_agent_by_ids(self, agent_ids: list):
+        """
+        Remove a profile from the Agents object.
+
+        :param agent: The Profile object to remove.
+        """
+        for agent in self.agents:
+            if agent.user_id in agent_ids:
+                self.agents.remove(agent)
+
     def get_agents(self):
         return self.agents
 

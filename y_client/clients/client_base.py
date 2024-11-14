@@ -45,7 +45,9 @@ class YClientBase(object):
         self.days = self.config["simulation"]["days"]
         self.slots = self.config["simulation"]["slots"]
         self.n_agents = self.config["simulation"]["starting_agents"]
-        self.percentage_new_agents_iteration = self.config["simulation"]["percentage_new_agents_iteration"]
+        self.percentage_new_agents_iteration = self.config["simulation"][
+            "percentage_new_agents_iteration"
+        ]
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
         self.percentage_removed_agents_iteration = float(
             self.config["simulation"]["percentage_removed_agents_iteration"]
@@ -229,19 +231,26 @@ class YClientBase(object):
     def churn(self, tid):
         """
         Evaluate churn
-        """
-        # sample agents to remove
-        if self.percentage_removed_agents_iteration > 0:
-            to_remove = random.sample(
-                self.agents.agents,
-                max(1, int(len(self.agents.agents) * self.percentage_removed_agents_iteration)),
-            )
 
-            # remove agents from the simulation
-            for agent in to_remove:
-                if agent not in self.pages:
-                    agent.churn_system(tid=tid)
-                    self.agents.remove_agent(agent)
+        :param tid:
+        :return:
+        """
+
+        if self.percentage_removed_agents_iteration > 0:
+            n_users = max(
+                1,
+                int(len(self.agents.agents) * self.percentage_removed_agents_iteration),
+            )
+            st = json.dumps({"n_users": n_users, "left_on": tid})
+
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+            api_url = f"{self.config['servers']['api']}/churn"
+            response = post(f"{api_url}", headers=headers, data=st)
+
+            data = json.loads(response.__dict__["_content"].decode("utf-8"))["removed"]
+
+            self.agents.remove_agent_by_ids(data)
 
     def run_simulation(self):
         """
@@ -308,13 +317,21 @@ class YClientBase(object):
                     agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
 
             total_users = len(self.agents.agents)
-            
+
             # daily churn
             self.churn(tid)
 
             # daily new agents
             if self.percentage_new_agents_iteration > 0:
-                for _ in range(max(1, int(len(self.agents.agents) * self.percentage_new_agents_iteration))):
+                for _ in range(
+                    max(
+                        1,
+                        int(
+                            len(self.agents.agents)
+                            * self.percentage_new_agents_iteration
+                        ),
+                    )
+                ):
                     self.add_agent()
 
             # saving "living" agents at the end of the day
@@ -324,4 +341,6 @@ class YClientBase(object):
             ):
                 self.save_agents()
 
-            print(f"\n\nTotal Users: {total_users}\nActive users: {len(daily_active)}\nUsers at the end of the day: {len(self.agents.agents)}\n")
+            print(
+                f"\n\nTotal Users: {total_users}\nActive users: {len(daily_active)}\nUsers at the end of the day: {len(self.agents.agents)}\n"
+            )

@@ -20,7 +20,7 @@ class YClientWithPages(YClientBase):
 
         for a in agents["agents"]:
             try:
-                if a['is_page'] == 0:
+                if a["is_page"] == 0:
                     ag = Agent(
                         name=a["name"], email=a["email"], load=True, config=self.config
                     )
@@ -28,7 +28,9 @@ class YClientWithPages(YClientBase):
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)
                 else:
-                    ag = PageAgent(a["name"], email=a["email"], load=True, config=self.config)
+                    ag = PageAgent(
+                        a["name"], email=a["email"], load=True, config=self.config
+                    )
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)

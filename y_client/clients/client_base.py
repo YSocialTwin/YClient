@@ -327,7 +327,7 @@ class YClientBase(object):
                     max(
                         1,
                         int(
-                            len(self.agents.agents)
+                            len(daily_active)
                             * self.percentage_new_agents_iteration
                         ),
                     )

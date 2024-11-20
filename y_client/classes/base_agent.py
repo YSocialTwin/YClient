@@ -118,7 +118,11 @@ class Agent(object):
             self.user_id = us["id"]
             self.type = us["user_type"]
             self.age = us["age"]
-            self.interests = us["interests"]
+
+            self.interests = random.randint(config["agents"]["n_interests"]["min"],
+                                            config["agents"]["n_interests"]["max"])
+            self.interests = self.__get_interests(-1)[0]
+
             self.leaning = us["leaning"]
             self.pwd = us["password"]
             self.oe = us["oe"]
@@ -338,10 +342,11 @@ class Agent(object):
             tid = int(data["id"])
 
         api_url = f"{self.base_url}/get_user_interests"
+
         data = {
             "user_id": self.user_id,
             "round_id": tid,
-            "n_interests": len(self.interests),
+            "n_interests": self.interests if isinstance(self.interests, int) else len(self.interests),
             "time_window": self.attention_window,
         }
         response = get(f"{api_url}", headers=headers, data=json.dumps(data))

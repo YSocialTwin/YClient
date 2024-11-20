@@ -119,9 +119,12 @@ class Agent(object):
             self.type = us["user_type"]
             self.age = us["age"]
 
-            self.interests = random.randint(config["agents"]["n_interests"]["min"],
-                                            config["agents"]["n_interests"]["max"])
-            self.interests = self.__get_interests(-1)[0]
+            if us["is_page"] == 0:
+                self.interests = random.randint(config["agents"]["n_interests"]["min"],
+                                                config["agents"]["n_interests"]["max"])
+                self.interests = self.__get_interests(-1)[0]
+            else:
+                self.interests = []
 
             self.leaning = us["leaning"]
             self.pwd = us["password"]

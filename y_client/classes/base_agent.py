@@ -81,6 +81,8 @@ class Agent(object):
             "url": config["servers"]["llm_v"],
             "api_key": config["servers"]["llm_v_api_key"],
             "model": config["agents"]["llm_v_agent"],
+            "temperature": config["servers"]["llm_v_temperature"],
+            "max_tokens": config["servers"]["llm_v_max_tokens"]
         }
         self.is_page = is_page
 
@@ -157,8 +159,8 @@ class Agent(object):
         self.llm_config = {
             "config_list": [config_list],
             "seed": np.random.randint(0, 100000),
-            "max_tokens": -1,  # max response length, -1 no limits. Imposing limits may lead to truncated responses
-            "temperature": 1.5,
+            "max_tokens": config['servers']['llm_max_tokens'],  # max response length, -1 no limits. Imposing limits may lead to truncated responses
+            "temperature": config['servers']['llm_temperature'],
         }
 
         # add and configure the content recsys

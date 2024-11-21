@@ -22,8 +22,8 @@ class Annotator(object):
             max_consecutive_auto_reply=1,
             llm_config={
                 "config_list": self.config_list,
-                "temperature": 0.5,
-                "max_tokens": 300,
+                "temperature": config['temperature'],
+                "max_tokens": config['max_tokens'],
             },
             human_input_mode="NEVER",
         )

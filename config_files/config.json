@@ -2,15 +2,18 @@
   "servers": {
     "llm": "http://127.0.0.1:11434/v1",
     "llm_api_key": "NULL",
+    "llm_v": "http://127.0.0.1:11434/v1",
+    "llm_v_api_key": "NULL",
     "api": "http://127.0.0.1:5010/"
   },
   "simulation": {
     "name": "simulation",
-    "client": "YClientBase",
-    "days": 31,
+    "client": "YClientWithPages",
+    "days": 3,
     "slots": 24,
-    "starting_agents": 10,
-    "new_agents_iteration": 1,
+    "starting_agents": 180,
+    "percentage_new_agents_iteration": 0.07,
+    "percentage_removed_agents_iteration": 0.014,
     "hourly_activity": {
        "10": 0.021,
        "16": 0.032,
@@ -39,13 +42,14 @@
     },
     "actions_likelihood": {
       "post": 0.2,
-      "comment": 0.25,
-      "read": 0.1,
-      "share": 0.1,
-      "reply": 0.2,
-      "search": 0.05,
-      "news": 0.1,
-      "cast": 0
+      "image": 0,
+      "news": 0,
+      "comment": 0.5,
+      "read": 0.2,
+      "share": 0.0,
+      "reply": 0,
+      "search": 0.1,
+      "cast": 0.0
     }
   },
   "agents": {
@@ -58,13 +62,14 @@
       ],
     "age": {
         "min": 18,
-        "max": 80
+        "max": 60
     },
     "daily_actions": {
       "min": 1,
       "max": 3
     },
-    "llm_agents": ["dolphin-llama3"],
+    "llm_agents": ["llama3"],
+    "llm_v_agent": ["minicpm-v"],
     "n_interests": {
         "min": 4,
         "max": 10
@@ -76,9 +81,10 @@
     "nationalities": ["American"],
     "probability_of_daily_follow": 0.1,
     "interests": [
-        "politics", "electoral campaign", "voting"
+      "improbable sports", "bad tv shows", "niche music", "surreal science fiction", "smurfs habits",
+      "books without readers", "silly political facts", "extreme gardening", "travel nightmares", "eccentric hobbies"
     ],
-    "toxicity_levels": ["no", "low", "average", "high", "extreme"],
+    "toxicity_levels": ["no", "low", "average"],
     "attention_window": 336,
     "big_five": {
       "oe": ["inventive/curious", "consistent/cautious"],

@@ -1,0 +1,37 @@
+[
+  {
+    "url_site": "",
+    "category": "politics",
+    "leaning": "right",
+    "name": "Fox News",
+    "feed_url": "http://feeds.foxnews.com/foxnews/world"
+    },
+  {
+    "url_site": "http://rss.cnn.com/rss/edition.rss",
+    "category": "politics",
+    "leaning": "left",
+    "name": "CNN",
+    "feed_url": "http://rss.cnn.com/rss/edition.rss"
+  },
+  {
+    "url_site": "https://insideelections.com/feeds/news",
+    "category": "politics",
+    "leaning": "center",
+    "name": "Inside Elections",
+    "feed_url": "https://insideelections.com/feeds/news"
+  },
+  {
+    "url_site": "https://www.politico.com",
+    "category": "politics",
+    "leaning": "center",
+    "name": "Politico",
+    "feed_url": "https://rss.politico.com/politics-news.xml"
+  },
+  {
+    "url_site": "https://www.pewresearch.org",
+    "category": "politics",
+    "leaning": "right",
+    "name": "Pew Research",
+    "feed_url": "https://www.pewresearch.org/feed/"
+  }
+]

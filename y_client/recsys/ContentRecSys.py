@@ -25,7 +25,7 @@ class ContentRecSys(object):
         """
         self.params["uid"] = uid
 
-    def read(self, base_url, articles=False):
+    def read(self, base_url, user_id, articles=False):
         """
         Read n_posts from the service.
 
@@ -39,6 +39,8 @@ class ContentRecSys(object):
 
         if articles:
             self.params["articles"] = True
+
+        self.params["uid"] = user_id
 
         st = json.dumps(self.params)
 

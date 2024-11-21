@@ -10,7 +10,7 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 from y_client import Agent, Agents, SimulationSlot
 from y_client.recsys import *
 from y_client.utils import generate_user
-from y_client.news_feeds import Feeds, session, Websites, Articles
+from y_client.news_feeds import Feeds, session, Websites, Articles, Images
 
 
 class YClientBase(object):
@@ -45,8 +45,13 @@ class YClientBase(object):
         self.days = self.config["simulation"]["days"]
         self.slots = self.config["simulation"]["slots"]
         self.n_agents = self.config["simulation"]["starting_agents"]
-        self.new_agents_iteration = self.config["simulation"]["new_agents_iteration"]
+        self.percentage_new_agents_iteration = self.config["simulation"][
+            "percentage_new_agents_iteration"
+        ]
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
+        self.percentage_removed_agents_iteration = float(
+            self.config["simulation"]["percentage_removed_agents_iteration"]
+        )
         self.actions_likelihood = {
             a.upper(): float(v)
             for a, v in self.config["simulation"]["actions_likelihood"].items()
@@ -80,6 +85,8 @@ class YClientBase(object):
         else:
             self.g = None
 
+        self.pages = []
+
     @staticmethod
     def reset_news_db():
         """
@@ -87,6 +94,7 @@ class YClientBase(object):
         """
         session.query(Articles).delete()
         session.query(Websites).delete()
+        session.query(Images).delete()
         session.commit()
 
     def reset_experiment(self):
@@ -220,21 +228,39 @@ class YClientBase(object):
             except Exception:
                 print(f"Error loading agent: {a['name']}")
 
+    def churn(self, tid):
+        """
+        Evaluate churn
+
+        :param tid:
+        :return:
+        """
+
+        if self.percentage_removed_agents_iteration > 0:
+            n_users = max(
+                1,
+                int(len(self.agents.agents) * self.percentage_removed_agents_iteration),
+            )
+            st = json.dumps({"n_users": n_users, "left_on": tid})
+
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+            api_url = f"{self.config['servers']['api']}/churn"
+            response = post(f"{api_url}", headers=headers, data=st)
+
+            data = json.loads(response.__dict__["_content"].decode("utf-8"))["removed"]
+
+            self.agents.remove_agent_by_ids(data)
+
     def run_simulation(self):
         """
         Run the simulation
         """
 
         for day in tqdm.tqdm(range(self.days)):
-            print(f"\nDay {day} of simulation\n")
+            print(f"\n\nDay {day} of simulation\n")
             daily_active = {}
             tid, _, _ = self.sim_clock.get_current_slot()
-
-            for _ in range(self.new_agents_iteration):
-                self.add_agent()
-
-            if self.new_agents_iteration != 0:
-                self.save_agents()
 
             for _ in tqdm.tqdm(range(self.slots)):
                 tid, _, h = self.sim_clock.get_current_slot()
@@ -262,6 +288,10 @@ class YClientBase(object):
                         )
                         candidates.append("NONE")
 
+                        # reply to received mentions
+                        if g not in self.pages:
+                            g.reply(tid=tid)
+
                         # select action to be performed
                         g.select_action(
                             tid=tid,
@@ -276,9 +306,41 @@ class YClientBase(object):
                 agent
                 for agent in self.agents.agents
                 if agent.name in daily_active
-                if random.random()
+                and agent not in self.pages
+                and random.random()
                 < float(self.config["agents"]["probability_of_daily_follow"])
             ]
-            print("\nEvaluating new friendship ties\n")
+
+            print("\n\nEvaluating new friendship ties")
             for agent in tqdm.tqdm(da):
-                agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
+                if agent not in self.pages:
+                    agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
+
+            total_users = len(self.agents.agents)
+
+            # daily churn
+            self.churn(tid)
+
+            # daily new agents
+            if self.percentage_new_agents_iteration > 0:
+                for _ in range(
+                    max(
+                        1,
+                        int(
+                            len(daily_active)
+                            * self.percentage_new_agents_iteration
+                        ),
+                    )
+                ):
+                    self.add_agent()
+
+            # saving "living" agents at the end of the day
+            if (
+                self.percentage_removed_agents_iteration != 0
+                or self.percentage_removed_agents_iteration != 0
+            ):
+                self.save_agents()
+
+            print(
+                f"\n\nTotal Users: {total_users}\nActive users: {len(daily_active)}\nUsers at the end of the day: {len(self.agents.agents)}\n"
+            )

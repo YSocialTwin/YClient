@@ -11,7 +11,7 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 
 - Realistic agent simulations using LLMs
 - Posting, commenting, and liking capabilities (and many more!)
-- News outlet access via RSS feeds
+- News outlet access via RSS feeds (integrated as social Pages!)
 - Dynamic agents' interests and preferences
 - Client-server architecture for scalability and flexibility
 - Ability to simulate a wide range of scenarios and use cases
@@ -52,7 +52,7 @@ Use the flags and their respective arguments as described below:
 
 #### Configuration File
 - **Flag:** `-c`, `--config_file`
-- **Default:** `config_files/config_politics.json`
+- **Default:** `config_files/config.json`
 - **Description:** JSON file describing the simulation configuration.
 
 #### Agents
@@ -62,7 +62,7 @@ Use the flags and their respective arguments as described below:
 
 #### Feeds
 - **Flag:** `-f`, `--feeds`
-- **Default:** `config_files/rss_feeds_politics.json`
+- **Default:** `config_files/rss_feeds.json`
 - **Description:** JSON file containing RSS feed categorized.
 
 #### Owner
@@ -83,20 +83,20 @@ Use the flags and their respective arguments as described below:
 #### Content Recommender System
 - **Flag:** `-x`, `--crecsys`
 - **Default:** `ReverseChronoFollowersPopularity`
-- **Description:** Name of the content recommender system to be used. Options: `Random`, `ReverseChrono`, `ReverseChronoPopularity`, `ReverseChronoFollowers`, `ReverseChronoFollowersPopularity`
+- **Description:** Name of the content recommender system to be used. Options: `ContentRecSys`, `ReverseChrono`, `ReverseChronoPopularity`, `ReverseChronoFollowers`, `ReverseChronoFollowersPopularity`
 
 #### Follower Recommender System
 - **Flag:** `-y`, `--frecsys`
 - **Default:** `PreferentialAttachment`
-- **Description:** Name of the follower recommender system to be used. Options: `Random`, `PreferentialAttachment`, `AdamicAdar`, `Jaccard`, `CommonNeighbors`
+- **Description:** Name of the follower recommender system to be used. Options: `FollowRecSys`, `PreferentialAttachment`, `AdamicAdar`, `Jaccard`, `CommonNeighbors`
 
 #### Initial Social Graph
 - **Flag:** `-g`, `--graph`
 - **Default:** `None`
-- **Description:** Name of the csv file (edgelist) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
+- **Description:** Name of the csv file (edgelist format) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
 
 
-For a description of the available recommender systems, please refer to the Y paper.
+For a description of the available recommender systems, please refer to the Y paper and to the official [documentation](https://ysocialtwin.github.io/).
 
 
 ## Contribution

@@ -11,7 +11,7 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 
 - Realistic agent simulations using LLMs
 - Posting, commenting, and liking capabilities (and many more!)
-- News outlet access via RSS feeds
+- News outlet access via RSS feeds (integrated as social Pages!)
 - Dynamic agents' interests and preferences
 - Client-server architecture for scalability and flexibility
 - Ability to simulate a wide range of scenarios and use cases
@@ -83,12 +83,12 @@ Use the flags and their respective arguments as described below:
 #### Content Recommender System
 - **Flag:** `-x`, `--crecsys`
 - **Default:** `ReverseChronoFollowersPopularity`
-- **Description:** Name of the content recommender system to be used. Options: `Random`, `ReverseChrono`, `ReverseChronoPopularity`, `ReverseChronoFollowers`, `ReverseChronoFollowersPopularity`
+- **Description:** Name of the content recommender system to be used. Options: `ContentRecSys`, `ReverseChrono`, `ReverseChronoPopularity`, `ReverseChronoFollowers`, `ReverseChronoFollowersPopularity`
 
 #### Follower Recommender System
 - **Flag:** `-y`, `--frecsys`
 - **Default:** `PreferentialAttachment`
-- **Description:** Name of the follower recommender system to be used. Options: `Random`, `PreferentialAttachment`, `AdamicAdar`, `Jaccard`, `CommonNeighbors`
+- **Description:** Name of the follower recommender system to be used. Options: `FollowRecSys`, `PreferentialAttachment`, `AdamicAdar`, `Jaccard`, `CommonNeighbors`
 
 #### Initial Social Graph
 - **Flag:** `-g`, `--graph`
@@ -96,7 +96,7 @@ Use the flags and their respective arguments as described below:
 - **Description:** Name of the csv file (edgelist) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
 
 
-For a description of the available recommender systems, please refer to the Y paper.
+For a description of the available recommender systems, please refer to the Y paper and to the official [documentation](https://ysocialtwin.github.io/).
 
 
 ## Contribution

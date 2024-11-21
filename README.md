@@ -52,7 +52,7 @@ Use the flags and their respective arguments as described below:
 
 #### Configuration File
 - **Flag:** `-c`, `--config_file`
-- **Default:** `config_files/config_politics.json`
+- **Default:** `config_files/config.json`
 - **Description:** JSON file describing the simulation configuration.
 
 #### Agents
@@ -62,7 +62,7 @@ Use the flags and their respective arguments as described below:
 
 #### Feeds
 - **Flag:** `-f`, `--feeds`
-- **Default:** `config_files/rss_feeds_politics.json`
+- **Default:** `config_files/rss_feeds.json`
 - **Description:** JSON file containing RSS feed categorized.
 
 #### Owner
@@ -93,7 +93,7 @@ Use the flags and their respective arguments as described below:
 #### Initial Social Graph
 - **Flag:** `-g`, `--graph`
 - **Default:** `None`
-- **Description:** Name of the csv file (edgelist) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
+- **Description:** Name of the csv file (edgelist format) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
 
 
 For a description of the available recommender systems, please refer to the Y paper and to the official [documentation](https://ysocialtwin.github.io/).

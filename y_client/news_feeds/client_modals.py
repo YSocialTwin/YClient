@@ -5,22 +5,27 @@ import os.path
 import json
 import shutil
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# read the experiment configuration (hardcoded config filename is a big issue!)
-config = json.load(open("experiments/current_config.json"))
+try:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-if not os.path.exists(f"experiments/{config['simulation']['name']}.db"):
-    # copy the clean database to the experiments folder
-    shutil.copyfile(
-        f"{BASE_DIR}/../../data_schema/database_clean_client.db",
-        f"{BASE_DIR}/../../experiments/{config['simulation']['name']}.db",
-    )
+    # read the experiment configuration (hardcoded config filename is a big issue!)
+    config = json.load(open("experiments/current_config.json"))
 
-base = declarative_base()
-engine = db.create_engine(f"sqlite:///experiments/{config['simulation']['name']}.db")
-base.metadata.bind = engine
-session = orm.scoped_session(orm.sessionmaker())(bind=engine)
+    if not os.path.exists(f"experiments/{config['simulation']['name']}.db"):
+        # copy the clean database to the experiments folder
+        shutil.copyfile(
+            f"{BASE_DIR}/../../data_schema/database_clean_client.db",
+            f"{BASE_DIR}/../../experiments/{config['simulation']['name']}.db",
+        )
+
+    base = declarative_base()
+    engine = db.create_engine(f"sqlite:///experiments/{config['simulation']['name']}.db")
+    base.metadata.bind = engine
+    session = orm.scoped_session(orm.sessionmaker())(bind=engine)
+except:
+    from y_client.clients.client_web import base, session
+    pass
 
 
 class Articles(base):

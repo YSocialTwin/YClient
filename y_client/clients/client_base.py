@@ -269,6 +269,7 @@ class YClientBase(object):
                 expected_active_users = max(
                     int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1
                 )
+
                 sagents = random.sample(self.agents.agents, expected_active_users)
 
                 # available actions

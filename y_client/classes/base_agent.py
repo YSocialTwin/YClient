@@ -68,22 +68,172 @@ class Agent(object):
         :param toxicity: the toxicity level of the agent, default is "no"
         :param api_key: the LLM server api key, default is NULL (self-hosted)
         """
+
+        if "web" in kwargs:
+
+            self.__web_init(name=name, email=email,pwd=pwd, interests=interests, leaning=leaning,
+                            ag_type=ag_type, load=load, recsys=recsys, age=age,
+                            frecsys=frecsys, config=config, big_five=big_five, language=language, owner=owner, education_level=education_level,
+                            joined_on=joined_on, round_actions=round_actions, gender=gender, nationality=nationality, toxicity=toxicity,
+                            api_key=api_key, is_page=is_page, *args, **kwargs)
+        else:
+            self.emotions = config["posts"]["emotions"]
+            self.actions_likelihood = config["simulation"]["actions_likelihood"]
+            self.base_url = config["servers"]["api"]
+            self.llm_base = config["servers"]["llm"]
+            self.content_rec_sys_name = None
+            self.follow_rec_sys_name = None
+            self.name = name
+            self.email = email
+            self.attention_window = int(config["agents"]["attention_window"])
+            self.llm_v_config = {
+                "url": config["servers"]["llm_v"],
+                "api_key": config["servers"]["llm_v_api_key"],
+                "model": config["agents"]["llm_v_agent"],
+                "temperature": config["servers"]["llm_v_temperature"],
+                "max_tokens": config["servers"]["llm_v_max_tokens"]
+            }
+            self.is_page = is_page
+
+            if not load:
+                self.language = language
+                self.type = ag_type
+                self.age = age
+                self.interests = interests
+                self.leaning = leaning
+                self.pwd = pwd
+                self.oe = big_five["oe"]
+                self.co = big_five["co"]
+                self.ex = big_five["ex"]
+                self.ag = big_five["ag"]
+                self.ne = big_five["ne"]
+                self.owner = owner
+                self.education_level = education_level
+                self.joined_on = joined_on
+                sc = SimulationSlot(config)
+                sc.get_current_slot()
+                self.joined_on = sc.id
+                self.round_actions = round_actions
+                self.gender = gender
+                self.nationality = nationality
+                self.toxicity = toxicity
+
+                uid = self.__register()
+                if uid is None:
+                    pass
+                else:
+                    self.user_id = uid
+
+            else:
+                us = json.loads(self.__get_user())
+                self.user_id = us["id"]
+                self.type = us["user_type"]
+                self.age = us["age"]
+
+                if us["is_page"] == 0:
+                    self.interests = random.randint(config["agents"]["n_interests"]["min"],
+                                                    config["agents"]["n_interests"]["max"])
+                    self.interests = self.__get_interests(-1)[0]
+                else:
+                    self.interests = []
+
+                self.leaning = us["leaning"]
+                self.pwd = us["password"]
+                self.oe = us["oe"]
+                self.co = us["co"]
+                self.ex = us["ex"]
+                self.ag = us["ag"]
+                self.ne = us["ne"]
+                self.content_rec_sys_name = us["rec_sys"]
+                self.follow_rec_sys_name = us["frec_sys"]
+                self.language = us["language"]
+                self.owner = us["owner"]
+                self.education_level = us["education_level"]
+                self.round_actions = us["round_actions"]
+                self.joined_on = us["joined_on"]
+                self.gender = us["gender"]
+                self.toxicity = us["toxicity"]
+                self.nationality = us["nationality"]
+                self.is_page = us["is_page"]
+
+            config_list = {
+                "model": f"{self.type}",
+                "base_url": self.llm_base,
+                "timeout": 10000,
+                "api_type": "open_ai",
+                "api_key": api_key,
+                "price": [0, 0],
+            }
+
+            self.llm_config = {
+                "config_list": [config_list],
+                "seed": np.random.randint(0, 100000),
+                "max_tokens": config['servers']['llm_max_tokens'],
+                # max response length, -1 no limits. Imposing limits may lead to truncated responses
+                "temperature": config['servers']['llm_temperature'],
+            }
+
+            # add and configure the content recsys
+            self.content_rec_sys = recsys
+            if self.content_rec_sys is not None:
+                self.content_rec_sys.add_user_id(self.user_id)
+
+            # add and configure the follow recsys
+            self.follow_rec_sys = frecsys
+            if self.follow_rec_sys is not None:
+                self.follow_rec_sys.add_user_id(self.user_id)
+
+            self.prompts = None
+
+    def __web_init(self, name: str,
+        email: str,
+        pwd: str = None,
+        age: int = None,
+        interests: list = None,
+        leaning: str = None,
+        ag_type="llama3",
+        load: bool = False,
+        recsys: ContentRecSys = None,
+        frecsys: FollowRecSys = None,
+        config: dict = None,
+        big_five: dict = None,
+        language: str = None,
+        owner: str = None,
+        education_level: str = None,
+        joined_on: int = None,
+        round_actions: int = 3,
+        gender: str = None,
+        nationality: str = None,
+        toxicity: str = "no",
+        api_key: str = "NULL",
+        is_page: int = 0,
+        *args,
+        **kwargs,):
+
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
         self.llm_base = config["servers"]["llm"]
         self.content_rec_sys_name = None
         self.follow_rec_sys_name = None
+        self.content_rec_sys = None
+        self.follow_rec_sys = None
+
         self.name = name
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
+
         self.llm_v_config = {
             "url": config["servers"]["llm_v"],
             "api_key": config["servers"]["llm_v_api_key"],
-            "model": config["agents"]["llm_v_agent"],
             "temperature": config["servers"]["llm_v_temperature"],
-            "max_tokens": config["servers"]["llm_v_max_tokens"]
+            "max_tokens": int(config["servers"]["llm_v_max_tokens"])
         }
+        try:
+            self.llm_v_config["model"] = config["agents"]["llm_v_agent"]
+        except:
+            self.llm_v_config["model"] = ag_type
+
         self.is_page = is_page
 
         if not load:
@@ -93,11 +243,21 @@ class Agent(object):
             self.interests = interests
             self.leaning = leaning
             self.pwd = pwd
-            self.oe = big_five["oe"]
-            self.co = big_five["co"]
-            self.ex = big_five["ex"]
-            self.ag = big_five["ag"]
-            self.ne = big_five["ne"]
+            try:
+                self.oe = big_five["oe"]
+                self.co = big_five["co"]
+                self.ex = big_five["ex"]
+                self.ag = big_five["ag"]
+                self.ne = big_five["ne"]
+
+            except:
+                self.oe = kwargs["oe"]
+                self.co = kwargs["co"]
+                self.ex = kwargs["ex"]
+                self.ag = kwargs["ag"]
+                self.ne = kwargs["ne"]
+
+            self.toxicity = toxicity
             self.owner = owner
             self.education_level = education_level
             self.joined_on = joined_on
@@ -107,7 +267,6 @@ class Agent(object):
             self.round_actions = round_actions
             self.gender = gender
             self.nationality = nationality
-            self.toxicity = toxicity
 
             uid = self.__register()
             if uid is None:
@@ -122,9 +281,13 @@ class Agent(object):
             self.age = us["age"]
 
             if us["is_page"] == 0:
-                self.interests = random.randint(config["agents"]["n_interests"]["min"],
-                                                config["agents"]["n_interests"]["max"])
-                self.interests = self.__get_interests(-1)[0]
+                try:
+                    self.interests = random.randint(config["agents"]["n_interests"]["min"],
+                                                    config["agents"]["n_interests"]["max"])
+                    self.interests = self.__get_interests(-1)[0]
+                except:
+                    self.interests = interests
+                    self.interests = self.__get_interests(-1)[0]
             else:
                 self.interests = []
 
@@ -159,17 +322,18 @@ class Agent(object):
         self.llm_config = {
             "config_list": [config_list],
             "seed": np.random.randint(0, 100000),
-            "max_tokens": config['servers']['llm_max_tokens'],  # max response length, -1 no limits. Imposing limits may lead to truncated responses
-            "temperature": config['servers']['llm_temperature'],
+            "max_tokens": int(config['servers']['llm_max_tokens']),
+            # max response length, -1 no limits. Imposing limits may lead to truncated responses
+            "temperature": float(config['servers']['llm_temperature']),
         }
 
+        self.set_rec_sys(recsys, frecsys)
+
         # add and configure the content recsys
-        self.content_rec_sys = recsys
         if self.content_rec_sys is not None:
             self.content_rec_sys.add_user_id(self.user_id)
 
         # add and configure the follow recsys
-        self.follow_rec_sys = frecsys
         if self.follow_rec_sys is not None:
             self.follow_rec_sys.add_user_id(self.user_id)
 
@@ -268,7 +432,9 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         params = {"username": self.name, "email": self.email}
         st = json.dumps(params)
+
         response = post(f"{api_url}", headers=headers, data=st)
+
         return response.__dict__["_content"].decode("utf-8")
 
     def _check_credentials(self):
@@ -281,8 +447,10 @@ class Agent(object):
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         params = {"name": self.name, "email": self.email}
+
         st = json.dumps(params)
         response = post(f"{api_url}", headers=headers, data=st)
+
         return response.__dict__["_content"].decode("utf-8")
 
     def __register(self):
@@ -1242,7 +1410,6 @@ class Agent(object):
 
         :return: the response from the service
         """
-
         # randomly select an image from database
         image = session.query(Images).order_by(func.random()).first()
 
@@ -1272,6 +1439,10 @@ class Agent(object):
             # no image available, select a news article and extract image from it
             if image is None:
                 news, website = self.select_news()
+
+                if news == "":
+                    return None, None
+
                 res = self.news(tid=tid, article=news, website=website)
                 article_id = int(
                     json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]

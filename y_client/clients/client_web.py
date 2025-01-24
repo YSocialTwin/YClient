@@ -248,6 +248,7 @@ class YClientWeb(object):
         Save the agents to a file
         """
         res = self.agents.__dict__()
+
         json.dump(res, open(agent_file, "w"), indent=4)
 
     def load_existing_agents_sdsds(self, a_file):

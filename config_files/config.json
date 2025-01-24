@@ -47,10 +47,10 @@
     "actions_likelihood": {
       "post": 0.2,
       "image": 0.15,
-      "news": 0.15,
+      "news": 0.8,
       "comment": 0.5,
       "read": 0.2,
-      "share": 0.2,
+      "share": 0.8,
       "search": 0.1,
       "cast": 0.0
     }

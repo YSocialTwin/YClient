@@ -151,3 +151,48 @@ class PageAgent(Agent):
         # Find all matches in the input text
         hashtags = pattern.findall(text)
         return hashtags
+
+    def __str__(self):
+        """
+        Return a string representation of the Agent object.
+
+        :return: the string representation
+        """
+        return f"Name: {self.name}, Age: {self.age}, Type: {self.type}"
+
+    def __dict__(self):
+        """
+        Return a dictionary representation of the Agent object.
+
+        :return: the dictionary representation
+        """
+
+        interests = self.__get_interests(-1)
+
+        return {
+            "name": self.name,
+            "email": self.email,
+            "password": self.pwd,
+            "age": self.age,
+            "type": self.type,
+            "leaning": self.leaning,
+            "interests": interests,
+            "oe": self.oe,
+            "co": self.co,
+            "ex": self.ex,
+            "ag": self.ag,
+            "ne": self.ne,
+            "rec_sys": self.content_rec_sys_name,
+            "frec_sys": self.follow_rec_sys_name,
+            "language": self.language,
+            "owner": self.owner,
+            "education_level": self.education_level,
+            "round_actions": self.round_actions,
+            "gender": self.gender,
+            "nationality": self.nationality,
+            "toxicity": self.toxicity,
+            "joined_on": self.joined_on,
+            "is_page": self.is_page,
+            "feed_url": self.feed_url,
+        }
+

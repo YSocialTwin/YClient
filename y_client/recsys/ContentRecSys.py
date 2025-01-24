@@ -10,7 +10,7 @@ class ContentRecSys(object):
         :param n_posts: the number of posts to recommend
         :param visibility_rounds: the number of visibility rounds
         """
-        self.name = "random"
+        self.name = "ContentRecSys"
         self.params = {
             "limit": n_posts,
             "mode": "default",
@@ -92,7 +92,7 @@ class ReverseChrono(ContentRecSys):
         super(ReverseChrono, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "rchrono"
+        self.name = "ReverseChrono"
         self.params = {
             "limit": 10,
             "mode": "rchrono",
@@ -111,7 +111,7 @@ class ReverseChronoPopularity(ContentRecSys):
         super(ReverseChronoPopularity, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "rchrono_popularity"
+        self.name = "ReverseChronoPopularity"
         self.params = {
             "limit": 10,
             "mode": "rchrono_popularity",
@@ -131,7 +131,7 @@ class ReverseChronoFollowers(ContentRecSys):
         super(ReverseChronoFollowers, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "rchrono_followers"
+        self.name = "ReverseChronoFollowers"
         self.params = {
             "limit": 10,
             "followers_ratio": followers_ratio,
@@ -152,7 +152,7 @@ class ReverseChronoFollowersPopularity(ContentRecSys):
         super(ReverseChronoFollowersPopularity, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "rchrono_followers_popularity"
+        self.name = "ReverseChronoFollowersPopularity"
         self.params = {
             "limit": 10,
             "followers_ratio": followers_ratio,

@@ -1,7 +1,11 @@
 import random
 import json
 import faker
-from y_client import Agent, PageAgent
+try:
+    from y_client import Agent, PageAgent
+except:
+    from y_client.classes.base_agent import Agent
+    from y_client.classes.page_agent import PageAgent
 
 
 def generate_user(config, owner=None):

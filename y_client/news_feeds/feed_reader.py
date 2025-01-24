@@ -3,7 +3,11 @@ import numpy as np
 import json
 import requests, re
 from bs4 import BeautifulSoup
-from .client_modals import Websites, Articles, Images, session
+try:
+    from .client_modals import Websites, Articles, Images, session
+except:
+    from y_client.clients.client_web import session
+    from .client_modals import Websites, Articles, Images
 import datetime
 
 

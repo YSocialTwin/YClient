@@ -173,7 +173,8 @@ class YClientWeb(object):
                     owner=ag["owner"],
                     config=self.config,
                     load=not self.first_run,
-                    web=True
+                    web=True,
+                    prompt=ag["prompts"],
                 )
 
                 agent.set_prompts(self.prompts)

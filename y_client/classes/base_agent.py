@@ -368,7 +368,7 @@ class Agent(object):
         self.prompts = prompts
 
         # if the agent has custom prompts substitute the default ones
-        aprompt = Agent_Custom_Prompt.query.filter_by(agent_name=self.name).first()
+        aprompt = session.query(Agent_Custom_Prompt).filter_by(agent_name=self.name).first()
         if aprompt:
             self.prompts["agent_roleplay"] = f"{aprompt.prompt} - Act as requested by the Handler."
             self.prompts["agent_roleplay_simple"] = f"{aprompt.prompt} - Act as requested by the Handler."

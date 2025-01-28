@@ -57,3 +57,10 @@ class Images(base):
     description = db.Column(db.String(400), nullable=True)
     article_id = db.Column(db.Integer, db.ForeignKey("articles.id"), nullable=True)
     remote_article_id = db.Column(db.Integer, nullable=True)
+
+
+class Agent_Custom_Prompt(base):
+    __tablename__ = "agent_custom_prompt"
+    id = db.Column(db.Integer, primary_key=True)
+    agent_name = db.Column(db.TEXT, nullable=False)
+    prompt = db.Column(db.TEXT, nullable=False)

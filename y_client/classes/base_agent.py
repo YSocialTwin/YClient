@@ -1,6 +1,6 @@
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
-from y_client.news_feeds.client_modals import Websites, Images, Articles, session
+from y_client.news_feeds.client_modals import Websites, Images, Articles, session, Agent_Custom_Prompt
 from y_client.classes.annotator import Annotator
 from sqlalchemy.sql.expression import func
 from y_client.news_feeds.feed_reader import NewsFeed
@@ -210,6 +210,7 @@ class Agent(object):
         *args,
         **kwargs,):
 
+
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
@@ -222,6 +223,14 @@ class Agent(object):
         self.name = name
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
+
+        if "prompts" in kwargs:
+            self.prompts = kwargs["prompts"]
+            # save on agent custom prompt
+            if self.prompts is not None:
+                aprompt = Agent_Custom_Prompt(name=self.name, prompt=self.prompts)
+                session.add(aprompt)
+                session.commit()
 
         self.llm_v_config = {
             "url": config["servers"]["llm_v"],
@@ -357,6 +366,14 @@ class Agent(object):
         :param prompts: the prompts
         """
         self.prompts = prompts
+
+        # if the agent has custom prompts substitute the default ones
+        aprompt = Agent_Custom_Prompt.query.filter_by(agent_name=self.name).first()
+        if aprompt:
+            self.prompts["agent_roleplay"] = f"{aprompt.prompt} - Act as requested by the Handler."
+            self.prompts["agent_roleplay_simple"] = f"{aprompt.prompt} - Act as requested by the Handler."
+            self.prompts["agent_roleplay_base"] = f"{aprompt.prompt} - Act as requested by the Handler."
+            self.prompts["agent_roleplay_comments_share"] = f"{aprompt.prompt} - Act as requested by the Handler."
 
     def set_rec_sys(self, content_recsys, follow_recsys):
         """

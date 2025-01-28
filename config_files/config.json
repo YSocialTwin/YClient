@@ -8,7 +8,7 @@
     "llm_v_api_key": "NULL",
     "llm_v_max_tokens": 300,
     "llm_v_temperature": 0.5,
-    "api": "http://127.0.0.1:5010/"
+    "api": "http://127.0.0.1:5040/"
   },
   "simulation": {
     "name": "simulation",

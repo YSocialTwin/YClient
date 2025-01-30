@@ -210,7 +210,6 @@ class Agent(object):
         *args,
         **kwargs,):
 
-
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
@@ -239,9 +238,9 @@ class Agent(object):
             "max_tokens": int(config["servers"]["llm_v_max_tokens"])
         }
         try:
-            self.llm_v_config["model"] = config["agents"]["llm_v_agent"]
+            self.llm_v_config["model"] = config["servers"]["llm_v_agent"]
         except:
-            self.llm_v_config["model"] = ag_type
+            self.llm_v_config["model"] = 'minicpm-v'
 
         self.is_page = is_page
 
@@ -1445,6 +1444,7 @@ class Agent(object):
                 else:
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
+                    print("IMAGE", self.llm_v_config)
                     description = an.annotate(image.url)
                     image.description = description
                     session.commit()

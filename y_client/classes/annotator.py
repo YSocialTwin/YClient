@@ -8,7 +8,7 @@ class Annotator(object):
     def __init__(self, config):
         self.config_list = [
             {
-                "model": config["model"][0],
+                "model": config["model"],
                 "base_url": config["url"],
                 "timeout": 10000,
                 "api_type": "open_ai",

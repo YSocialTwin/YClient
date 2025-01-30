@@ -161,7 +161,7 @@ class Agent(object):
                 "base_url": self.llm_base,
                 "timeout": 10000,
                 "api_type": "open_ai",
-                "api_key": api_key,
+                "api_key": api_key if (api_key is not None and api_key != "") else "NULL",
                 "price": [0, 0],
             }
 

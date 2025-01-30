@@ -12,6 +12,8 @@ class PageAgent(Agent):
         super().__init__(*args, **kwargs)
         self.feed_url = kwargs.get("feed_url")
         self.name = kwargs.get("name")
+        # @todo: trace back the source of the following line
+        self.llm_config['config_list'][0]['api_key'] = "NULL"
 
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """

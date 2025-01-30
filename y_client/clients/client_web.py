@@ -7,6 +7,7 @@ import sqlalchemy as db
 from requests import post
 from sqlalchemy import orm
 
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 session = None
@@ -109,24 +110,42 @@ class YClientWeb(object):
         self.content_recsys = None
         self.follow_recsys = None
 
+        users_id_map = {}
+
         if self.first_run and network is not None:
             with open(f"{data_base_path}{network}", "r") as f:
+                headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
                 for l in f:
-                    e = l.strip().split(",")
+                    l = l.strip().split(",")
+
+                    # from username to id on the server
+                    if l[0] not in users_id_map:
+                        api_url = f"{self.config['servers']['api']}get_user_id"
+                        data = {
+                            "username": l[0],
+                        }
+                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
+                        users_id_map[l[0]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
+
+                    if l[1] not in users_id_map:
+                        api_url = f"{self.config['servers']['api']}get_user_id"
+                        data = {
+                            "username": l[1],
+                        }
+                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
+                        users_id_map[l[1]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
+
                     api_url = f"{self.config['servers']['api']}follow"
 
-                    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
                     data = {
-                        "user_id": int(e[0]),
-                        "target": int(e[1]),
+                        "user_id": users_id_map[l[0]],
+                        "target": users_id_map[l[1]],
                         "action": "follow",
                         "round": 0,
                     }
 
                     post(f"{api_url}", headers=headers, data=json.dumps(data))
-
 
         self.pages = []
 
@@ -220,7 +239,12 @@ class YClientWeb(object):
 
                 page.set_prompts(self.prompts)
                 self.agents.add_agent(page)
-                self.pages.append(page)
+                self.pages.append({
+                    "name": ag["name"],
+                    "feed": ag["feed_url"],
+                    "leaning": ag["leaning"],
+                    "category": ag["type"]
+                })
 
     def set_interests(self):
         """
@@ -252,7 +276,7 @@ class YClientWeb(object):
 
         json.dump(res, open(agent_file, "w"), indent=4)
 
-    def load_existing_agents_sdsds(self, a_file):
+    def load_existing_agents(self, a_file):
         """
         Load existing agents from a file
         :param a_file: the JSON file containing the agents
@@ -325,3 +349,11 @@ class YClientWeb(object):
         if agent is not None:
             self.agents.add_agent(agent)
 
+    def add_feeds(self):
+        for page in self.pages:
+            self.feed.add_feed(
+                name=page["name"],
+                url_feed=page["feed"],
+                category=page["category"],
+                leaning=page["leaning"]
+            )

@@ -34,6 +34,9 @@ class Annotator(object):
         )
 
     def annotate(self, image):
+
+        print(self.config_list)
+
         self.user_proxy.initiate_chat(
             self.image_agent,
             silent=True,

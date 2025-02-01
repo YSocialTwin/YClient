@@ -366,13 +366,16 @@ class Agent(object):
         """
         self.prompts = prompts
 
-        # if the agent has custom prompts substitute the default ones
-        aprompt = session.query(Agent_Custom_Prompt).filter_by(agent_name=self.name).first()
-        if aprompt:
-            self.prompts["agent_roleplay"] = f"{aprompt.prompt} - Act as requested by the Handler."
-            self.prompts["agent_roleplay_simple"] = f"{aprompt.prompt} - Act as requested by the Handler."
-            self.prompts["agent_roleplay_base"] = f"{aprompt.prompt} - Act as requested by the Handler."
-            self.prompts["agent_roleplay_comments_share"] = f"{aprompt.prompt} - Act as requested by the Handler."
+        try:
+            # if the agent has custom prompts substitute the default ones
+            aprompt = session.query(Agent_Custom_Prompt).filter_by(agent_name=self.name).first()
+            if aprompt:
+                self.prompts["agent_roleplay"] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts["agent_roleplay_simple"] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts["agent_roleplay_base"] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts["agent_roleplay_comments_share"] = f"{aprompt.prompt} - Act as requested by the Handler."
+        except:
+            pass
 
     def set_rec_sys(self, content_recsys, follow_recsys):
         """

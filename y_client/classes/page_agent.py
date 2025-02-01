@@ -167,7 +167,7 @@ class PageAgent(Agent):
         :return: the dictionary representation
         """
 
-        interests = self.__get_interests(-1)
+        # interests = self.__get_interests(-1)
 
         return {
             "name": self.name,
@@ -176,7 +176,7 @@ class PageAgent(Agent):
             "age": self.age,
             "type": self.type,
             "leaning": self.leaning,
-            "interests": interests,
+            "interests": [],
             "oe": self.oe,
             "co": self.co,
             "ex": self.ex,

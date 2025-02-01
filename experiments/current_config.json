@@ -8,14 +8,14 @@
     "llm_v_api_key": "NULL",
     "llm_v_max_tokens": 300,
     "llm_v_temperature": 0.5,
-    "api": "http://127.0.0.1:5040/"
+    "api": "http://127.0.0.1:5010/"
   },
   "simulation": {
     "name": "simulation",
     "client": "YClientWithPages",
-    "days": 30,
+    "days": 10,
     "slots": 24,
-    "starting_agents": 180,
+    "starting_agents": 100,
     "percentage_new_agents_iteration": 0.07,
     "percentage_removed_agents_iteration": 0.014,
     "hourly_activity": {
@@ -45,13 +45,13 @@
        "19": 0.031
     },
     "actions_likelihood": {
-      "post": 0.2,
-      "image": 0.15,
-      "news": 0.8,
-      "comment": 0.5,
-      "read": 0.2,
-      "share": 0.8,
-      "search": 0.1,
+      "post": 0.1,
+      "image": 0.4,
+      "news": 0.9,
+      "comment": 0.0,
+      "read": 0.0,
+      "share": 0.0,
+      "search": 0.0,
       "cast": 0.0
     }
   },
@@ -61,7 +61,7 @@
     "max_length_thread_reading": 5,
     "reading_from_follower_ratio": 0.6,
     "political_leanings": [
-      "Democrat", "Republican", "Independent"
+      "Democrat", "Republican"
       ],
     "age": {
         "min": 18,
@@ -71,8 +71,8 @@
       "min": 1,
       "max": 3
     },
-    "llm_agents": ["llama3"],
-    "llm_v_agent": ["minicpm-v"],
+    "llm_agents": ["llama3.1"],
+    "llm_v_agent": "minicpm-v",
     "n_interests": {
         "min": 4,
         "max": 10

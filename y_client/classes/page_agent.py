@@ -48,6 +48,12 @@ class PageAgent(Agent):
         article = website_feed.get_random_news()
         return article, website
 
+    def comment(self, post_id: int, tid, max_length_threads=None):
+        return
+
+    def reply(self, tid: int, max_length_thread_reading: int = 5):
+        return
+
     def news(self, tid, article, website):
         """
         Post a message to the service.

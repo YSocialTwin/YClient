@@ -88,7 +88,7 @@ class Agent(object):
             self.attention_window = int(config["agents"]["attention_window"])
             self.llm_v_config = {
                 "url": config["servers"]["llm_v"],
-                "api_key": config["servers"]["llm_v_api_key"],
+                "api_key": config["servers"]["llm_v_api_key"] if (config["servers"]["llm_v_api_key"] is not None and config["servers"]["llm_v_api_key"] != "") else "NULL",
                 "model": config["agents"]["llm_v_agent"],
                 "temperature": config["servers"]["llm_v_temperature"],
                 "max_tokens": config["servers"]["llm_v_max_tokens"]
@@ -233,7 +233,7 @@ class Agent(object):
 
         self.llm_v_config = {
             "url": config["servers"]["llm_v"],
-            "api_key": config["servers"]["llm_v_api_key"],
+            "api_key": config["servers"]["llm_v_api_key"] if (config["servers"]["llm_v_api_key"] is not None and config["servers"]["llm_v_api_key"] != "") else "NULL",
             "temperature": config["servers"]["llm_v_temperature"],
             "max_tokens": int(config["servers"]["llm_v_max_tokens"])
         }
@@ -323,7 +323,7 @@ class Agent(object):
             "base_url": self.llm_base,
             "timeout": 10000,
             "api_type": "open_ai",
-            "api_key": api_key,
+            "api_key": api_key if (api_key is not None and api_key != "") else "NULL",
             "price": [0, 0],
         }
 
@@ -544,7 +544,12 @@ class Agent(object):
         response = get(f"{api_url}", headers=headers, data=json.dumps(data))
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
         try:
-            selected = np.random.choice(range(len(data)), np.random.randint(1, 3))
+            # select a random interest without replacement
+            if len(data) >= 3:
+                selected = np.random.choice(range(len(data)), np.random.randint(1, 3), replace=False)
+            else:
+                selected = np.random.choice(range(len(data)), len(data), replace=False)
+
             interests = [data[i]["topic"] for i in selected]
             interests_id = [data[i]["id"] for i in selected]
         except:
@@ -562,9 +567,21 @@ class Agent(object):
         # obtain the most recent (and frequent) interests of the agent
         interests, interests_id = self.__get_interests(tid)
 
+        # get recent sentiment on the selected interests
+        api_url = f"{self.base_url}/get_sentiment"
+        data = {"user_id": self.user_id, "interests": interests}
+        response = post(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"}, data=json.dumps(data))
+        sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        self.topics_opinions = "Your opinion on the topics you are interested in is: "
+        for s in sentiment:
+            self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+        if len(sentiment) == 0:
+            self.topics_opinions = ""
+
         u1 = AssistantAgent(
             name=f"{self.name}",
-            llm_config=self.llm_config,  # self.llm_config,
+            llm_config=self.llm_config,
             system_message=self.__effify(
                 self.prompts["agent_roleplay"], interest=interests
             ),
@@ -607,7 +624,7 @@ class Agent(object):
                 "hashtags": hashtags,
                 "mentions": mentions,
                 "tid": tid,
-                "topics": interests_id,
+                "topics": interests_id
             }
         )
 
@@ -793,7 +810,29 @@ class Agent(object):
         conv = "".join(conversation)
 
         # obtain the most recent (and frequent) interests of the agent
-        interests, _ = self.__get_interests(tid)
+        # interests, _ = self.__get_interests(tid)
+
+        # get the post_id topics
+        api_url = f"{self.base_url}/get_post_topics_name"
+        response = get(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
+                        data=json.dumps({"post_id": post_id}))
+        interests = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # get the opinion on the topics (if present)
+        self.topics_opinions = ""
+        if len(interests) > 0:
+            # get recent sentiment on the selected interests
+            api_url = f"{self.base_url}/get_sentiment"
+            data = {"user_id": self.user_id, "interests": interests}
+            response = post(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
+                            data=json.dumps(data))
+            sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+            self.topics_opinions = "Your opinion on the topics of the post you are responding to are: "
+            for s in sentiment:
+                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+            if len(sentiment) == 0:
+                self.topics_opinions = ""
 
         u1 = AssistantAgent(
             name=f"{self.name}",
@@ -899,7 +938,31 @@ class Agent(object):
         post_text = self.__get_post(post_id)
 
         # obtain the most recent (and frequent) interests of the agent
-        interests, _ = self.__get_interests(tid)
+        # interests, _ = self.__get_interests(tid)
+
+        # get the post_id topics
+        api_url = f"{self.base_url}/get_post_topics_name"
+        response = get(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
+                       data=json.dumps({"post_id": post_id}))
+        interests = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # get the opinion on the topics (if present)
+        self.topics_opinions = ""
+        if len(interests) > 0:
+            # get recent sentiment on the selected interests
+            api_url = f"{self.base_url}/get_sentiment"
+            data = {"user_id": self.user_id, "interests": interests}
+            response = post(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
+                            data=json.dumps(data))
+            sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+            self.topics_opinions = "Your opinion topics of the post you are responding to are: "
+            for s in sentiment:
+                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+            if len(sentiment) == 0:
+                self.topics_opinions = ""
+        else:
+            interests, _ = self.__get_interests(tid)
 
         u1 = AssistantAgent(
             name=f"{self.name}",
@@ -1447,7 +1510,6 @@ class Agent(object):
                 else:
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
-                    print("IMAGE", self.llm_v_config)
                     description = an.annotate(image.url)
                     image.description = description
                     session.commit()
@@ -1563,6 +1625,8 @@ class Agent(object):
         """
         # obtain the most recent (and frequent) interests of the agent
         interests, _ = self.__get_interests(tid)
+
+        self.topics_opinions = ""
 
         u1 = AssistantAgent(
             name=f"{self.name}",

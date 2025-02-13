@@ -109,43 +109,7 @@ class YClientWeb(object):
         self.feed = Feeds()
         self.content_recsys = None
         self.follow_recsys = None
-
-        users_id_map = {}
-
-        if self.first_run and network is not None:
-            with open(f"{data_base_path}{network}", "r") as f:
-                headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-                for l in f:
-                    l = l.strip().split(",")
-
-                    # from username to id on the server
-                    if l[0] not in users_id_map:
-                        api_url = f"{self.config['servers']['api']}get_user_id"
-                        data = {
-                            "username": l[0],
-                        }
-                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
-                        users_id_map[l[0]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
-
-                    if l[1] not in users_id_map:
-                        api_url = f"{self.config['servers']['api']}get_user_id"
-                        data = {
-                            "username": l[1],
-                        }
-                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
-                        users_id_map[l[1]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
-
-                    api_url = f"{self.config['servers']['api']}follow"
-
-                    data = {
-                        "user_id": users_id_map[l[0]],
-                        "target": users_id_map[l[1]],
-                        "action": "follow",
-                        "round": 0,
-                    }
-
-                    post(f"{api_url}", headers=headers, data=json.dumps(data))
+        self.network = network
 
         self.pages = []
 
@@ -357,3 +321,42 @@ class YClientWeb(object):
                 category=page["category"],
                 leaning=page["leaning"]
             )
+
+    def add_network(self):
+        users_id_map = {}
+
+        if self.first_run and self.network is not None:  # self.run
+            with open(f"{self.base_path}{self.network}", "r") as f:
+                headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+                for l in f:
+                    l = l.strip().split(",")
+
+                    # from username to id on the server
+                    if l[0] not in users_id_map:
+                        api_url = f"{self.config['servers']['api']}get_user_id"
+                        data = {
+                            "username": l[0],
+                        }
+                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
+
+                        users_id_map[l[0]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
+
+                    if l[1] not in users_id_map:
+                        api_url = f"{self.config['servers']['api']}get_user_id"
+                        data = {
+                            "username": l[1],
+                        }
+                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
+                        users_id_map[l[1]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
+
+                    api_url = f"{self.config['servers']['api']}follow"
+
+                    data = {
+                        "user_id": users_id_map[l[0]],
+                        "target": users_id_map[l[1]],
+                        "action": "follow",
+                        "tid": 0,  # first round
+                    }
+
+                    post(f"{api_url}", headers=headers, data=json.dumps(data))

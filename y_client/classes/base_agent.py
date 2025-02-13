@@ -1145,8 +1145,14 @@ class Agent(object):
         u2.reset()
 
         if "YES" in text.split():
-            self.follow(post_id=post_id, action=action, tid=tid)
-            return action
+            if action == "follow":
+                # follow with a probability of 0.2 (@ToDo: make this a parameter?)
+                if np.random.rand() < 0.2:
+                    self.follow(post_id=post_id, action=action, tid=tid)
+                    return action
+            else:
+                self.follow(post_id=post_id, action=action, tid=tid)
+                return action
         else:
             return None
 

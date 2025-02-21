@@ -30,6 +30,7 @@ class ContentRecSys(object):
         Read n_posts from the service.
 
         :param base_url: the base url of the service
+        :param user_id: the user id
         :param articles: whether to return articles or not
         :return: the response from the service
         """

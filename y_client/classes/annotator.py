@@ -38,9 +38,11 @@ class Annotator(object):
         self.user_proxy.initiate_chat(
             self.image_agent,
             silent=True,
-            message=f"""Describe the image content and, if present, identify the main characters in it. 
+            message=f"""Describe the following image. 
             Write in english. <img {image}>""",
         )
 
         res = self.image_agent.chat_messages[self.user_proxy][-1]["content"][-1]["text"]
+        if "I'm sorry" in res:
+            res = None
         return res

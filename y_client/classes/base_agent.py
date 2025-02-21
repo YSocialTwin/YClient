@@ -641,88 +641,6 @@ class Agent(object):
         data = {"user_id": self.user_id, "interests": interests, "round": tid}
         post(f"{api_url}", headers=headers, data=json.dumps(data))
 
-    def news(self, tid, article, website):
-        """
-        Post a message to the service.
-
-        :param tid: the round id
-        :param article: the article
-        :param website: the website
-        """
-
-        u1 = AssistantAgent(
-            name=f"{self.name}",
-            llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
-            max_consecutive_auto_reply=1,
-        )
-
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
-            max_consecutive_auto_reply=1,
-        )
-
-        u2.initiate_chat(
-            u1,
-            message=self.__effify(
-                self.prompts["handler_news"], website=website, article=article
-            ),
-            silent=True,
-            max_round=1,
-        )
-
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
-
-        post_text = u2.chat_messages[u1][-2]["content"]
-
-        post_text = (
-            post_text.split(":")[-1]
-            .split("-")[-1]
-            .replace("@ ", "")
-            .replace("  ", " ")
-            .replace(". ", ".")
-            .replace(" ,", ",")
-            .replace("[", "")
-            .replace("]", "")
-            .replace("@,", "")
-        )
-        post_text = post_text.replace(f"@{self.name}", "")
-
-        hashtags = self.__extract_components(post_text, c_type="hashtags")
-        mentions = self.__extract_components(post_text, c_type="mentions")
-
-        st = json.dumps(
-            {
-                "user_id": self.user_id,
-                "tweet": post_text.replace('"', ""),
-                "emotions": emotion_eval,
-                "hashtags": hashtags,
-                "mentions": mentions,
-                "tid": tid,
-                "title": article.title,
-                "summary": article.summary,
-                "link": article.link,
-                "publisher": website.name,
-                "rss": website.rss,
-                "leaning": website.leaning,
-                "country": website.country,
-                "language": website.language,
-                "category": website.category,
-                "fetched_on": website.last_fetched,
-            }
-        )
-
-        u1.reset()
-        u2.reset()
-
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-        api_url = f"{self.base_url}/news"
-        res = post(f"{api_url}", headers=headers, data=st)
-        return res
 
     def __get_thread(self, post_id: int, max_tweets=None):
         """
@@ -1517,8 +1435,15 @@ class Agent(object):
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
-                    image.description = description
-                    session.commit()
+
+                    if description is not None:
+                        image.description = description
+                        session.commit()
+                    else:
+                        # delete image
+                        session.delete(image)
+                        session.commit()
+                        return None, None
 
                     return image, None
 
@@ -1531,94 +1456,51 @@ class Agent(object):
                 if news == "":
                     return None, None
 
-                res = self.news(tid=tid, article=news, website=website)
-                article_id = int(
-                    json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
-                )
-
                 # get image given article id and set the remote id
                 image = (
-                    session.query(Images)
-                    .filter(Images.article_id == article_id)
-                    .first()
+                    session.query(Images).order_by(func.random()).first()
                 )
 
                 if image is None:
                     return None, None
                 else:
-                    image.remote_article_id = article_id
+                    image.remote_article_id = None
                     session.commit()
 
                     # annotate the image with a description
                     an = Annotator(self.llm_v_config)
                     description = an.annotate(image.url)
-                    image.description = description
-                    session.commit()
 
-                    return image, article_id
+                    if description is not None:
+                        image.description = description
+                        session.commit()
+                    else:
+                        # delete image
+                        session.delete(image)
+                        session.commit()
+                        return None, None
+
+                    return image, None
 
             # images available, check if they have a description
             else:
-                # check if the image has a remote article id
-                if image.remote_article_id is None:
-                    # get local article linked to the image
-                    article = (
-                        session.query(Articles)
-                        .filter(Articles.id == image.article_id)
-                        .first()
-                    )
-                    # get the website linked to the article
-                    website = (
-                        session.query(Websites)
-                        .filter(Websites.id == article.website_id)
-                        .first()
-                    )
-
-                    # save the website and article on the server
-                    st = json.dumps(
-                        {
-                            "user_id": self.user_id,
-                            "tweet": "",
-                            "emotions": [],
-                            "hashtags": [],
-                            "mentions": [],
-                            "tid": tid,
-                            "title": article.title,
-                            "summary": article.summary,
-                            "link": article.link,
-                            "publisher": website.name,
-                            "rss": website.rss,
-                            "leaning": website.leaning,
-                            "country": website.country,
-                            "language": website.language,
-                            "category": website.category,
-                            "fetched_on": website.last_fetched,
-                        }
-                    )
-
-                    headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-                    api_url = f"{self.base_url}/news"
-                    res = post(f"{api_url}", headers=headers, data=st)
-                    remote_article_id = int(
-                        json.loads(res.__dict__["_content"].decode("utf-8"))[
-                            "article_id"
-                        ]
-                    )
-                    image.remote_article_id = remote_article_id
-                    session.commit()
-
                 if image.description is not None:
-                    return image, image.remote_article_id
+                    return image, None
 
                 else:
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
-                    image.description = description
-                    session.commit()
+                    if description is not None:
+                        image.description = description
+                        session.commit()
+                    else:
+                        # delete image
+                        session.delete(image)
+                        session.commit()
+                        return None, None
 
-                    return image, image.remote_article_id
+                    return image, None
 
     def comment_image(self, image: object, tid: int, article_id: int = None):
         """

@@ -29,10 +29,8 @@ class YClientWeb(object):
         """
         Initialize the YClient object
 
-        :param config_filename: the configuration file for the simulation in JSON format
-        :param prompts_filename: the LLM prompts file for the simulation in JSON format
+        :param config_file: the configuration file for the simulation in JSON format
         :param agents_filename: the file containing the agents in JSON format
-        :param graph_file: the file containing the graph of the agents in CSV format, where the number of nodes is equal to the number of agents
         :param agents_output: the file to save the generated agents in JSON format
         :param owner: the owner of the simulation
         :param first_run: if it is the first run of the simulation
@@ -129,8 +127,8 @@ class YClientWeb(object):
         for ag in data['agents']:
             if ag["is_page"] == 0:
 
-                content_recsys = getattr(recsys, ag["rec_sys"])()
-                follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
+                self.content_recsys = getattr(recsys, ag["rec_sys"])()
+                self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
                 agent = Agent(
                     name=ag["name"],
@@ -150,8 +148,8 @@ class YClientWeb(object):
                     toxicity=ag["toxicity"],
                     gender=ag["gender"],
                     age=ag["age"],
-                    recsys=content_recsys,
-                    frecsys=follow_recsys,
+                    recsys=self.content_recsys,
+                    frecsys=self.follow_recsys,
                     language=ag["language"],
                     owner=ag["owner"],
                     config=self.config,
@@ -301,15 +299,16 @@ class YClientWeb(object):
         from y_client.utils import generate_user
 
         if agent is None:
-            try:
-                agent = generate_user(self.config, owner=self.agents_owner)
+            #try:
 
-                if agent is None:
-                    return
-                agent.set_prompts(self.prompts)
-                agent.set_rec_sys(self.content_recsys, self.follow_recsys)
-            except Exception:
-                pass
+            agent = generate_user(self.config, owner=self.agents_owner)
+
+            if agent is None:
+                return
+            agent.set_prompts(self.prompts)
+            agent.set_rec_sys(self.content_recsys, self.follow_recsys)
+           # except Exception:
+           #     pass
         if agent is not None:
             self.agents.add_agent(agent)
 

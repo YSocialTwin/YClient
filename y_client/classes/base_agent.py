@@ -119,6 +119,7 @@ class Agent(object):
                 self.toxicity = toxicity
 
                 uid = self.__register()
+
                 if uid is None:
                     pass
                 else:

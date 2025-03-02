@@ -279,6 +279,7 @@ class YClientWeb(object):
                 1,
                 int(len(self.agents.agents) * self.percentage_removed_agents_iteration),
             )
+
             st = json.dumps({"n_users": n_users, "left_on": tid})
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}

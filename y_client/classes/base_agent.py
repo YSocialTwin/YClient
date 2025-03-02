@@ -1685,6 +1685,7 @@ class Agents(object):
 
         :param agent: The Profile object to remove.
         """
+        agent_ids = {int(aid): None for aid in agent_ids}
         for agent in self.agents:
             if agent.user_id in agent_ids:
                 self.agents.remove(agent)

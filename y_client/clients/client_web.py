@@ -85,7 +85,7 @@ class YClientWeb(object):
         global session, engine, base
         base = declarative_base()
 
-        engine = db.create_engine(f"sqlite:////{BASE_DIR}experiments/{self.config['simulation']['name']}.db")
+        engine = db.create_engine(f"sqlite:////{BASE_DIR}experiments/{self.config['simulation']['name']}.db", connect_args={"check_same_thread": False})
         base.metadata.bind = engine
         session = orm.scoped_session(orm.sessionmaker())(bind=engine)
 

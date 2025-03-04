@@ -1,6 +1,12 @@
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
-from y_client.news_feeds.client_modals import Websites, Images, Articles, session, Agent_Custom_Prompt
+from y_client.news_feeds.client_modals import (
+    Websites,
+    Images,
+    Articles,
+    session,
+    Agent_Custom_Prompt,
+)
 from y_client.classes.annotator import Annotator
 from sqlalchemy.sql.expression import func
 from y_client.news_feeds.feed_reader import NewsFeed
@@ -71,12 +77,33 @@ class Agent(object):
         """
 
         if "web" in kwargs:
-
-            self.__web_init(name=name, email=email,pwd=pwd, interests=interests, leaning=leaning,
-                            ag_type=ag_type, load=load, recsys=recsys, age=age,
-                            frecsys=frecsys, config=config, big_five=big_five, language=language, owner=owner, education_level=education_level,
-                            joined_on=joined_on, round_actions=round_actions, gender=gender, nationality=nationality, toxicity=toxicity,
-                            api_key=api_key, is_page=is_page, daily_activity_level=daily_activity_level, *args, **kwargs)
+            self.__web_init(
+                name=name,
+                email=email,
+                pwd=pwd,
+                interests=interests,
+                leaning=leaning,
+                ag_type=ag_type,
+                load=load,
+                recsys=recsys,
+                age=age,
+                frecsys=frecsys,
+                config=config,
+                big_five=big_five,
+                language=language,
+                owner=owner,
+                education_level=education_level,
+                joined_on=joined_on,
+                round_actions=round_actions,
+                gender=gender,
+                nationality=nationality,
+                toxicity=toxicity,
+                api_key=api_key,
+                is_page=is_page,
+                daily_activity_level=daily_activity_level,
+                *args,
+                **kwargs,
+            )
         else:
             self.emotions = config["posts"]["emotions"]
             self.actions_likelihood = config["simulation"]["actions_likelihood"]
@@ -89,10 +116,15 @@ class Agent(object):
             self.attention_window = int(config["agents"]["attention_window"])
             self.llm_v_config = {
                 "url": config["servers"]["llm_v"],
-                "api_key": config["servers"]["llm_v_api_key"] if (config["servers"]["llm_v_api_key"] is not None and config["servers"]["llm_v_api_key"] != "") else "NULL",
+                "api_key": config["servers"]["llm_v_api_key"]
+                if (
+                    config["servers"]["llm_v_api_key"] is not None
+                    and config["servers"]["llm_v_api_key"] != ""
+                )
+                else "NULL",
                 "model": config["agents"]["llm_v_agent"],
                 "temperature": config["servers"]["llm_v_temperature"],
-                "max_tokens": config["servers"]["llm_v_max_tokens"]
+                "max_tokens": config["servers"]["llm_v_max_tokens"],
             }
             self.is_page = is_page
 
@@ -134,8 +166,10 @@ class Agent(object):
                 self.age = us["age"]
 
                 if us["is_page"] == 0:
-                    self.interests = random.randint(config["agents"]["n_interests"]["min"],
-                                                    config["agents"]["n_interests"]["max"])
+                    self.interests = random.randint(
+                        config["agents"]["n_interests"]["min"],
+                        config["agents"]["n_interests"]["max"],
+                    )
                     self.interests = self.__get_interests(-1)[0]
                 else:
                     self.interests = []
@@ -164,16 +198,18 @@ class Agent(object):
                 "base_url": self.llm_base,
                 "timeout": 10000,
                 "api_type": "open_ai",
-                "api_key": api_key if (api_key is not None and api_key != "") else "NULL",
+                "api_key": api_key
+                if (api_key is not None and api_key != "")
+                else "NULL",
                 "price": [0, 0],
             }
 
             self.llm_config = {
                 "config_list": [config_list],
                 "seed": np.random.randint(0, 100000),
-                "max_tokens": config['servers']['llm_max_tokens'],
+                "max_tokens": config["servers"]["llm_max_tokens"],
                 # max response length, -1 no limits. Imposing limits may lead to truncated responses
-                "temperature": config['servers']['llm_temperature'],
+                "temperature": config["servers"]["llm_temperature"],
             }
 
             # add and configure the content recsys
@@ -188,7 +224,9 @@ class Agent(object):
 
             self.prompts = None
 
-    def __web_init(self, name: str,
+    def __web_init(
+        self,
+        name: str,
         email: str,
         pwd: str = None,
         age: int = None,
@@ -212,8 +250,8 @@ class Agent(object):
         is_page: int = 0,
         daily_activity_level: int = 1,
         *args,
-        **kwargs,):
-
+        **kwargs,
+    ):
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
@@ -237,14 +275,19 @@ class Agent(object):
 
         self.llm_v_config = {
             "url": config["servers"]["llm_v"],
-            "api_key": config["servers"]["llm_v_api_key"] if (config["servers"]["llm_v_api_key"] is not None and config["servers"]["llm_v_api_key"] != "") else "NULL",
+            "api_key": config["servers"]["llm_v_api_key"]
+            if (
+                config["servers"]["llm_v_api_key"] is not None
+                and config["servers"]["llm_v_api_key"] != ""
+            )
+            else "NULL",
             "temperature": config["servers"]["llm_v_temperature"],
-            "max_tokens": int(config["servers"]["llm_v_max_tokens"])
+            "max_tokens": int(config["servers"]["llm_v_max_tokens"]),
         }
         try:
             self.llm_v_config["model"] = config["servers"]["llm_v_agent"]
         except:
-            self.llm_v_config["model"] = 'minicpm-v'
+            self.llm_v_config["model"] = "minicpm-v"
 
         self.is_page = is_page
 
@@ -294,8 +337,10 @@ class Agent(object):
 
             if us["is_page"] == 0:
                 try:
-                    self.interests = random.randint(config["agents"]["n_interests"]["min"],
-                                                    config["agents"]["n_interests"]["max"])
+                    self.interests = random.randint(
+                        config["agents"]["n_interests"]["min"],
+                        config["agents"]["n_interests"]["max"],
+                    )
                     self.interests = self.__get_interests(-1)[0]
                 except:
                     self.interests = interests
@@ -334,9 +379,9 @@ class Agent(object):
         self.llm_config = {
             "config_list": [config_list],
             "seed": np.random.randint(0, 100000),
-            "max_tokens": int(config['servers']['llm_max_tokens']),
+            "max_tokens": int(config["servers"]["llm_max_tokens"]),
             # max response length, -1 no limits. Imposing limits may lead to truncated responses
-            "temperature": float(config['servers']['llm_temperature']),
+            "temperature": float(config["servers"]["llm_temperature"]),
         }
 
         self.set_rec_sys(recsys, frecsys)
@@ -372,12 +417,24 @@ class Agent(object):
 
         try:
             # if the agent has custom prompts substitute the default ones
-            aprompt = session.query(Agent_Custom_Prompt).filter_by(agent_name=self.name).first()
+            aprompt = (
+                session.query(Agent_Custom_Prompt)
+                .filter_by(agent_name=self.name)
+                .first()
+            )
             if aprompt:
-                self.prompts["agent_roleplay"] = f"{aprompt.prompt} - Act as requested by the Handler."
-                self.prompts["agent_roleplay_simple"] = f"{aprompt.prompt} - Act as requested by the Handler."
-                self.prompts["agent_roleplay_base"] = f"{aprompt.prompt} - Act as requested by the Handler."
-                self.prompts["agent_roleplay_comments_share"] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay_simple"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay_base"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay_comments_share"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
         except:
             pass
 
@@ -505,7 +562,7 @@ class Agent(object):
                 "toxicity": self.toxicity,
                 "joined_on": self.joined_on,
                 "is_page": self.is_page,
-                "daily_activity_level": self.daily_activity_level
+                "daily_activity_level": self.daily_activity_level,
             }
         )
 
@@ -543,7 +600,9 @@ class Agent(object):
         data = {
             "user_id": self.user_id,
             "round_id": tid,
-            "n_interests": self.interests if isinstance(self.interests, int) else len(self.interests),
+            "n_interests": self.interests
+            if isinstance(self.interests, int)
+            else len(self.interests),
             "time_window": self.attention_window,
         }
         response = get(f"{api_url}", headers=headers, data=json.dumps(data))
@@ -551,7 +610,9 @@ class Agent(object):
         try:
             # select a random interest without replacement
             if len(data) >= 3:
-                selected = np.random.choice(range(len(data)), np.random.randint(1, 3), replace=False)
+                selected = np.random.choice(
+                    range(len(data)), np.random.randint(1, 3), replace=False
+                )
             else:
                 selected = np.random.choice(range(len(data)), len(data), replace=False)
 
@@ -575,7 +636,11 @@ class Agent(object):
         # get recent sentiment on the selected interests
         api_url = f"{self.base_url}/get_sentiment"
         data = {"user_id": self.user_id, "interests": interests}
-        response = post(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"}, data=json.dumps(data))
+        response = post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data),
+        )
         sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
         self.topics_opinions = "Your opinion on the topics you are interested in is: "
@@ -629,7 +694,7 @@ class Agent(object):
                 "hashtags": hashtags,
                 "mentions": mentions,
                 "tid": tid,
-                "topics": interests_id
+                "topics": interests_id,
             }
         )
 
@@ -645,7 +710,6 @@ class Agent(object):
         api_url = f"{self.base_url}/set_user_interests"
         data = {"user_id": self.user_id, "interests": interests, "round": tid}
         post(f"{api_url}", headers=headers, data=json.dumps(data))
-
 
     def __get_thread(self, post_id: int, max_tweets=None):
         """
@@ -737,8 +801,11 @@ class Agent(object):
 
         # get the post_id topics
         api_url = f"{self.base_url}/get_post_topics_name"
-        response = get(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
-                        data=json.dumps({"post_id": post_id}))
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
         interests = json.loads(response.__dict__["_content"].decode("utf-8"))
 
         # get the opinion on the topics (if present)
@@ -747,11 +814,16 @@ class Agent(object):
             # get recent sentiment on the selected interests
             api_url = f"{self.base_url}/get_sentiment"
             data = {"user_id": self.user_id, "interests": interests}
-            response = post(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
-                            data=json.dumps(data))
+            response = post(
+                f"{api_url}",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data=json.dumps(data),
+            )
             sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-            self.topics_opinions = "Your opinion on the topics of the post you are responding to are: "
+            self.topics_opinions = (
+                "Your opinion on the topics of the post you are responding to are: "
+            )
             for s in sentiment:
                 self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
             if len(sentiment) == 0:
@@ -865,8 +937,11 @@ class Agent(object):
 
         # get the post_id topics
         api_url = f"{self.base_url}/get_post_topics_name"
-        response = get(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
-                       data=json.dumps({"post_id": post_id}))
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
         interests = json.loads(response.__dict__["_content"].decode("utf-8"))
 
         # get the opinion on the topics (if present)
@@ -875,11 +950,16 @@ class Agent(object):
             # get recent sentiment on the selected interests
             api_url = f"{self.base_url}/get_sentiment"
             data = {"user_id": self.user_id, "interests": interests}
-            response = post(f"{api_url}", headers={"Content-Type": "application/x-www-form-urlencoded"},
-                            data=json.dumps(data))
+            response = post(
+                f"{api_url}",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data=json.dumps(data),
+            )
             sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-            self.topics_opinions = "Your opinion topics of the post you are responding to are: "
+            self.topics_opinions = (
+                "Your opinion topics of the post you are responding to are: "
+            )
             for s in sentiment:
                 self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
             if len(sentiment) == 0:
@@ -1462,9 +1542,7 @@ class Agent(object):
                     return None, None
 
                 # get image given article id and set the remote id
-                image = (
-                    session.query(Images).order_by(func.random()).first()
-                )
+                image = session.query(Images).order_by(func.random()).first()
 
                 if image is None:
                     return None, None

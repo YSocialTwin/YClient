@@ -21,11 +21,15 @@ try:
         )
 
     base = declarative_base()
-    engine = db.create_engine(f"sqlite:///experiments/{config['simulation']['name']}.db", connect_args={"check_same_thread": False})
+    engine = db.create_engine(
+        f"sqlite:///experiments/{config['simulation']['name']}.db",
+        connect_args={"check_same_thread": False},
+    )
     base.metadata.bind = engine
     session = orm.scoped_session(orm.sessionmaker())(bind=engine)
 except:
     from y_client.clients.client_web import base, session
+
     pass
 
 

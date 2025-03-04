@@ -22,8 +22,8 @@ class Annotator(object):
             max_consecutive_auto_reply=1,
             llm_config={
                 "config_list": self.config_list,
-                "temperature": config['temperature'],
-                "max_tokens": config['max_tokens'],
+                "temperature": config["temperature"],
+                "max_tokens": config["max_tokens"],
             },
             human_input_mode="NEVER",
         )
@@ -34,7 +34,6 @@ class Annotator(object):
         )
 
     def annotate(self, image):
-
         self.user_proxy.initiate_chat(
             self.image_agent,
             silent=True,

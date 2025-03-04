@@ -327,10 +327,7 @@ class YClientBase(object):
                 for _ in range(
                     max(
                         1,
-                        int(
-                            len(daily_active)
-                            * self.percentage_new_agents_iteration
-                        ),
+                        int(len(daily_active) * self.percentage_new_agents_iteration),
                     )
                 ):
                     self.add_agent()

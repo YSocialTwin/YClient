@@ -155,7 +155,9 @@ class YClientWeb(object):
                     config=self.config,
                     load=not self.first_run,
                     web=True,
-                    #prompt=ag["prompts"],
+                    daily_activity_level=ag["daily_activity_level"]
+
+                    # prompt=ag["prompts"],
                 )
 
                 agent.set_prompts(self.prompts)

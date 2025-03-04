@@ -40,6 +40,7 @@ class Agent(object):
         toxicity: str = "no",
         api_key: str = "NULL",
         is_page: int = 0,
+        daily_activity_level: int = 1,
         *args,
         **kwargs,
     ):
@@ -75,7 +76,7 @@ class Agent(object):
                             ag_type=ag_type, load=load, recsys=recsys, age=age,
                             frecsys=frecsys, config=config, big_five=big_five, language=language, owner=owner, education_level=education_level,
                             joined_on=joined_on, round_actions=round_actions, gender=gender, nationality=nationality, toxicity=toxicity,
-                            api_key=api_key, is_page=is_page, *args, **kwargs)
+                            api_key=api_key, is_page=is_page, daily_activity_level=daily_activity_level, *args, **kwargs)
         else:
             self.emotions = config["posts"]["emotions"]
             self.actions_likelihood = config["simulation"]["actions_likelihood"]
@@ -117,6 +118,7 @@ class Agent(object):
                 self.gender = gender
                 self.nationality = nationality
                 self.toxicity = toxicity
+                self.daily_activity_level = daily_activity_level
 
                 uid = self.__register()
 
@@ -208,6 +210,7 @@ class Agent(object):
         toxicity: str = "no",
         api_key: str = "NULL",
         is_page: int = 0,
+        daily_activity_level: int = 1,
         *args,
         **kwargs,):
 
@@ -219,7 +222,7 @@ class Agent(object):
         self.follow_rec_sys_name = None
         self.content_rec_sys = None
         self.follow_rec_sys = None
-
+        self.daily_activity_level = daily_activity_level
         self.name = name
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
@@ -502,6 +505,7 @@ class Agent(object):
                 "toxicity": self.toxicity,
                 "joined_on": self.joined_on,
                 "is_page": self.is_page,
+                "daily_activity_level": self.daily_activity_level
             }
         )
 
@@ -1618,6 +1622,7 @@ class Agent(object):
             "toxicity": self.toxicity,
             "joined_on": self.joined_on,
             "is_page": self.is_page,
+            "daily_activity_level": self.daily_activity_level,
         }
 
     def __clean_emotion(self, text):

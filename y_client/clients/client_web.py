@@ -161,7 +161,8 @@ class YClientWeb(object):
                     config=self.config,
                     load=not self.first_run,
                     web=True,
-                    daily_activity_level=ag["daily_activity_level"]
+                    daily_activity_level=ag["daily_activity_level"],
+                    profession=ag["profession"],
                     # prompt=ag["prompts"],
                 )
 

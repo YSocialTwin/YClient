@@ -47,6 +47,7 @@ class Agent(object):
         api_key: str = "NULL",
         is_page: int = 0,
         daily_activity_level: int = 1,
+        profession: str = None,
         *args,
         **kwargs,
     ):
@@ -101,6 +102,7 @@ class Agent(object):
                 api_key=api_key,
                 is_page=is_page,
                 daily_activity_level=daily_activity_level,
+                profession=profession,
                 *args,
                 **kwargs,
             )
@@ -151,6 +153,7 @@ class Agent(object):
                 self.nationality = nationality
                 self.toxicity = toxicity
                 self.daily_activity_level = daily_activity_level
+                self.profession = profession
 
                 uid = self.__register()
 
@@ -249,6 +252,7 @@ class Agent(object):
         api_key: str = "NULL",
         is_page: int = 0,
         daily_activity_level: int = 1,
+        profession: str = None,
         *args,
         **kwargs,
     ):
@@ -261,6 +265,7 @@ class Agent(object):
         self.content_rec_sys = None
         self.follow_rec_sys = None
         self.daily_activity_level = daily_activity_level
+        self.profession = profession
         self.name = name
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
@@ -563,6 +568,7 @@ class Agent(object):
                 "joined_on": self.joined_on,
                 "is_page": self.is_page,
                 "daily_activity_level": self.daily_activity_level,
+                "profession": self.profession,
             }
         )
 
@@ -1701,6 +1707,7 @@ class Agent(object):
             "joined_on": self.joined_on,
             "is_page": self.is_page,
             "daily_activity_level": self.daily_activity_level,
+            "profession": self.profession,
         }
 
     def __clean_emotion(self, text):

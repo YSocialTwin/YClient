@@ -160,3 +160,108 @@ class ReverseChronoFollowersPopularity(ContentRecSys):
             "mode": "rchrono_followers_popularity",
             "visibility_rounds": visibility_rounds,
         }
+
+
+class ReverseChronoComments(ContentRecSys):
+    def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
+        """
+        Reverse chronological most commented content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param followers_ratio: the ratio posts from followers to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
+        super(ReverseChronoComments, self).__init__(
+            n_posts=n_posts, visibility_rounds=visibility_rounds
+        )
+        self.name = "rchrono_comments"
+        self.params = {
+            "limit": n_posts,
+            "followers_ratio": followers_ratio,
+            "mode": "rchrono_comments",
+            "visibility_rounds": visibility_rounds,
+        }
+
+
+class CommonInterests(ContentRecSys):
+    def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
+        """
+        Common interests content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param followers_ratio: the ratio posts from followers to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
+        super(CommonInterests, self).__init__(
+            n_posts=n_posts, visibility_rounds=visibility_rounds
+        )
+        self.name = "common_interests"
+        self.params = {
+            "limit": n_posts,
+            "followers_ratio": followers_ratio,
+            "mode": "common_interests",
+            "visibility_rounds": visibility_rounds,
+        }
+
+
+class CommonUserInterests(ContentRecSys):
+    def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
+        """
+        Common interests content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param followers_ratio: the ratio posts from followers to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
+        super(CommonUserInterests, self).__init__(
+            n_posts=n_posts, visibility_rounds=visibility_rounds
+        )
+        self.name = "common_user_interests"
+        self.params = {
+            "limit": n_posts,
+            "followers_ratio": followers_ratio,
+            "mode": "common_user_interests",
+            "visibility_rounds": visibility_rounds,
+        }
+
+
+class SimilarUsersReactions(ContentRecSys):
+    def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
+        """
+        Similar users content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param followers_ratio: the ratio posts from followers to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
+        super(SimilarUsersReactions, self).__init__(
+            n_posts=n_posts, visibility_rounds=visibility_rounds
+        )
+        self.name = "similar_users"
+        self.params = {
+            "limit": n_posts,
+            "followers_ratio": followers_ratio,
+            "mode": "similar_users",
+            "visibility_rounds": visibility_rounds,
+        }
+
+
+class SimilarUsersPosts(ContentRecSys):
+    def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
+        """
+        Similar users content recommendation system.
+
+        :param n_posts: the number of posts to recommend
+        :param followers_ratio: the ratio posts from followers to recommend
+        :param visibility_rounds: the number of visibility rounds
+        """
+        super(SimilarUsersPosts, self).__init__(
+            n_posts=n_posts, visibility_rounds=visibility_rounds
+        )
+        self.name = "similar_users_posts"
+        self.params = {
+            "limit": n_posts,
+            "followers_ratio": followers_ratio,
+            "mode": "similar_users_posts",
+            "visibility_rounds": visibility_rounds,
+        }

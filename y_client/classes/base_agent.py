@@ -107,6 +107,9 @@ class Agent(object):
                 **kwargs,
             )
         else:
+            self.probability_of_secondary_follow = config["agents"][
+                "probability_of_secondary_follow"
+            ]
             self.emotions = config["posts"]["emotions"]
             self.actions_likelihood = config["simulation"]["actions_likelihood"]
             self.base_url = config["servers"]["api"]
@@ -256,6 +259,9 @@ class Agent(object):
         *args,
         **kwargs,
     ):
+        self.probability_of_secondary_follow = config["agents"][
+            "probability_of_secondary_follow"
+        ]
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
@@ -1116,14 +1122,18 @@ class Agent(object):
 
     def __evaluate_follow(self, post_text, post_id, action, tid):
         """
-        Evaluate a follow action.
+        Evaluate secondary follow action (tied to a given probability_of_secondary_follow)
 
-        :param post_text: the post text
+        :param post_text: the post_text
         :param post_id: the post id
         :param action: the action, either follow or unfollow
         :param tid: the round id
         :return: the response from the service
         """
+
+        if self.probability_of_secondary_follow > 0:
+            if np.random.rand() > self.probability_of_secondary_follow:
+                return None
 
         u1 = AssistantAgent(
             name=f"{self.name}",
@@ -1155,10 +1165,8 @@ class Agent(object):
 
         if "YES" in text.split():
             if action == "follow":
-                # follow with a probability of 0.2 (@ToDo: make this a parameter?)
-                if np.random.rand() < 0.2:
-                    self.follow(post_id=post_id, action=action, tid=tid)
-                    return action
+                self.follow(post_id=post_id, action=action, tid=tid)
+                return action
             else:
                 self.follow(post_id=post_id, action=action, tid=tid)
                 return action
@@ -1364,15 +1372,6 @@ class Agent(object):
             except:
                 pass
 
-        # elif "REPLY" in text.split():
-        #    selected_post = json.loads(self.read_mentions())
-        #    if "status" not in selected_post:
-        #        self.comment(
-        #            int(selected_post[0]),
-        #            max_length_threads=max_length_thread_reading,
-        #            tid=tid,
-        #        )
-
         elif "SEARCH" in text.split():
             candidates = json.loads(self.search())
             if "status" not in candidates and len(candidates) > 0:
@@ -1395,12 +1394,6 @@ class Agent(object):
                     size=1,
                 )[0]
                 self.follow(tid=tid, target=selected, action="follow")
-
-        # demanded to page agents
-        # elif "NEWS" in text.split():
-        #    news, website = self.select_news()
-        #    if not isinstance(news, str):
-        #        self.news(tid=tid, article=news, website=website)
 
         elif "SHARE" in text.split():
             candidates = json.loads(self.read(article=True))
@@ -1444,7 +1437,7 @@ class Agent(object):
         """
         Read n_posts from the service.
 
-        :param article: whether to read an article or not
+        :param article: Whether to read an article or not
         :return: the response from the service
         """
         return self.content_rec_sys.read(self.base_url, self.user_id, article)
@@ -1453,7 +1446,7 @@ class Agent(object):
         """
         Read n_posts from the service.
 
-        :return: the response from the service
+        :return: The response from the service
         """
         return self.content_rec_sys.read_mentions(self.base_url)
 

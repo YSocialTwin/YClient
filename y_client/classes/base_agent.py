@@ -739,6 +739,9 @@ class Agent(object):
 
         res = json.loads(response.__dict__["_content"].decode("utf-8"))
 
+        if isinstance(res, dict) and "error" in res:
+            return res
+
         if max_tweets is not None and len(res) > max_tweets:
             return res[-max_tweets:]
 
@@ -806,7 +809,11 @@ class Agent(object):
         """
 
         conversation = self.__get_thread(post_id, max_tweets=max_length_threads)
-        conv = "".join(conversation)
+
+        conv = ""
+
+        if "error" not in conversation:
+            conv = "".join(conversation)
 
         # obtain the most recent (and frequent) interests of the agent
         # interests, _ = self.__get_interests(tid)
@@ -1189,19 +1196,21 @@ class Agent(object):
         if post_id is not None:
             target = self.get_user_from_post(post_id)
 
-        st = json.dumps(
-            {
-                "user_id": self.user_id,
-                "target": int(target),
-                "action": action,
-                "tid": tid,
-            }
-        )
+        if "error" not in target:
 
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            st = json.dumps(
+                {
+                    "user_id": self.user_id,
+                    "target": int(target),
+                    "action": action,
+                    "tid": tid,
+                }
+            )
 
-        api_url = f"{self.base_url}/follow"
-        post(f"{api_url}", headers=headers, data=st)
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+            api_url = f"{self.base_url}/follow"
+            post(f"{api_url}", headers=headers, data=st)
 
     def followers(self):
         """

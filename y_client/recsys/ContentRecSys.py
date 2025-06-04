@@ -168,13 +168,13 @@ class ReverseChronoComments(ContentRecSys):
         Reverse chronological most commented content recommendation system.
 
         :param n_posts: the number of posts to recommend
-        :param followers_ratio: the ratio posts from followers to recommend
+        :param followers_ratio: the ratio of posts from followers to recommend
         :param visibility_rounds: the number of visibility rounds
         """
         super(ReverseChronoComments, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "rchrono_comments"
+        self.name = "ReverseChronoComments"
         self.params = {
             "limit": n_posts,
             "followers_ratio": followers_ratio,
@@ -195,7 +195,7 @@ class CommonInterests(ContentRecSys):
         super(CommonInterests, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "common_interests"
+        self.name = "CommonInterests"
         self.params = {
             "limit": n_posts,
             "followers_ratio": followers_ratio,
@@ -216,7 +216,7 @@ class CommonUserInterests(ContentRecSys):
         super(CommonUserInterests, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "common_user_interests"
+        self.name = "CommonUserInterests"
         self.params = {
             "limit": n_posts,
             "followers_ratio": followers_ratio,
@@ -237,7 +237,7 @@ class SimilarUsersReactions(ContentRecSys):
         super(SimilarUsersReactions, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "similar_users"
+        self.name = "SimilarUsersReactions"
         self.params = {
             "limit": n_posts,
             "followers_ratio": followers_ratio,
@@ -258,7 +258,7 @@ class SimilarUsersPosts(ContentRecSys):
         super(SimilarUsersPosts, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
         )
-        self.name = "similar_users_posts"
+        self.name = "SimilarUsersPosts"
         self.params = {
             "limit": n_posts,
             "followers_ratio": followers_ratio,

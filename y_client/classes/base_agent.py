@@ -1196,7 +1196,7 @@ class Agent(object):
         if post_id is not None:
             target = self.get_user_from_post(post_id)
 
-        if "error" not in target:
+        if isinstance(target, int):
 
             st = json.dumps(
                 {

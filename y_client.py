@@ -80,10 +80,10 @@ if __name__ == "__main__":
     simulation_name = config["simulation"]["name"]
 
     # agent file output
-    output = f"experiments/{simulation_name}_agents.json"
+    output = f"experiments{os.sep}{simulation_name}_agents.json"
 
     # set the current config file (needed to generate the database)
-    shutil.copyfile(config_file, f"experiments/current_config.json")
+    shutil.copyfile(config_file, f"experiments{os.sep}current_config.json")
 
     import y_client.recsys
     import y_client.clients

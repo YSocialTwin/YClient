@@ -76,12 +76,12 @@ class YClientWeb(object):
         ##############
         BASE_DIR = os.path.dirname(os.path.abspath(__file__)).split("y_client")[0]
         if not os.path.exists(
-            f"{BASE_DIR}experiments/{self.config['simulation']['name']}.db"
+            f"{BASE_DIR}experiments{os.sep}{self.config['simulation']['name']}.db"
         ):
             # copy the clean database to the experiments folder
             shutil.copyfile(
-                f"{BASE_DIR}data_schema/database_clean_client.db",
-                f"{BASE_DIR}experiments/{self.config['simulation']['name']}.db",
+                f"{BASE_DIR}data_schema{os.sep}database_clean_client.db",
+                f"{BASE_DIR}experiments{os.sep}{self.config['simulation']['name']}.db",
             )
 
         global session, engine, base
@@ -100,7 +100,7 @@ class YClientWeb(object):
         ##############
 
         yclient_path = os.path.dirname(os.path.abspath(__file__)).split("y_web")[0]
-        sys.path.append(f"{yclient_path}{os.sep}external{os.sep}YClient/")
+        sys.path.append(f"{yclient_path}{os.sep}external{os.sep}YClient{os.sep}")
 
         from y_client.classes import Agent, Agents, SimulationSlot
         from y_client.news_feeds import Feeds
@@ -136,39 +136,43 @@ class YClientWeb(object):
                 self.content_recsys = getattr(recsys, ag["rec_sys"])()
                 self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
-                agent = Agent(
-                    name=ag["name"],
-                    email=ag["email"],
-                    pwd=ag["password"],
-                    ag_type=ag["type"],
-                    leaning=ag["leaning"],
-                    interests=ag["interests"][0],
-                    oe=ag["oe"],
-                    co=ag["co"],
-                    ex=ag["ex"],
-                    ag=ag["ag"],
-                    ne=ag["ne"],
-                    education_level=ag["education_level"],
-                    round_actions=ag["round_actions"],
-                    nationality=ag["nationality"],
-                    toxicity=ag["toxicity"],
-                    gender=ag["gender"],
-                    age=ag["age"],
-                    recsys=self.content_recsys,
-                    frecsys=self.follow_recsys,
-                    language=ag["language"],
-                    owner=ag["owner"],
-                    config=self.config,
-                    load=not self.first_run,
-                    web=True,
-                    daily_activity_level=ag["daily_activity_level"],
-                    profession=ag["profession"],
-                    # prompt=ag["prompts"],
-                )
+                try:
+                    agent = Agent(
+                        name=ag["name"],
+                        email=ag["email"],
+                        pwd=ag["password"],
+                            ag_type=ag["type"],
+                            leaning=ag["leaning"],
+                            interests=ag["interests"][0],
+                            oe=ag["oe"],
+                            co=ag["co"],
+                            ex=ag["ex"],
+                            ag=ag["ag"],
+                            ne=ag["ne"],
+                            education_level=ag["education_level"],
+                            round_actions=ag["round_actions"],
+                            nationality=ag["nationality"],
+                            toxicity=ag["toxicity"],
+                            gender=ag["gender"],
+                            age=ag["age"],
+                            recsys=self.content_recsys,
+                            frecsys=self.follow_recsys,
+                            language=ag["language"],
+                            owner=ag["owner"],
+                            config=self.config,
+                            load=not self.first_run,
+                            web=True,
+                            daily_activity_level=ag["daily_activity_level"],
+                            profession=ag["profession"],
+                            prompt=ag["prompts"] if "prompts" in ag else None,
+                        )
 
-                agent.set_prompts(self.prompts)
+                    agent.set_prompts(self.prompts)
 
-                self.agents.add_agent(agent)
+                    self.agents.add_agent(agent)
+                except:
+                    print(f"Error loading agent: {ag['name']}")
+                    continue
 
             else:
                 big_five = {
@@ -182,41 +186,45 @@ class YClientWeb(object):
                 content_recsys = getattr(recsys, "ReverseChronoPopularity")()
                 follow_recsys = getattr(frecsys, "Jaccard")(leaning_bias=1.5)
 
-                page = PageAgent(
-                    name=ag["name"],
-                    pwd="",
-                    email=ag["email"],
-                    age=0,
-                    ag_type=ag["type"],
-                    leaning=None,
-                    interests=[],
-                    config=self.config,
-                    big_five=big_five,
-                    language=None,
-                    education_level=None,
-                    owner=ag["owner"],
-                    round_actions=ag["round_actions"],
-                    gender=None,
-                    nationality=None,
-                    toxicity=None,
-                    api_key="",
-                    feed_url=ag["feed_url"],
-                    recsys=content_recsys,
-                    frecsys=follow_recsys,
-                    is_page=1,
-                    web=True,
-                )
+                try:
+                    page = PageAgent(
+                        name=ag["name"],
+                        pwd="",
+                        email=ag["email"],
+                        age=0,
+                        ag_type=ag["type"],
+                        leaning=None,
+                        interests=[],
+                        config=self.config,
+                        big_five=big_five,
+                        language=None,
+                        education_level=None,
+                        owner=ag["owner"],
+                        round_actions=ag["round_actions"],
+                        gender=None,
+                        nationality=None,
+                        toxicity=None,
+                        api_key="",
+                        feed_url=ag["feed_url"],
+                        recsys=content_recsys,
+                        frecsys=follow_recsys,
+                        is_page=1,
+                        web=True,
+                    )
 
-                page.set_prompts(self.prompts)
-                self.agents.add_agent(page)
-                self.pages.append(
-                    {
-                        "name": ag["name"],
-                        "feed": ag["feed_url"],
-                        "leaning": ag["leaning"],
-                        "category": ag["type"],
-                    }
-                )
+                    page.set_prompts(self.prompts)
+                    self.agents.add_agent(page)
+                    self.pages.append(
+                        {
+                            "name": ag["name"],
+                            "feed": ag["feed_url"],
+                            "leaning": ag["leaning"],
+                            "category": ag["type"],
+                        }
+                    )
+                except:
+                    print(f"Error loading page agent: {ag['name']}, {e}")
+                    continue
 
     def set_interests(self):
         """

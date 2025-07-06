@@ -342,6 +342,7 @@ class Agent(object):
 
         else:
             us = json.loads(self.__get_user())
+
             self.user_id = us["id"]
             self.type = us["user_type"]
             self.age = us["age"]
@@ -618,6 +619,7 @@ class Agent(object):
             "time_window": self.attention_window,
         }
         response = get(f"{api_url}", headers=headers, data=json.dumps(data))
+
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
         try:
             # select a random interest without replacement
@@ -1435,11 +1437,12 @@ class Agent(object):
         """
         selected_post = json.loads(self.read_mentions())
         if "status" not in selected_post:
-            self.comment(
-                int(selected_post[0]),
-                max_length_threads=max_length_thread_reading,
-                tid=tid,
-            )
+            if len(selected_post) > 0:
+                self.comment(
+                    int(selected_post['post_id']),
+                    max_length_threads=max_length_thread_reading,
+                    tid=tid,
+                )
         return
 
     def read(self, article=False):

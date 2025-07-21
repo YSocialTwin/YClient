@@ -133,6 +133,8 @@ class Agent(object):
             }
             self.is_page = is_page
 
+            print(f"Loading Preexisting simulation: {load}")
+
             if not load:
                 self.language = language
                 self.type = ag_type
@@ -341,7 +343,11 @@ class Agent(object):
                 self.user_id = uid
 
         else:
-            us = json.loads(self.__get_user())
+            u = self.__get_user()
+            us = json.loads(u)
+
+            if "status" in us and us["status"] == 404:
+                return
 
             self.user_id = us["id"]
             self.type = us["user_type"]
@@ -516,9 +522,11 @@ class Agent(object):
 
         :return: the user
         """
-        res = json.loads(self._check_credentials())
-        if res["status"] == 404:
-            raise Exception("User not found")
+        #res = json.loads(self._check_credentials())
+
+        #if res["status"] == 404:
+        #    return json.dumps({"status": 404, "error": "User not found"})
+
         api_url = f"{self.base_url}get_user"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -542,8 +550,12 @@ class Agent(object):
 
         st = json.dumps(params)
         response = post(f"{api_url}", headers=headers, data=st)
+        data = response.json()
 
-        return response.__dict__["_content"].decode("utf-8")
+        if response.status_code != 200 or data.get("status") != 200:
+            return json.dumps({"status": response.status_code, "error": "User not found"})
+        else:
+            return json.dumps({"status": 200})
 
     def __register(self):
         """
@@ -584,11 +596,9 @@ class Agent(object):
         api_url = f"{self.base_url}/register"
         post(f"{api_url}", headers=headers, data=st)
 
-        try:
-            res = json.loads(self.__get_user())
-            uid = int(res["id"])
-        except:
-            return None
+        us = self.__get_user()
+        res = json.loads(us)
+        uid = int(res["id"])
 
         api_url = f"{self.base_url}/set_user_interests"
         data = {"user_id": uid, "interests": self.interests, "round": self.joined_on}

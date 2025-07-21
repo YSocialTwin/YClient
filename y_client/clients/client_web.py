@@ -136,8 +136,8 @@ class YClientWeb(object):
                 self.content_recsys = getattr(recsys, ag["rec_sys"])()
                 self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
-                try:
-                    agent = Agent(
+                #try:
+                agent = Agent(
                         name=ag["name"],
                         email=ag["email"],
                         pwd=ag["password"],
@@ -167,12 +167,9 @@ class YClientWeb(object):
                             prompt=ag["prompts"] if "prompts" in ag else None,
                         )
 
-                    agent.set_prompts(self.prompts)
+                agent.set_prompts(self.prompts)
 
-                    self.agents.add_agent(agent)
-                except:
-                    print(f"Error loading agent: {ag['name']}")
-                    continue
+                self.agents.add_agent(agent)
 
             else:
                 big_five = {
@@ -222,8 +219,9 @@ class YClientWeb(object):
                             "category": ag["type"],
                         }
                     )
+
                 except:
-                    print(f"Error loading page agent: {ag['name']}, {e}")
+                    print(f"Error loading page agent: {ag['name']}")
                     continue
 
     def set_interests(self):

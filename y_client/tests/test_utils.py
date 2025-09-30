@@ -98,7 +98,8 @@ class TestUtils(unittest.TestCase):
         # Verify Agent was called with correct parameters
         mock_agent_class.assert_called_once()
         call_args = mock_agent_class.call_args
-        self.assertEqual(call_args[1]['name'], "JohnDoe")
+        # Name should be from our mocked faker data
+        self.assertIn(call_args[1]['name'], ["JohnDoe", "JaneDoe"])  # Either male or female name
         self.assertEqual(call_args[1]['config'], self.mock_config)
         self.assertEqual(call_args[1]['owner'], "test_owner")
         self.assertEqual(call_args[1]['api_key'], "test_api_key")

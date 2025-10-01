@@ -1,14 +1,55 @@
+"""
+Content Recommendation Systems Module
+
+This module provides various content recommendation system implementations for
+the Y social network simulation. These systems determine which posts appear
+in a user's feed based on different ranking strategies.
+
+Available Strategies:
+    - ContentRecSys: Base recommendation system (default chronological)
+    - ReverseChrono: Simple reverse chronological ordering
+    - ReverseChronoPopularity: Chronological with popularity boost
+    - ReverseChronoFollowers: Prioritizes content from followed users
+    - ReverseChronoFollowersPopularity: Follows + popularity
+    - ReverseChronoComments: Prioritizes highly commented posts
+    - CommonInterests: Recommends based on shared interests
+    - CommonUserInterests: User-based interest matching
+    - SimilarUsersReactions: Recommends based on similar users' reactions
+    - SimilarUsersPosts: Recommends based on similar users' posting patterns
+
+All classes inherit from ContentRecSys and communicate with the server API
+to fetch recommended posts.
+"""
+
 import json
 from requests import post
 
 
 class ContentRecSys(object):
+    """
+    Base content recommendation system for post feeds.
+    
+    This class provides the interface for fetching recommended posts from
+    the server. Subclasses customize the recommendation strategy by setting
+    different mode parameters.
+    
+    Attributes:
+        name (str): Name of the recommendation system
+        params (dict): Parameters sent to the server including:
+                      - limit: Number of posts to fetch
+                      - mode: Recommendation strategy
+                      - visibility_rounds: How long posts remain visible
+                      - uid: User ID (added when making requests)
+    """
+    
     def __init__(self, n_posts=10, visibility_rounds=36):
         """
-        Content recommendation system.
-
-        :param n_posts: the number of posts to recommend
-        :param visibility_rounds: the number of visibility rounds
+        Initialize the content recommendation system.
+        
+        Args:
+            n_posts (int, optional): Number of posts to recommend. Defaults to 10.
+            visibility_rounds (int, optional): Number of time slots posts remain visible
+                                              (typically hours). Defaults to 36.
         """
         self.name = "ContentRecSys"
         self.params = {
@@ -19,20 +60,28 @@ class ContentRecSys(object):
 
     def add_user_id(self, uid):
         """
-        Add user id to the request.
-
-        :param uid: user id
+        Set the user ID for subsequent requests.
+        
+        Args:
+            uid (int): User ID to add to request parameters
         """
         self.params["uid"] = uid
 
     def read(self, base_url, user_id, articles=False):
         """
-        Read n_posts from the service.
-
-        :param base_url: the base url of the service
-        :param user_id: the user id
-        :param articles: whether to return articles or not
-        :return: the response from the service
+        Fetch recommended posts from the server for a user.
+        
+        This method queries the server's /read endpoint to get posts
+        recommended by this system for the specified user.
+        
+        Args:
+            base_url (str): Base URL of the simulation server API
+            user_id (int): User ID to fetch recommendations for
+            articles (bool, optional): Whether to include news articles.
+                                      Defaults to False.
+        
+        Returns:
+            str: JSON string containing recommended posts
         """
         api_url = f"{base_url}/read"
 
@@ -51,10 +100,13 @@ class ContentRecSys(object):
 
     def read_mentions(self, base_url):
         """
-        Read n_posts from the service.
-
-        :param base_url: the base url of the service
-        :return: the response from the service
+        Fetch posts that mention the user.
+        
+        Args:
+            base_url (str): Base URL of the simulation server API
+        
+        Returns:
+            str: JSON string containing posts that mention the user
         """
         api_url = f"{base_url}/read_mentions"
 
@@ -67,10 +119,16 @@ class ContentRecSys(object):
 
     def search(self, base_url):
         """
-        Search for a query.
-
-        :param base_url: the base url of the service
-        :return: the response from the service
+        Search for posts matching query criteria.
+        
+        Args:
+            base_url (str): Base URL of the simulation server API
+        
+        Returns:
+            str: JSON string containing search results
+        
+        Note:
+            Query parameters should be set in self.params before calling
         """
         api_url = f"{base_url}/search"
 
@@ -83,12 +141,20 @@ class ContentRecSys(object):
 
 
 class ReverseChrono(ContentRecSys):
+    """
+    Simple reverse chronological feed (newest posts first).
+    
+    This recommendation system orders posts by recency without any
+    personalization or filtering.
+    """
+    
     def __init__(self, n_posts=10, visibility_rounds=36):
         """
-        Reverse chronological content recommendation system.
-
-        :param n_posts: the number of posts to recommend
-        :param visibility_rounds: the number of visibility rounds
+        Initialize reverse chronological recommendation system.
+        
+        Args:
+            n_posts (int, optional): Number of posts to recommend. Defaults to 10.
+            visibility_rounds (int, optional): Post visibility duration. Defaults to 36.
         """
         super(ReverseChrono, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
@@ -121,13 +187,22 @@ class ReverseChronoPopularity(ContentRecSys):
 
 
 class ReverseChronoFollowers(ContentRecSys):
+    """
+    Chronological feed prioritizing posts from followed users.
+    
+    This system shows a mix of posts from followed users and the general
+    network, with a configurable ratio.
+    """
+    
     def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
         """
-        Reverse chronological followers content recommendation system.
-
-        :param n_posts: the number of posts to recommend
-        :param followers_ratio: the ratio posts from followers to recommend
-        :param visibility_rounds: the number of visibility rounds
+        Initialize followers-prioritizing recommendation system.
+        
+        Args:
+            n_posts (int, optional): Number of posts to recommend. Defaults to 10.
+            followers_ratio (float, optional): Proportion of posts from followed users
+                                              (0.0-1.0). Defaults to 0.6.
+            visibility_rounds (int, optional): Post visibility duration. Defaults to 36.
         """
         super(ReverseChronoFollowers, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds
@@ -184,13 +259,21 @@ class ReverseChronoComments(ContentRecSys):
 
 
 class CommonInterests(ContentRecSys):
+    """
+    Recommends posts matching the user's interests.
+    
+    This system surfaces posts with topics/hashtags that align with
+    the user's declared interests.
+    """
+    
     def __init__(self, n_posts=10, followers_ratio=0.6, visibility_rounds=36):
         """
-        Common interests content recommendation system.
-
-        :param n_posts: the number of posts to recommend
-        :param followers_ratio: the ratio posts from followers to recommend
-        :param visibility_rounds: the number of visibility rounds
+        Initialize interest-based recommendation system.
+        
+        Args:
+            n_posts (int, optional): Number of posts to recommend. Defaults to 10.
+            followers_ratio (float, optional): Proportion from followed users. Defaults to 0.6.
+            visibility_rounds (int, optional): Post visibility duration. Defaults to 36.
         """
         super(CommonInterests, self).__init__(
             n_posts=n_posts, visibility_rounds=visibility_rounds

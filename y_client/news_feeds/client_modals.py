@@ -1,3 +1,25 @@
+"""
+Client Models Module
+
+This module defines SQLAlchemy database models for storing news-related data
+in the Y social network simulation. It manages the local database for articles,
+websites, images, and custom agent prompts.
+
+The module automatically initializes a SQLite database from a clean schema
+template when starting a new simulation.
+
+Database Models:
+    - Articles: News articles fetched from RSS feeds
+    - Websites: News sources/websites with RSS feeds
+    - Images: Images associated with articles
+    - Agent_Custom_Prompt: Custom LLM prompts for specific agents
+
+Global Objects:
+    - base: SQLAlchemy declarative base
+    - engine: Database engine connection
+    - session: Scoped session for database operations
+"""
+
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy as db
@@ -34,6 +56,17 @@ except:
 
 
 class Articles(base):
+    """
+    Database model for news articles.
+    
+    Attributes:
+        id (int): Primary key
+        title (str): Article title (max 200 chars)
+        summary (str): Article summary/description (max 800 chars)
+        website_id (int): Foreign key to Websites table
+        fetched_on (int): Date fetched in YYYYMMDD format
+        link (str): URL to the full article (max 200 chars)
+    """
     __tablename__ = "articles"
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
@@ -44,6 +77,19 @@ class Articles(base):
 
 
 class Websites(base):
+    """
+    Database model for news websites/sources.
+    
+    Attributes:
+        id (int): Primary key
+        name (str): Website/source name (max 100 chars)
+        rss (str): RSS feed URL (max 200 chars)
+        country (str): Country of origin (max 50 chars)
+        language (str): Primary language (max 50 chars)
+        leaning (str): Political leaning (max 50 chars)
+        category (str): Content category (max 50 chars)
+        last_fetched (int): Last fetch date in YYYYMMDD format
+    """
     __tablename__ = "websites"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -56,6 +102,16 @@ class Websites(base):
 
 
 class Images(base):
+    """
+    Database model for images associated with articles.
+    
+    Attributes:
+        id (int): Primary key
+        url (str): Image URL (max 200 chars)
+        description (str): Image description (max 400 chars)
+        article_id (int): Foreign key to Articles table (local articles)
+        remote_article_id (int): ID of article on remote server
+    """
     __tablename__ = "images"
     id = db.Column(db.Integer, primary_key=True)
     url = db.Column(db.String(200), nullable=True)
@@ -65,6 +121,17 @@ class Images(base):
 
 
 class Agent_Custom_Prompt(base):
+    """
+    Database model for custom LLM prompts per agent.
+    
+    Allows individual agents to have personalized system prompts
+    for content generation.
+    
+    Attributes:
+        id (int): Primary key
+        agent_name (str): Name of the agent
+        prompt (str): Custom prompt text
+    """
     __tablename__ = "agent_custom_prompt"
     id = db.Column(db.Integer, primary_key=True)
     agent_name = db.Column(db.TEXT, nullable=False)

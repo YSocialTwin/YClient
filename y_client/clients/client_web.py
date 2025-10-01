@@ -1,3 +1,19 @@
+"""
+Web Client Module
+
+This module provides YClientWeb, a web-based client implementation for running
+Y social network simulations. Unlike the base client, this version manages
+its own database connection and is designed for web application deployment.
+
+The client handles database initialization, agent management, and simulation
+execution through a web interface.
+
+Global Variables:
+    - session: SQLAlchemy database session (initialized on client creation)
+    - engine: Database engine connection
+    - base: SQLAlchemy declarative base
+"""
+
 import json
 import sys
 import os
@@ -16,6 +32,24 @@ base = None
 
 
 class YClientWeb(object):
+    """
+    Web-based client for Y social network simulations.
+    
+    This client is designed for web application deployments and manages
+    its own database connections. It provides a simpler interface compared
+    to YClientBase, focusing on essential simulation features.
+    
+    Attributes:
+        config (dict): Simulation configuration
+        prompts (dict): LLM prompts for agent behaviors
+        base_path (str): Base path for data files
+        agents_owner (str): Owner of the simulation
+        days (int): Total simulation days
+        slots (int): Time slots per day
+        first_run (bool): Whether this is the first simulation run
+        (plus various simulation parameters from config)
+    """
+    
     def __init__(
         self,
         config_file,
@@ -27,13 +61,31 @@ class YClientWeb(object):
         network=None,
     ):
         """
-        Initialize the YClient object
-
-        :param config_file: the configuration file for the simulation in JSON format
-        :param agents_filename: the file containing the agents in JSON format
-        :param agents_output: the file to save the generated agents in JSON format
-        :param owner: the owner of the simulation
-        :param first_run: if it is the first run of the simulation
+        Initialize the web-based YClient simulation environment.
+        
+        This constructor sets up the simulation with database connections,
+        loads configuration and prompts, and prepares for agent creation
+        and simulation execution.
+        
+        Args:
+            config_file (dict): Configuration dictionary (not filename) containing
+                               simulation parameters
+            data_base_path (str): Path to directory containing prompts.json and other
+                                 data files
+            agents_filename (str, optional): Path to JSON file with pre-existing agents.
+                                            Defaults to None.
+            agents_output (str, optional): Path to save generated agents. 
+                                          Defaults to "agents.json".
+            owner (str, optional): Username of simulation owner. Defaults to "admin".
+            first_run (bool, optional): Whether this is the first run (affects setup).
+                                       Defaults to False.
+            network (optional): Network configuration (currently unused). Defaults to None.
+        
+        Side effects:
+            - Loads prompts from data_base_path/prompts.json
+            - Creates SQLite database from clean schema if it doesn't exist
+            - Initializes global session, engine, and base variables for database access
+            - Normalizes action likelihood probabilities to sum to 1.0
         """
 
         self.first_run = first_run

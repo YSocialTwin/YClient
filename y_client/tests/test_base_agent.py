@@ -14,15 +14,7 @@ import os
 # Add the project root to the Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
 
-# Mock all the problematic imports
-sys.modules['autogen'] = MagicMock()
-sys.modules['y_client.news_feeds.client_modals'] = MagicMock()
-sys.modules['y_client.recsys.ContentRecSys'] = MagicMock()
-sys.modules['y_client.recsys.FollowRecSys'] = MagicMock()
-sys.modules['y_client.classes.annotator'] = MagicMock()
-sys.modules['y_client.news_feeds.feed_reader'] = MagicMock()
-sys.modules['y_client.classes.time'] = MagicMock()
-
+# Import the actual classes - all dependencies are now installed
 from y_client.classes.base_agent import Agent, Agents
 
 

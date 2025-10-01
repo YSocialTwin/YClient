@@ -128,8 +128,11 @@ class YClientWeb(object):
 
         # population filename
         self.agents_filename = (
-            f"{self.base_path}{self.config['simulation']['population']}.json"
+            f"{self.base_path}{self.config['simulation']['population'].replace(' ', '')}.json"
         )
+
+        print(f"Loading agents from {self.agents_filename}")
+
         data = json.load(open(self.agents_filename, "r"))
         for ag in data["agents"]:
             if ag["is_page"] == 0:

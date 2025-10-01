@@ -40,7 +40,7 @@ class YClientWeb(object):
         self.base_path = data_base_path
         self.config = config_file
 
-        self.prompts = json.load(open(f"{data_base_path}prompts.json", "r"))
+        self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 
         self.agents_owner = owner
         self.agents_filename = agents_filename
@@ -127,8 +127,11 @@ class YClientWeb(object):
         import y_client.recsys as frecsys
 
         # population filename
-        self.agents_filename = (
-            f"{self.base_path}{self.config['simulation']['population']}.json"
+        population_name = self.config['simulation']['population']
+        # Sanitize filename by replacing spaces with underscores
+        population_name = population_name.replace(' ', '_')
+        self.agents_filename = os.path.join(
+            self.base_path, f"{population_name}.json"
         )
         data = json.load(open(self.agents_filename, "r"))
         for ag in data["agents"]:
@@ -350,7 +353,7 @@ class YClientWeb(object):
         users_id_map = {}
 
         if self.first_run and self.network is not None:  # self.run
-            with open(f"{self.base_path}{self.network}", "r") as f:
+            with open(os.path.join(self.base_path, self.network), "r") as f:
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
                 for l in f:

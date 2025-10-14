@@ -1,3 +1,11 @@
+"""
+Time Management Module
+
+This module provides time management functionality for the Y social network simulation.
+It handles the simulation clock, tracking days and time slots (hours), and synchronizing
+with the server's time state.
+"""
+
 import json
 from requests import get, post
 
@@ -5,11 +13,27 @@ __all__ = ["SimulationSlot"]
 
 
 class SimulationSlot(object):
+    """
+    Manages simulation time by tracking days and hourly time slots.
+    
+    This class synchronizes with the server to maintain the current simulation time,
+    which is divided into days (24-hour periods) and slots (individual hours).
+    It provides methods to query and increment the simulation time.
+    
+    Attributes:
+        base_url (str): Base URL for the simulation server API
+        day (int): Current simulation day (0-indexed)
+        slot (int): Current time slot within the day (0-23, representing hours)
+        id (int): Unique identifier for the current time point
+    """
+    
     def __init__(self, config):
         """
-        Initialize the SimulationSlot object.
-
-        :param config: the configuration dictionary
+        Initialize the SimulationSlot object and sync with server time.
+        
+        Args:
+            config (dict): Configuration dictionary containing:
+                - servers.api (str): Base URL for the simulation server API
         """
         self.base_url = config["servers"]["api"]
 
@@ -26,9 +50,16 @@ class SimulationSlot(object):
 
     def get_current_slot(self):
         """
-        Get the current slot.
-
-        :return: the current slot, day and id
+        Query and update the current simulation time from the server.
+        
+        This method fetches the current time state from the simulation server
+        and updates the local time attributes (day, slot, id).
+        
+        Returns:
+            tuple: A tuple containing (id, day, slot) representing:
+                - id (int): Unique identifier for the current time point
+                - day (int): Current simulation day
+                - slot (int): Current time slot (hour) within the day
         """
 
         api_url = f"{self.base_url}current_time"
@@ -46,7 +77,18 @@ class SimulationSlot(object):
 
     def increment_slot(self):
         """
-        Update the current slot.
+        Advance the simulation time by one slot (hour).
+        
+        This method increments the simulation time by one slot. If the current slot
+        is 23 (last hour of the day), it advances to day+1, slot 0. The method
+        only updates the server if the new time is ahead of the current server time,
+        preventing backwards time travel.
+        
+        The time wraps around at slot 23: (day=0, slot=23) -> (day=1, slot=0)
+        
+        Side effects:
+            Updates self.day, self.slot, and self.id with the new time values
+            after successfully incrementing the server time.
         """
         api_url = f"{self.base_url}update_time"
 

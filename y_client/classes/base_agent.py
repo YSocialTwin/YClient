@@ -1,3 +1,19 @@
+"""
+Base Agent Module
+
+This module provides the core Agent class for the Y social network simulation.
+Agents represent individual users who can perform various social actions like
+posting, commenting, replying, liking, following, and consuming news content.
+
+The Agent class integrates with LLM backends to generate realistic human-like
+behavior, uses recommendation systems for content and follow suggestions,
+and maintains personality traits based on the Big Five model.
+
+Classes:
+    - Agent: Individual user agent with social network capabilities
+    - Agents: Collection/manager for multiple Agent instances
+"""
+
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
 from y_client.news_feeds.client_modals import (
@@ -22,6 +38,42 @@ __all__ = ["Agent", "Agents"]
 
 
 class Agent(object):
+    """
+    Represents an individual user agent in the Y social network simulation.
+    
+    The Agent class models a social network user with demographic attributes,
+    personality traits, interests, and the ability to perform various social
+    actions. Agents use LLM backends to generate realistic content and make
+    decisions based on their personality, interests, and political leanings.
+    
+    Key Features:
+        - Posts original content and news articles
+        - Comments on and replies to posts
+        - Likes and reshares content
+        - Follows and unfollows other users
+        - Uses content and follow recommendation systems
+        - Maintains Big Five personality traits
+        - Supports multiple LLM backends for content generation
+        - Can process and describe images
+    
+    Attributes:
+        name (str): Username of the agent
+        email (str): Email address
+        age (int): Age of the user
+        gender (str): Gender
+        nationality (str): Nationality
+        language (str): Primary language
+        interests (list): List of topics/interests
+        leaning (str): Political leaning
+        education_level (str): Education level
+        toxicity (str): Toxicity level ("no", "low", "medium", "high")
+        Big Five personality traits: oe, co, ex, ag, ne (openness, conscientiousness, 
+                                    extraversion, agreeableness, neuroticism)
+        type (str): LLM model type to use (e.g., "llama3", "gpt-4")
+        round_actions (int): Number of actions per time slot
+        user_id (int): Unique identifier assigned by the server
+    """
+    
     def __init__(
         self,
         name: str,
@@ -52,29 +104,49 @@ class Agent(object):
         **kwargs,
     ):
         """
-        Initialize the Agent object.
-
-        :param name: the name of the agent
-        :param email: the email of the agent
-        :param pwd: the password of the agent
-        :param age: the age of the agent
-        :param interests: the interests of the agent
-        :param leaning: the leaning of the agent
-        :param ag_type: the type of the agent
-        :param load: whether to load the agent from file or not
-        :param recsys: the content recommendation system
-        :param frecsys: the follow recommendation system
-        :param config: the configuration dictionary
-        :param big_five: the big five personality traits
-        :param language: the language of the agent
-        :param owner: the owner of the agent
-        :param education_level: the education level of the agent
-        :param joined_on: the joined on date of the agent
-        :param round_actions: the number of daily actions
-        :param gender: the agent gender
-        :param nationality: the agent nationality
-        :param toxicity: the toxicity level of the agent, default is "no"
-        :param api_key: the LLM server api key, default is NULL (self-hosted)
+        Initialize an Agent with demographic, personality, and configuration attributes.
+        
+        This constructor can operate in two modes:
+        1. Web mode (if 'web' in kwargs): Delegates to __web_init for server-based setup
+        2. Standard mode: Initializes agent locally or loads from existing state
+        
+        Args:
+            name (str): Username for the agent (no spaces)
+            email (str): Email address for the agent
+            pwd (str, optional): Password for authentication. Defaults to None.
+            age (int, optional): Age of the user. Defaults to None.
+            interests (list, optional): List of topics/interests. Defaults to None.
+            leaning (str, optional): Political leaning. Defaults to None.
+            ag_type (str, optional): LLM model type (e.g., "llama3", "gpt-4"). Defaults to "llama3".
+            load (bool, optional): Whether to load agent from existing state. Defaults to False.
+            recsys (ContentRecSys, optional): Content recommendation system instance. Defaults to None.
+            frecsys (FollowRecSys, optional): Follow recommendation system instance. Defaults to None.
+            config (dict, optional): Configuration dictionary with server URLs, agent parameters,
+                                    and simulation settings. Defaults to None.
+            big_five (dict, optional): Big Five personality traits with keys:
+                                      'oe' (openness), 'co' (conscientiousness),
+                                      'ex' (extraversion), 'ag' (agreeableness),
+                                      'ne' (neuroticism). Defaults to None.
+            language (str, optional): Primary language for content generation. Defaults to None.
+            owner (str, optional): Username of the agent owner/creator. Defaults to None.
+            education_level (str, optional): Education level. Defaults to None.
+            joined_on (int, optional): Timestamp when agent joined the network. Defaults to None.
+            round_actions (int, optional): Number of actions per time slot. Defaults to 3.
+            gender (str, optional): Gender. Defaults to None.
+            nationality (str, optional): Nationality. Defaults to None.
+            toxicity (str, optional): Toxicity level ("no", "low", "medium", "high").
+                                     Defaults to "no".
+            api_key (str, optional): API key for LLM services. Defaults to "NULL" (self-hosted).
+            is_page (int, optional): Flag indicating if this is a page agent (1) or user (0).
+                                    Defaults to 0.
+            daily_activity_level (int, optional): Activity level multiplier. Defaults to 1.
+            profession (str, optional): Professional occupation. Defaults to None.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments. 'web' key triggers web initialization mode.
+        
+        Raises:
+            Various exceptions may be raised during server communication or if required
+            configuration parameters are missing.
         """
 
         if "web" in kwargs:

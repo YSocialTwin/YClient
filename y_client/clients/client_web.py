@@ -220,6 +220,7 @@ class YClientWeb(object):
                             daily_activity_level=ag["daily_activity_level"],
                             profession=ag["profession"],
                             prompt=ag["prompts"] if "prompts" in ag else None,
+                            activity_profile=ag["activity_profile"]
                         )
 
                 agent.set_prompts(self.prompts)

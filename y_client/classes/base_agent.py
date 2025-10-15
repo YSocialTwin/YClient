@@ -330,6 +330,7 @@ class Agent(object):
         is_page: int = 0,
         daily_activity_level: int = 1,
         profession: str = None,
+        activity_profile: str = None,
         *args,
         **kwargs,
     ):
@@ -349,6 +350,7 @@ class Agent(object):
         self.name = name
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
+        self.activity_profile = activity_profile
 
         if "prompts" in kwargs:
             self.prompts = kwargs["prompts"]
@@ -660,6 +662,7 @@ class Agent(object):
                 "is_page": self.is_page,
                 "daily_activity_level": self.daily_activity_level,
                 "profession": self.profession,
+                "activity_profile": self.activity_profile,
             }
         )
 
@@ -1795,6 +1798,7 @@ class Agent(object):
             "is_page": self.is_page,
             "daily_activity_level": self.daily_activity_level,
             "profession": self.profession,
+            "activity_profile": self.activity_profile,
         }
 
     def __clean_emotion(self, text):

@@ -351,6 +351,7 @@ class Agent(object):
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
         self.activity_profile = activity_profile
+        self.annotate_emotions = config["simulation"]["emotion_annotation"]
 
         if "prompts" in kwargs:
             self.prompts = kwargs["prompts"]
@@ -722,6 +723,29 @@ class Agent(object):
 
         return interests, interests_id
 
+    def __emotion_annotation(self, text_to_annotate: str):
+        """
+        Annotate the emotions in the text.
+
+        :param text: the text to annotate
+        :return: the annotated emotions
+        """
+
+        emotion_agent = AssistantAgent(
+            name="EmotionAnnotator",
+            llm_config=self.llm_config,
+            system_message=self.prompts['handler_instructions'],
+            max_consecutive_auto_reply=1,
+        )
+
+        prompt = f"Annotate the following text with the emotions it elicits:\n\n{text_to_annotate}. Answer with a JSON formatted list of emotions only."
+        response = emotion_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
+
+        emotion_eval = response.lower()
+        emotion_eval = self.__clean_emotion(emotion_eval)
+
+        return emotion_eval
+
     def post(self, tid):
         """
         Post a message to the service.
@@ -748,8 +772,8 @@ class Agent(object):
         if len(sentiment) == 0:
             self.topics_opinions = ""
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
+        user_agent = AssistantAgent(
+            name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
                 self.prompts["agent_roleplay"], interest=interests
@@ -757,26 +781,13 @@ class Agent(object):
             max_consecutive_auto_reply=1,
         )
 
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.prompts["handler_instructions"],
-            max_consecutive_auto_reply=1,
-        )
-
-        u2.initiate_chat(
-            u1,
-            message=self.__effify(self.prompts["handler_post"]),
-            silent=True,
-            max_round=1,
-        )
-
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
-
-        post_text = u2.chat_messages[u1][-2]["content"]
-
+        prompt = self.__effify(self.prompts["handler_post"])
+        post_text = user_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
         post_text = self.__clean_text(post_text)
+
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
 
         # avoid posting empty messages
         if len(post_text) < 3:
@@ -796,9 +807,6 @@ class Agent(object):
                 "topics": interests_id,
             }
         )
-
-        u1.reset()
-        u2.reset()
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -935,8 +943,8 @@ class Agent(object):
             if len(sentiment) == 0:
                 self.topics_opinions = ""
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
+        user_agent = AssistantAgent(
+            name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
                 self.prompts["agent_roleplay_comments_share"], interest=interests
@@ -944,27 +952,13 @@ class Agent(object):
             max_consecutive_auto_reply=1,
         )
 
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
-            max_consecutive_auto_reply=1,
-        )
-
-        u2.initiate_chat(
-            u1,
-            message=self.__effify(self.prompts["handler_comment"], conv=conv),
-            silent=True,
-            max_round=1,
-        )
-
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
-
-        post_text = u2.chat_messages[u1][-2]["content"]
-
-        # cleaning the post text of some unwanted characters
+        prompt = self.__effify(self.prompts["handler_comment"], conv=conv)
+        post_text = user_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
         post_text = self.__clean_text(post_text)
+
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
 
         # avoid posting empty messages
         if len(post_text) < 3:
@@ -1073,8 +1067,8 @@ class Agent(object):
         else:
             interests, _ = self.__get_interests(tid)
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
+        user_agent = AssistantAgent(
+            name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
                 self.prompts["agent_roleplay_comments_share"], interest=interests
@@ -1082,27 +1076,8 @@ class Agent(object):
             max_consecutive_auto_reply=1,
         )
 
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,  # self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
-            max_consecutive_auto_reply=1,
-        )
-
-        u2.initiate_chat(
-            u1,
-            message=self.__effify(
-                self.prompts["handler_share"], article=article, post_text=post_text
-            ),
-            silent=True,
-            max_round=1,
-        )
-
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
-
-        post_text = u2.chat_messages[u1][-2]["content"]
-
+        prompt = self.__effify(self.prompts["handler_share"], article=article, post_text=post_text)
+        post_text = user_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
         post_text = (
             post_text.split(":")[-1]
             .split("-")[-1]
@@ -1115,6 +1090,10 @@ class Agent(object):
             .replace("@,", "")
         )
         post_text = post_text.replace(f"@{self.name}", "")
+
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -1695,39 +1674,22 @@ class Agent(object):
 
         self.topics_opinions = ""
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
+        user_agent = AssistantAgent(
+            name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
-                self.prompts["agent_roleplay_comments_share"], interest=[]  # interests
+                self.prompts["agent_roleplay_comments_share"], interest=[]
             ),
             max_consecutive_auto_reply=1,
         )
 
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
-            max_consecutive_auto_reply=1,
-        )
+        prompt = self.__effify(self.prompts["handler_comment_image"], descr=image.description)
+        post_text = user_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
+        post_text = self.__clean_text(post_text)
 
-        u2.initiate_chat(
-            u1,
-            message=self.__effify(
-                self.prompts["handler_comment_image"], descr=image.description
-            ),
-            silent=True,
-            max_round=1,
-        )
-
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-
-        emotion_eval = self.__clean_emotion(emotion_eval)
-
-        post_text = u2.chat_messages[u1][-2]["content"]
-
-        # cleaning the post text of some unwanted characters
-        # post_text = self.__clean_text(post_text)
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
 
         # avoid posting empty messages
         if len(post_text) < 3:

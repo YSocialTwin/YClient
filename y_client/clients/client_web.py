@@ -125,6 +125,9 @@ class YClientWeb(object):
         # posts' parameters
         self.visibility_rd = int(self.config["posts"]["visibility_rounds"])
 
+        # emotion annotation
+        self.emotions_annotation = self.config["simulation"]["emotion_annotation"]
+
         ##############
         BASE_DIR = os.path.dirname(os.path.abspath(__file__)).split("y_client")[0]
         if not os.path.exists(
@@ -263,6 +266,7 @@ class YClientWeb(object):
                         frecsys=follow_recsys,
                         is_page=1,
                         web=True,
+                        activity_profile=ag["activity_profile"]
                     )
 
                     page.set_prompts(self.prompts)

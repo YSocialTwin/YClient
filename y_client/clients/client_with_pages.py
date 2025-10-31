@@ -6,11 +6,12 @@ addition to regular user agents. Pages automatically publish news content
 from RSS feeds during the simulation.
 """
 
+import json
+
+import tqdm
+from y_client import Agent, PageAgent
 from y_client.clients.client_base import YClientBase
 from y_client.utils import generate_page
-import tqdm
-import json
-from y_client import Agent, PageAgent
 
 
 class YClientWithPages(YClientBase):

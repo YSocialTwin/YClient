@@ -12,17 +12,20 @@ Classes:
     - FeedLinkExtractor: Utility to discover RSS feed URLs from website pages
 """
 
+import json
+import re
+
 import feedparser
 import numpy as np
-import json
-import requests, re
+import requests
 from bs4 import BeautifulSoup
 
 try:
-    from .client_modals import Websites, Articles, Images, session
+    from .client_modals import Articles, Images, Websites, session
 except:
     from y_client.clients.client_web import session
     from .client_modals import Websites, Articles, Images
+
 import datetime
 
 

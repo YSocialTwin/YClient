@@ -20,14 +20,14 @@ Global Objects:
     - session: Scoped session for database operations
 """
 
+import json
+import os
+import os.path
+import shutil
+
+import sqlalchemy as db
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
-import sqlalchemy as db
-import os.path
-import json
-import shutil
-import os
-
 
 try:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))

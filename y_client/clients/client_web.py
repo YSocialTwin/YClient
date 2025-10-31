@@ -15,14 +15,14 @@ Global Variables:
 """
 
 import json
-import sys
 import os
 import shutil
-from sqlalchemy.ext.declarative import declarative_base
+import sys
+
 import sqlalchemy as db
 from requests import post
 from sqlalchemy import orm
-
+from sqlalchemy.ext.declarative import declarative_base
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
@@ -177,9 +177,9 @@ class YClientWeb(object):
 
         :return:
         """
-        from y_client.classes import Agent, PageAgent
         import y_client.recsys as recsys
         import y_client.recsys as frecsys
+        from y_client.classes import Agent, PageAgent
 
         # population filename
         self.agents_filename = (

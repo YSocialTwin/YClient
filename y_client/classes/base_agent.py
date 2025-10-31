@@ -14,25 +14,26 @@ Classes:
     - Agents: Collection/manager for multiple Agent instances
 """
 
+import json
+import random
+import re
+
+import numpy as np
+from autogen import AssistantAgent
+from requests import get, post
+from sqlalchemy.sql.expression import func
+from y_client.classes.annotator import Annotator
+from y_client.classes.time import SimulationSlot
+from y_client.news_feeds.client_modals import (
+    Agent_Custom_Prompt,
+    Articles,
+    Images,
+    Websites,
+    session,
+)
+from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
-from y_client.news_feeds.client_modals import (
-    Websites,
-    Images,
-    Articles,
-    session,
-    Agent_Custom_Prompt,
-)
-from y_client.classes.annotator import Annotator
-from sqlalchemy.sql.expression import func
-from y_client.news_feeds.feed_reader import NewsFeed
-from y_client.classes.time import SimulationSlot
-import random
-from requests import get, post
-import json
-from autogen import AssistantAgent
-import numpy as np
-import re
 
 __all__ = ["Agent", "Agents"]
 

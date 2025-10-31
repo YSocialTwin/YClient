@@ -1,4 +1,7 @@
-import os, sys, json, shutil
+import json
+import os
+import shutil
+import sys
 
 if __name__ == "__main__":
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -85,8 +88,8 @@ if __name__ == "__main__":
     # set the current config file (needed to generate the database)
     shutil.copyfile(config_file, f"experiments{os.sep}current_config.json")
 
-    import y_client.recsys
     import y_client.clients
+    import y_client.recsys
 
     if not os.path.exists("./experiments"):
         os.mkdir("./experiments")

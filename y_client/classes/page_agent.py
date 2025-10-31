@@ -6,13 +6,14 @@ in the Y social network simulation. Page agents differ from regular agents by
 focusing solely on publishing news content from RSS feeds.
 """
 
+import json
+import re
+
+from autogen import AssistantAgent
+from requests import post
 from y_client.classes.base_agent import Agent
 from y_client.news_feeds.client_modals import Websites, session
 from y_client.news_feeds.feed_reader import NewsFeed
-from requests import post
-from autogen import AssistantAgent
-import json
-import re
 
 
 class PageAgent(Agent):

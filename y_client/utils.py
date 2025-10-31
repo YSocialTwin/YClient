@@ -10,10 +10,11 @@ Functions:
     - generate_page: Generate a synthetic page agent for news feeds
 """
 
-import random
 import json
-import faker
 import os
+import random
+
+import faker
 
 try:
     from y_client import Agent, PageAgent

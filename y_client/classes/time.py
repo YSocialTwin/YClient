@@ -7,6 +7,7 @@ with the server's time state.
 """
 
 import json
+
 from requests import get, post
 
 __all__ = ["SimulationSlot"]

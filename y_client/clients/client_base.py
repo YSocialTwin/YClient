@@ -9,19 +9,20 @@ Classes:
     - YClientBase: Base client for managing and running social network simulations
 """
 
-import random
-import tqdm
-import sys
 import os
+import random
+import sys
+
 import networkx as nx
+import tqdm
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from y_client import Agent, Agents, SimulationSlot
+from y_client.news_feeds import Articles, Feeds, Images, Websites, session
 from y_client.recsys import *
 from y_client.utils import generate_user
-from y_client.news_feeds import Feeds, session, Websites, Articles, Images
 
 
 class YClientBase(object):

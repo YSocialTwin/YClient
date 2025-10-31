@@ -22,6 +22,7 @@ to fetch recommended posts.
 """
 
 import json
+
 from requests import post
 
 

@@ -72,19 +72,42 @@ class AgentLogger:
 _default_logger = None
 
 
-def get_logger(log_file="agent_execution.log"):
+def get_logger(log_file=None):
     """
     Get the global logger instance or create one if it doesn't exist.
     
     Args:
-        log_file (str): Path to the log file. Defaults to "agent_execution.log"
+        log_file (str, optional): Path to the log file. If None and no logger exists,
+                                  defaults to "agent_execution.log". If a logger already
+                                  exists, the existing logger is returned regardless of
+                                  this parameter.
     
     Returns:
         AgentLogger: The global logger instance
     """
     global _default_logger
     if _default_logger is None:
+        if log_file is None:
+            log_file = "agent_execution.log"
         _default_logger = AgentLogger(log_file)
+    return _default_logger
+
+
+def set_logger(log_file):
+    """
+    Set or reset the global logger instance with a specific log file.
+    
+    This function allows reconfiguring the logger to use a different log file.
+    Use this at client initialization to specify a custom log location.
+    
+    Args:
+        log_file (str): Path to the log file
+    
+    Returns:
+        AgentLogger: The newly configured logger instance
+    """
+    global _default_logger
+    _default_logger = AgentLogger(log_file)
     return _default_logger
 
 

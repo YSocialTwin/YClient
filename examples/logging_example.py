@@ -9,14 +9,18 @@ This script shows how to:
 
 import json
 import os
+import sys
 from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Example: Setting up logging programmatically
 def example_custom_log_path():
     """Example of using a custom log file path"""
     
     # Option 1: Pass log_file parameter when creating client
-    from y_client.clients import YClientBase
+    # from y_client.clients import YClientBase
     
     # Create logs directory if it doesn't exist
     log_dir = Path("logs/simulation_run_1")

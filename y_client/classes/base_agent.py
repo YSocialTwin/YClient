@@ -990,6 +990,7 @@ class Agent(object):
         api_url = f"{self.base_url}/comment"
         post(f"{api_url}", headers=headers, data=st)
 
+        res = None
         if self.probability_of_secondary_follow > 0:
             res = self.__evaluate_follow(post_text, post_id, "follow", tid)
 
@@ -1003,9 +1004,8 @@ class Agent(object):
         self.__update_user_interests(data, tid)
 
         # if not followed, test unfollow
-        if res is None:
-            if self.probability_of_secondary_follow > 0:
-                self.__evaluate_follow(post_text, post_id, "unfollow", tid)
+        if self.probability_of_secondary_follow > 0 and res is None:
+            self.__evaluate_follow(post_text, post_id, "unfollow", tid)
 
     def __update_user_interests(self, post_id, tid):
         """

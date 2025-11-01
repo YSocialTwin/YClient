@@ -9,7 +9,7 @@ import json
 import time
 import functools
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -58,7 +58,7 @@ class AgentLogger:
             error (str, optional): Error message if method failed. Defaults to None.
         """
         log_entry = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "agent_name": agent_name,
             "method_name": method_name,
             "execution_time_seconds": round(execution_time, 4),

@@ -989,7 +989,9 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         api_url = f"{self.base_url}/comment"
         post(f"{api_url}", headers=headers, data=st)
-        res = self.__evaluate_follow(post_text, post_id, "follow", tid)
+
+        if self.probability_of_secondary_follow > 0:
+            res = self.__evaluate_follow(post_text, post_id, "follow", tid)
 
         # update topic of interest with the ones from the post
         # get the root post id
@@ -1002,7 +1004,8 @@ class Agent(object):
 
         # if not followed, test unfollow
         if res is None:
-            self.__evaluate_follow(post_text, post_id, "unfollow", tid)
+            if self.probability_of_secondary_follow > 0:
+                self.__evaluate_follow(post_text, post_id, "unfollow", tid)
 
     def __update_user_interests(self, post_id, tid):
         """
@@ -1183,7 +1186,8 @@ class Agent(object):
             )
             flag = "unfollow"
             # always evaluate unfollow in case of dislike
-            self.__evaluate_follow(post_text, post_id, flag, tid)
+            if self.probability_of_secondary_follow > 0:
+                self.__evaluate_follow(post_text, post_id, flag, tid)
         else:
             return
 
@@ -1193,8 +1197,9 @@ class Agent(object):
         post(f"{api_url}", headers=headers, data=st)
 
         # evaluate follow only upon explicit request
-        if check_follow and flag == "follow":
-            self.__evaluate_follow(post_text, post_id, flag, tid)
+        if self.probability_of_secondary_follow > 0:
+            if check_follow and flag == "follow":
+                self.__evaluate_follow(post_text, post_id, flag, tid)
 
         # update user interests after reaction
         self.__update_user_interests(post_id, tid)

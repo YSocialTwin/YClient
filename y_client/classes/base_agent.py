@@ -181,6 +181,9 @@ class Agent(object):
                 **kwargs,
             )
         else:
+            self.probability_of_daily_follow = float(config["agents"][
+                "probability_of_daily_follow"
+            ])
             self.probability_of_secondary_follow = float(config["agents"][
                 "probability_of_secondary_follow"
             ])
@@ -339,6 +342,9 @@ class Agent(object):
         self.probability_of_secondary_follow = float(config["agents"][
             "probability_of_secondary_follow"
         ])
+        self.probability_of_daily_follow = float(config["agents"][
+                                                     "probability_of_daily_follow"
+                                                 ])
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
@@ -1475,16 +1481,17 @@ class Agent(object):
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
         elif "FOLLOW" in text.split():
-            candidates = self.search_follow()
-            if len(candidates) > 0:
-                tot = sum([float(v) for v in candidates.values()])
-                probs = [v / tot for v in candidates.values()]
-                selected = np.random.choice(
-                    [int(c) for c in candidates],
-                    p=probs,
-                    size=1,
-                )[0]
-                self.follow(tid=tid, target=selected, action="follow")
+            if self.probability_of_daily_follow > 0:
+                candidates = self.search_follow()
+                if len(candidates) > 0:
+                    tot = sum([float(v) for v in candidates.values()])
+                    probs = [v / tot for v in candidates.values()]
+                    selected = np.random.choice(
+                        [int(c) for c in candidates],
+                        p=probs,
+                        size=1,
+                    )[0]
+                    self.follow(tid=tid, target=selected, action="follow")
 
         elif "SHARE" in text.split():
             candidates = json.loads(self.read(article=True))

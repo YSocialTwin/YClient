@@ -67,6 +67,13 @@ if __name__ == "__main__":
         help="Name of the graph file (CSV format, number of nodes equal to the starting agents) "
         "to be used for the simulation",
     )
+    
+    parser.add_argument(
+        "-l",
+        "--log_file",
+        default="agent_execution.log",
+        help="Path to the log file for agent execution time tracking. Default is 'agent_execution.log'",
+    )
 
     args = parser.parse_args()
 
@@ -106,6 +113,7 @@ if __name__ == "__main__":
         owner=agents_owner,
         agents_output=output,
         graph_file=graph_file,
+        log_file=args.log_file,
     )
 
     if args.reset:

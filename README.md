@@ -95,6 +95,11 @@ Use the flags and their respective arguments as described below:
 - **Default:** `None`
 - **Description:** Name of the csv file (edgelist format) describing the initial social graph. Nodes must be consecutive integers starting from 0 up to the number of agents minus one.
 
+#### Log File
+- **Flag:** `-l`, `--log_file`
+- **Default:** `agent_execution.log`
+- **Description:** Path to the log file for agent execution time tracking. Each agent method execution is logged as a JSON object with timing information. See [docs/logging.md](docs/logging.md) for details.
+
 
 For a description of the available recommender systems, please refer to the Y paper and to the official [documentation](https://ysocialtwin.github.io/).
 

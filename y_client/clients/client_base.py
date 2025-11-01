@@ -9,17 +9,20 @@ Classes:
     - YClientBase: Base client for managing and running social network simulations
 """
 
+import json
 import os
 import random
 import sys
 
 import networkx as nx
 import tqdm
+from requests import post
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from y_client import Agent, Agents, SimulationSlot
+from y_client.logger import set_logger
 from y_client.news_feeds import Articles, Feeds, Images, Websites, session
 from y_client.recsys import *
 from y_client.utils import generate_user
@@ -59,6 +62,7 @@ class YClientBase(object):
         graph_file=None,
         agents_output="agents.json",
         owner="admin",
+        log_file="agent_execution.log",
     ):
         """
         Initialize the YClient simulation environment.
@@ -81,6 +85,8 @@ class YClientBase(object):
                                           Defaults to "agents.json".
             owner (str, optional): Username of the simulation owner/administrator.
                                   Defaults to "admin".
+            log_file (str, optional): Path to the log file for agent execution time tracking.
+                                     Defaults to "agent_execution.log" in the current directory.
         
         Raises:
             Exception: If prompts_filename is None (prompts are required)
@@ -91,9 +97,13 @@ class YClientBase(object):
             - Creates agent and feed management structures
             - Loads social network graph if provided
             - Normalizes action likelihood probabilities to sum to 1.0
+            - Configures the global logger for agent execution time tracking
         """
         if prompts_filename is None:
             raise Exception("Prompts file not found")
+
+        # Configure the logger with the specified log file
+        set_logger(log_file)
 
         self.prompts = json.load(open(prompts_filename, "r"))
         self.config = json.load(open(config_filename, "r"))

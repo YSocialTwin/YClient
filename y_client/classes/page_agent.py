@@ -12,6 +12,7 @@ import re
 from autogen import AssistantAgent
 from requests import post
 from y_client.classes.base_agent import Agent
+from y_client.logger import log_execution_time
 from y_client.news_feeds.client_modals import Websites, session
 from y_client.news_feeds.feed_reader import NewsFeed
 
@@ -45,6 +46,7 @@ class PageAgent(Agent):
         self.feed_url = kwargs.get("feed_url")
         self.name = kwargs.get("name")
 
+    @log_execution_time
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """
         Select and perform the page's action for the current time slot.
@@ -127,6 +129,7 @@ class PageAgent(Agent):
         """
         return
 
+    @log_execution_time
     def news(self, tid, article, website):
         """
         Post a news article to the social network.

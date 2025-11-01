@@ -31,11 +31,19 @@ class AgentLogger:
         Args:
             log_file (str): Path to the log file. Defaults to "agent_execution.log"
                            in the current working directory.
+        
+        Raises:
+            OSError: If the log directory cannot be created due to permission issues
         """
         self.log_file = log_file
         # Ensure log directory exists
         log_path = Path(log_file)
-        log_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            import sys
+            print(f"Warning: Cannot create log directory {log_path.parent}: {e}", file=sys.stderr)
+            print(f"Logging will be attempted but may fail.", file=sys.stderr)
     
     def log_execution(self, agent_name, method_name, execution_time, args_info=None, success=True, error=None):
         """
@@ -63,9 +71,14 @@ class AgentLogger:
         if error:
             log_entry["error"] = str(error)
         
-        # Write as single-line JSON
-        with open(self.log_file, 'a') as f:
-            f.write(json.dumps(log_entry) + '\n')
+        # Write as single-line JSON with error handling
+        try:
+            with open(self.log_file, 'a') as f:
+                f.write(json.dumps(log_entry) + '\n')
+        except IOError as e:
+            # If logging fails, print to stderr but don't crash the application
+            import sys
+            print(f"Warning: Failed to write to log file {self.log_file}: {e}", file=sys.stderr)
 
 
 # Global logger instance
@@ -140,18 +153,21 @@ def log_execution_time(func):
         agent_name = getattr(self, 'name', 'UnknownAgent')
         method_name = func.__name__
         
-        # Prepare args info (only log tid if present for brevity)
+        # Prepare args info (only log tid and post_id if present for brevity)
         args_info = {}
-        if args:
-            # First positional arg for many methods is 'tid'
-            if len(args) > 0 and isinstance(args[0], int):
-                args_info['tid'] = args[0]
+        
+        # Extract common arguments from kwargs
         if 'tid' in kwargs:
             args_info['tid'] = kwargs['tid']
         if 'post_id' in kwargs:
             args_info['post_id'] = kwargs['post_id']
-        elif len(args) > 1 and isinstance(args[1], int):
-            # Some methods have post_id as second arg
+        
+        # Also check positional args for common patterns
+        # Many methods have tid as first positional arg
+        if args and isinstance(args[0], int) and 'tid' not in args_info:
+            args_info['tid'] = args[0]
+        # Some methods have post_id as first or second positional arg
+        if len(args) > 1 and isinstance(args[1], int) and 'post_id' not in args_info:
             args_info['post_id'] = args[1]
         
         # Measure execution time

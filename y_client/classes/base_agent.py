@@ -181,9 +181,9 @@ class Agent(object):
                 **kwargs,
             )
         else:
-            self.probability_of_secondary_follow = config["agents"][
+            self.probability_of_secondary_follow = float(config["agents"][
                 "probability_of_secondary_follow"
-            ]
+            ])
             self.emotions = config["posts"]["emotions"]
             self.actions_likelihood = config["simulation"]["actions_likelihood"]
             self.base_url = config["servers"]["api"]
@@ -336,9 +336,9 @@ class Agent(object):
         *args,
         **kwargs,
     ):
-        self.probability_of_secondary_follow = config["agents"][
+        self.probability_of_secondary_follow = float(config["agents"][
             "probability_of_secondary_follow"
-        ]
+        ])
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"]
@@ -1213,6 +1213,8 @@ class Agent(object):
         if self.probability_of_secondary_follow > 0:
             if np.random.rand() > self.probability_of_secondary_follow:
                 return None
+        else:
+            return None
 
         u1 = AssistantAgent(
             name=f"{self.name}",

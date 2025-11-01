@@ -24,6 +24,7 @@ from requests import get, post
 from sqlalchemy.sql.expression import func
 from y_client.classes.annotator import Annotator
 from y_client.classes.time import SimulationSlot
+from y_client.logger import log_execution_time
 from y_client.news_feeds.client_modals import (
     Agent_Custom_Prompt,
     Articles,
@@ -747,6 +748,7 @@ class Agent(object):
 
         return emotion_eval
 
+    @log_execution_time
     def post(self, tid):
         """
         Post a message to the service.
@@ -895,6 +897,7 @@ class Agent(object):
         res = json.loads(response.__dict__["_content"].decode("utf-8"))
         return res
 
+    @log_execution_time
     def comment(self, post_id: int, tid, max_length_threads=None):
         """
         Generate a comment to an existing post
@@ -1018,6 +1021,7 @@ class Agent(object):
             data = {"user_id": self.user_id, "interests": data, "round": tid}
             post(f"{api_url}", headers=headers, data=json.dumps(data))
 
+    @log_execution_time
     def share(self, post_id: int, tid):
         """
         Share a post containing a news article.
@@ -1116,6 +1120,7 @@ class Agent(object):
         api_url = f"{self.base_url}/share"
         post(f"{api_url}", headers=headers, data=st)
 
+    @log_execution_time
     def reaction(self, post_id: int, tid: int, check_follow=True):
         """
         Generate a reaction to a post/comment.
@@ -1247,6 +1252,7 @@ class Agent(object):
         else:
             return None
 
+    @log_execution_time
     def follow(
         self, tid: int, target: int = None, post_id: int = None, action="follow"
     ):
@@ -1311,6 +1317,7 @@ class Agent(object):
 
         return response.__dict__["_content"].decode("utf-8")
 
+    @log_execution_time
     def cast(self, post_id: int, tid: int):
         """
         Cast a voting intention (political simulation)
@@ -1390,6 +1397,7 @@ class Agent(object):
 
         return response.__dict__["_content"].decode("utf-8")
 
+    @log_execution_time
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """
         Post a message to the service.
@@ -1492,6 +1500,7 @@ class Agent(object):
 
         return
 
+    @log_execution_time
     def reply(self, tid: int, max_length_thread_reading: int = 5):
         """
         Reply to a mention.
@@ -1510,6 +1519,7 @@ class Agent(object):
                 )
         return
 
+    @log_execution_time
     def read(self, article=False):
         """
         Read n_posts from the service.
@@ -1527,6 +1537,7 @@ class Agent(object):
         """
         return self.content_rec_sys.read_mentions(self.base_url)
 
+    @log_execution_time
     def search(self):
         """
         Read n_posts from the service.
@@ -1535,6 +1546,7 @@ class Agent(object):
         """
         return self.content_rec_sys.search(self.base_url)
 
+    @log_execution_time
     def search_follow(self):
         """
         Read n_posts from the service.
@@ -1661,6 +1673,7 @@ class Agent(object):
 
                     return image, None
 
+    @log_execution_time
     def comment_image(self, image: object, tid: int, article_id: int = None):
         """
         Comment on an image

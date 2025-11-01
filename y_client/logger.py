@@ -53,12 +53,12 @@ class AgentLogger:
             agent_name (str): Name of the agent executing the method
             method_name (str): Name of the method being executed
             execution_time (float): Time taken to execute the method in seconds
-            args_info (dict, optional): Information about method arguments. Defaults to None.
+            args_info (dict, optional): Information about method arguments including tid, day, hour. Defaults to None.
             success (bool, optional): Whether the method executed successfully. Defaults to True.
             error (str, optional): Error message if method failed. Defaults to None.
         """
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "time": datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S'),
             "agent_name": agent_name,
             "method_name": method_name,
             "execution_time_seconds": round(execution_time, 4),
@@ -66,7 +66,13 @@ class AgentLogger:
         }
         
         if args_info:
-            log_entry["args"] = args_info
+            # Include tid, day, and hour from args_info
+            if 'tid' in args_info:
+                log_entry["tid"] = args_info['tid']
+            if 'day' in args_info:
+                log_entry["day"] = args_info['day']
+            if 'hour' in args_info:
+                log_entry["hour"] = args_info['hour']
         
         if error:
             log_entry["error"] = str(error)
@@ -153,22 +159,22 @@ def log_execution_time(func):
         agent_name = getattr(self, 'name', 'UnknownAgent')
         method_name = func.__name__
         
-        # Prepare args info (only log tid and post_id if present for brevity)
+        # Prepare args info (extract tid and calculate day/hour)
         args_info = {}
+        tid = None
         
-        # Extract common arguments from kwargs
+        # Extract tid from kwargs or positional args
         if 'tid' in kwargs:
-            args_info['tid'] = kwargs['tid']
-        if 'post_id' in kwargs:
-            args_info['post_id'] = kwargs['post_id']
+            tid = kwargs['tid']
+        elif args and isinstance(args[0], int):
+            # Many methods have tid as first positional arg
+            tid = args[0]
         
-        # Also check positional args for common patterns
-        # Many methods have tid as first positional arg
-        if args and isinstance(args[0], int) and 'tid' not in args_info:
-            args_info['tid'] = args[0]
-        # Some methods have post_id as first or second positional arg
-        if len(args) > 1 and isinstance(args[1], int) and 'post_id' not in args_info:
-            args_info['post_id'] = args[1]
+        # If we have tid, calculate day and hour (assuming 24 slots per day)
+        if tid is not None:
+            args_info['tid'] = tid
+            args_info['day'] = tid // 24
+            args_info['hour'] = tid % 24
         
         # Measure execution time
         start_time = time.time()

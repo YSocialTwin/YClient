@@ -20,26 +20,27 @@ Each log entry contains the following fields:
 
 ```json
 {
-  "timestamp": "2025-11-01T06:09:20.020355",
-  "agent_name": "Agent1",
-  "method_name": "post",
-  "execution_time_seconds": 0.0501,
+  "time": "2025-11-01 11:38:53",
+  "agent_name": "CharlesHarris",
+  "method_name": "comment",
+  "execution_time_seconds": 1.6934,
   "success": true,
-  "args": {
-    "tid": 5,
-    "post_id": 42
-  }
+  "tid": 108,
+  "day": 4,
+  "hour": 12
 }
 ```
 
 ### Fields
 
-- **timestamp**: UTC timestamp in ISO 8601 format
+- **time**: Timestamp in format 'YYYY-MM-DD HH:MM:SS' (UTC)
 - **agent_name**: Name of the agent executing the method
 - **method_name**: Name of the method being executed
 - **execution_time_seconds**: Time taken to execute the method in seconds (4 decimal places)
 - **success**: Boolean indicating if the method completed successfully
-- **args**: (optional) Dictionary containing relevant method arguments (tid, post_id, etc.)
+- **tid**: (optional) Time slot ID when the method was called
+- **day**: (optional) Simulation day calculated from tid (tid // 24)
+- **hour**: (optional) Simulation hour calculated from tid (tid % 24)
 - **error**: (optional) Error message if the method failed
 
 ## Usage
@@ -141,6 +142,12 @@ cat agent_execution.log | jq -r 'select(.success==false)'
 
 # Get execution times for a specific agent
 cat agent_execution.log | jq -r 'select(.agent_name=="Agent1")'
+
+# Get all actions on a specific simulation day
+cat agent_execution.log | jq -r 'select(.day==4)'
+
+# Group by hour to see activity patterns
+cat agent_execution.log | jq -r '.hour' | sort -n | uniq -c
 ```
 
 ## Best Practices

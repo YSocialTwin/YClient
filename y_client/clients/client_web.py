@@ -60,6 +60,7 @@ class YClientWeb(object):
         first_run=False,
         network=None,
         log_file="agent_execution.log",
+        llm=True
     ):
         """
         Initialize the web-based YClient simulation environment.
@@ -83,6 +84,8 @@ class YClientWeb(object):
             network (optional): Network configuration (currently unused). Defaults to None.
             log_file (str, optional): Path to the log file for agent execution time tracking.
                                      Defaults to "agent_execution.log" in the current directory.
+
+            llm (bool, optional): Whether or not to use LLM for agent behaviors. Defaults to True.
         
         Side effects:
             - Loads prompts from data_base_path/prompts.json
@@ -95,6 +98,8 @@ class YClientWeb(object):
         
         # Configure the logger with the specified log file
         set_logger(log_file)
+
+        self.llm_active = llm
 
         self.first_run = first_run
         self.base_path = data_base_path
@@ -187,7 +192,7 @@ class YClientWeb(object):
         """
         import y_client.recsys as recsys
         import y_client.recsys as frecsys
-        from y_client.classes import Agent, PageAgent
+        from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
 
         # population filename
         self.agents_filename = (
@@ -202,8 +207,9 @@ class YClientWeb(object):
                 self.content_recsys = getattr(recsys, ag["rec_sys"])()
                 self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
-                #try:
-                agent = Agent(
+                if self.llm_active:
+
+                    agent = Agent(
                         name=ag["name"],
                         email=ag["email"],
                         pwd=ag["password"],
@@ -233,6 +239,37 @@ class YClientWeb(object):
                             prompt=ag["prompts"] if "prompts" in ag else None,
                             activity_profile=ag["activity_profile"]
                         )
+                else:
+                    agent = FakeAgent(
+                        name=ag["name"],
+                        email=ag["email"],
+                        pwd=ag["password"],
+                        ag_type=ag["type"],
+                        leaning=ag["leaning"],
+                        interests=ag["interests"][0],
+                        oe=ag["oe"],
+                        co=ag["co"],
+                        ex=ag["ex"],
+                        ag=ag["ag"],
+                        ne=ag["ne"],
+                        education_level=ag["education_level"],
+                        round_actions=ag["round_actions"],
+                        nationality=ag["nationality"],
+                        toxicity=ag["toxicity"],
+                        gender=ag["gender"],
+                        age=ag["age"],
+                        recsys=self.content_recsys,
+                        frecsys=self.follow_recsys,
+                        language=ag["language"],
+                        owner=ag["owner"],
+                        config=self.config,
+                        load=not self.first_run,
+                        web=True,
+                        daily_activity_level=ag["daily_activity_level"],
+                        profession=ag["profession"],
+                        prompt=ag["prompts"] if "prompts" in ag else None,
+                        activity_profile=ag["activity_profile"]
+                    )
 
                 agent.set_prompts(self.prompts)
 
@@ -251,31 +288,59 @@ class YClientWeb(object):
                 follow_recsys = getattr(frecsys, "Jaccard")(leaning_bias=1.5)
 
                 try:
-                    page = PageAgent(
-                        name=ag["name"],
-                        pwd="",
-                        email=ag["email"],
-                        age=0,
-                        ag_type=ag["type"],
-                        leaning=None,
-                        interests=[],
-                        config=self.config,
-                        big_five=big_five,
-                        language=None,
-                        education_level=None,
-                        owner=ag["owner"],
-                        round_actions=ag["round_actions"],
-                        gender=None,
-                        nationality=None,
-                        toxicity=None,
-                        api_key="",
-                        feed_url=ag["feed_url"],
-                        recsys=content_recsys,
-                        frecsys=follow_recsys,
-                        is_page=1,
-                        web=True,
-                        activity_profile=ag["activity_profile"]
-                    )
+
+                    if self.llm_active:
+                        page = PageAgent(
+                            name=ag["name"],
+                            pwd="",
+                            email=ag["email"],
+                            age=0,
+                            ag_type=ag["type"],
+                            leaning=None,
+                            interests=[],
+                            config=self.config,
+                            big_five=big_five,
+                            language=None,
+                            education_level=None,
+                            owner=ag["owner"],
+                            round_actions=ag["round_actions"],
+                            gender=None,
+                            nationality=None,
+                            toxicity=None,
+                            api_key="",
+                            feed_url=ag["feed_url"],
+                            recsys=content_recsys,
+                            frecsys=follow_recsys,
+                            is_page=1,
+                            web=True,
+                            activity_profile=ag["activity_profile"]
+                        )
+                    else:
+                        page = FakePageAgent(
+                            name=ag["name"],
+                            pwd="",
+                            email=ag["email"],
+                            age=0,
+                            ag_type=ag["type"],
+                            leaning=None,
+                            interests=[],
+                            config=self.config,
+                            big_five=big_five,
+                            language=None,
+                            education_level=None,
+                            owner=ag["owner"],
+                            round_actions=ag["round_actions"],
+                            gender=None,
+                            nationality=None,
+                            toxicity=None,
+                            api_key="",
+                            feed_url=ag["feed_url"],
+                            recsys=content_recsys,
+                            frecsys=follow_recsys,
+                            is_page=1,
+                            web=True,
+                            activity_profile=ag["activity_profile"]
+                        )
 
                     page.set_prompts(self.prompts)
                     self.agents.add_agent(page)
@@ -328,29 +393,48 @@ class YClientWeb(object):
         :param a_file: the JSON file containing the agents
         """
         agents = json.load(open(a_file, "r"))
-        from y_client.classes import Agent, PageAgent
+        from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
 
         for a in agents["agents"]:
             try:
                 if a["is_page"] == 0:
-                    ag = Agent(
-                        name=a["name"],
-                        email=a["email"],
-                        load=True,
-                        config=self.config,
-                        web=True,
-                    )
+                    if self.llm_active:
+                        ag = Agent(
+                            name=a["name"],
+                            email=a["email"],
+                            load=True,
+                            config=self.config,
+                            web=True,
+                        )
+                    else:
+                        ag = FakeAgent(
+                            name=a["name"],
+                            email=a["email"],
+                            load=True,
+                            config=self.config,
+                            web=True,
+                        )
+
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)
                 else:
-                    ag = PageAgent(
-                        a["name"],
-                        email=a["email"],
-                        load=True,
-                        config=self.config,
-                        web=True,
-                    )
+                    if self.llm_active:
+                        ag = PageAgent(
+                            a["name"],
+                            email=a["email"],
+                            load=True,
+                            config=self.config,
+                            web=True,
+                        )
+                    else:
+                        ag = FakePageAgent(
+                            a["name"],
+                            email=a["email"],
+                            load=True,
+                            config=self.config,
+                            web=True,
+                        )
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)

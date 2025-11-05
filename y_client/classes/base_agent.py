@@ -699,7 +699,9 @@ class Agent(object):
             us = self.__get_user()
             res = json.loads(us)
             
-            # Check if user was successfully retrieved (has 'id' field and no error status)
+            # Check if user was successfully retrieved
+            # User must have an 'id' field and not have an error status
+            # The 'status' field is present in error responses (e.g., 404 when user not found)
             if "id" not in res or ("status" in res and res["status"] != 200):
                 if attempt < max_retries - 1:
                     print(f"User not found after registration, retrying... (attempt {attempt + 1}/{max_retries})")

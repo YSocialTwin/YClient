@@ -272,7 +272,6 @@ class YClientWeb(object):
                     )
 
                 agent.set_prompts(self.prompts)
-
                 self.agents.add_agent(agent)
 
             else:

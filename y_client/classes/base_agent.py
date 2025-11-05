@@ -678,7 +678,11 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         api_url = f"{self.base_url}/register"
-        post(f"{api_url}", headers=headers, data=st)
+        response = post(f"{api_url}", headers=headers, data=st)
+        
+        # Check if registration was successful
+        if response.status_code != 200:
+            print(f"Warning: Registration request returned status {response.status_code}")
 
         us = self.__get_user()
         res = json.loads(us)

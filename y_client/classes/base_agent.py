@@ -17,6 +17,7 @@ Classes:
 import json
 import random
 import re
+import time
 
 import numpy as np
 from autogen import AssistantAgent
@@ -684,16 +685,36 @@ class Agent(object):
         if response.status_code != 200:
             print(f"Warning: Registration request returned status {response.status_code}")
 
-        us = self.__get_user()
-        res = json.loads(us)
-        uid = int(res["id"])
-
-        api_url = f"{self.base_url}/set_user_interests"
-        data = {"user_id": uid, "interests": self.interests, "round": self.joined_on}
-
-        post(f"{api_url}", headers=headers, data=json.dumps(data))
-
-        return uid
+        # Retry mechanism to handle race condition where get_user is called 
+        # before the server has fully processed the registration
+        max_retries = 3
+        retry_delay = 0.5  # seconds
+        
+        for attempt in range(max_retries):
+            us = self.__get_user()
+            res = json.loads(us)
+            
+            # Check if user was found
+            if "status" in res and res["status"] == 404:
+                if attempt < max_retries - 1:
+                    print(f"User not found after registration, retrying... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    print(f"Error: User not found after {max_retries} attempts")
+                    raise Exception(f"Failed to retrieve user after registration: {self.name}")
+            
+            # User found, proceed with setting interests
+            uid = int(res["id"])
+            
+            api_url = f"{self.base_url}/set_user_interests"
+            data = {"user_id": uid, "interests": self.interests, "round": self.joined_on}
+            post(f"{api_url}", headers=headers, data=json.dumps(data))
+            
+            return uid
+        
+        # This should not be reached, but just in case
+        raise Exception(f"Failed to register user: {self.name}")
 
     def __get_interests(self, tid):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}

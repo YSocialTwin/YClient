@@ -686,9 +686,9 @@ class Agent(object):
             error_msg = f"Registration request failed with status {response.status_code}"
             try:
                 error_msg += f": {response.text}"
-            except:
+            except (AttributeError, ValueError):
                 pass
-            print(f"Warning: {error_msg}")
+            raise Exception(f"Failed to register user {self.name}: {error_msg}")
 
         # Retry mechanism to handle race condition where get_user is called 
         # before the server has fully processed the registration

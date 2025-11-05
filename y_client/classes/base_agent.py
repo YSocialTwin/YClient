@@ -683,7 +683,12 @@ class Agent(object):
         
         # Check if registration was successful
         if response.status_code != 200:
-            print(f"Warning: Registration request returned status {response.status_code}")
+            error_msg = f"Registration request failed with status {response.status_code}"
+            try:
+                error_msg += f": {response.text}"
+            except:
+                pass
+            print(f"Warning: {error_msg}")
 
         # Retry mechanism to handle race condition where get_user is called 
         # before the server has fully processed the registration
@@ -694,8 +699,8 @@ class Agent(object):
             us = self.__get_user()
             res = json.loads(us)
             
-            # Check if user was found
-            if "status" in res and res["status"] == 404:
+            # Check if user was successfully retrieved (has 'id' field and no error status)
+            if "id" not in res or ("status" in res and res["status"] != 200):
                 if attempt < max_retries - 1:
                     print(f"User not found after registration, retrying... (attempt {attempt + 1}/{max_retries})")
                     time.sleep(retry_delay)
@@ -712,9 +717,6 @@ class Agent(object):
             post(f"{api_url}", headers=headers, data=json.dumps(data))
             
             return uid
-        
-        # This should not be reached, but just in case
-        raise Exception(f"Failed to register user: {self.name}")
 
     def __get_interests(self, tid):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}

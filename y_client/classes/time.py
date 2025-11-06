@@ -36,9 +36,9 @@ class SimulationSlot(object):
             config (dict): Configuration dictionary containing:
                 - servers.api (str): Base URL for the simulation server API
         """
-        self.base_url = config["servers"]["api"]
+        self.base_url = config["servers"]["api"].rstrip("/")
 
-        api_url = f"{self.base_url}current_time"
+        api_url = f"{self.base_url}/current_time"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -63,7 +63,7 @@ class SimulationSlot(object):
                 - slot (int): Current time slot (hour) within the day
         """
 
-        api_url = f"{self.base_url}current_time"
+        api_url = f"{self.base_url}/current_time"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -91,7 +91,7 @@ class SimulationSlot(object):
             Updates self.day, self.slot, and self.id with the new time values
             after successfully incrementing the server time.
         """
-        api_url = f"{self.base_url}update_time"
+        api_url = f"{self.base_url}/update_time"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 

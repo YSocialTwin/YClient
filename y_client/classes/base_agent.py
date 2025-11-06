@@ -189,7 +189,7 @@ class Agent(object):
             ])
             self.emotions = config["posts"]["emotions"]
             self.actions_likelihood = config["simulation"]["actions_likelihood"]
-            self.base_url = config["servers"]["api"]
+            self.base_url = config["servers"]["api"].rstrip("/")
             self.llm_base = config["servers"]["llm"]
             self.content_rec_sys_name = None
             self.follow_rec_sys_name = None
@@ -347,7 +347,7 @@ class Agent(object):
                                                  ])
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
-        self.base_url = config["servers"]["api"]
+        self.base_url = config["servers"]["api"].rstrip("/")
         self.llm_base = config["servers"]["llm"]
         self.content_rec_sys_name = None
         self.follow_rec_sys_name = None
@@ -551,7 +551,7 @@ class Agent(object):
             self.content_rec_sys.add_user_id(self.user_id)
             self.content_rec_sys_name = content_recsys.name
 
-            api_url = f"{self.base_url}update_user"
+            api_url = f"{self.base_url}/update_user"
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             params = {
@@ -567,7 +567,7 @@ class Agent(object):
             self.follow_rec_sys.add_user_id(self.user_id)
             self.follow_rec_sys_name = follow_recsys.name
 
-            api_url = f"{self.base_url}update_user"
+            api_url = f"{self.base_url}/update_user"
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             params = {
@@ -610,7 +610,7 @@ class Agent(object):
         #if res["status"] == 404:
         #    return json.dumps({"status": 404, "error": "User not found"})
 
-        api_url = f"{self.base_url}get_user"
+        api_url = f"{self.base_url}/get_user"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         params = {"username": self.name, "email": self.email}
@@ -626,7 +626,7 @@ class Agent(object):
 
         :return: the response from the service
         """
-        api_url = f"{self.base_url}user_exists"
+        api_url = f"{self.base_url}/user_exists"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         params = {"name": self.name, "email": self.email}

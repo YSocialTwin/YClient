@@ -143,21 +143,23 @@ class YClientWeb(object):
         self.emotions_annotation = self.config["simulation"]["emotion_annotation"]
 
         ##############
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__)).split("y_client")[0]
-        if not os.path.exists(
-            f"{BASE_DIR}experiments{os.sep}{self.config['simulation']['name']}.db"
-        ):
+        BASE_DIR = Path(__file__).parent.absolute()
+        # Navigate up to project root (split on "y_client" to get project root)
+        BASE_DIR = str(BASE_DIR).split("y_client")[0]
+        BASE_DIR = Path(BASE_DIR)
+        
+        db_file = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
+        if not db_file.exists():
             # copy the clean database to the experiments folder
-            shutil.copyfile(
-                f"{BASE_DIR}data_schema{os.sep}database_clean_client.db",
-                f"{BASE_DIR}experiments{os.sep}{self.config['simulation']['name']}.db",
-            )
+            source_db = BASE_DIR / "data_schema" / "database_clean_client.db"
+            dest_db = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
+            shutil.copyfile(source_db, dest_db)
 
         global session, engine, base
         base = declarative_base()
 
         # SQLite URIs always use forward slashes, use pathlib for robust conversion
-        db_path = Path(BASE_DIR) / "experiments" / f"{self.config['simulation']['name']}.db"
+        db_path = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
         db_uri = db_path.as_posix()
         engine = db.create_engine(
             f"sqlite:///{db_uri}",
@@ -171,8 +173,9 @@ class YClientWeb(object):
         globals()["base"] = base
         ##############
 
-        yclient_path = os.path.dirname(os.path.abspath(__file__)).split("y_web")[0]
-        sys.path.append(f"{yclient_path}{os.sep}external{os.sep}YClient{os.sep}")
+        yclient_path = Path(__file__).parent.absolute()
+        yclient_path = str(yclient_path).split("y_web")[0]
+        sys.path.append(str(Path(yclient_path) / "external" / "YClient"))
 
         from y_client.classes import Agent, Agents, SimulationSlot
         from y_client.news_feeds import Feeds

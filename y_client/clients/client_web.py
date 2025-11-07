@@ -18,6 +18,7 @@ import json
 import os
 import shutil
 import sys
+from pathlib import Path
 
 import sqlalchemy as db
 from requests import post
@@ -105,7 +106,7 @@ class YClientWeb(object):
         self.base_path = data_base_path
         self.config = config_file
 
-        self.prompts = json.load(open(f"{data_base_path}prompts.json", "r"))
+        self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 
         self.agents_owner = owner
         self.agents_filename = agents_filename
@@ -142,21 +143,26 @@ class YClientWeb(object):
         self.emotions_annotation = self.config["simulation"]["emotion_annotation"]
 
         ##############
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__)).split("y_client")[0]
-        if not os.path.exists(
-            f"{BASE_DIR}experiments{os.sep}{self.config['simulation']['name']}.db"
-        ):
+        BASE_DIR = Path(__file__).parent.absolute()
+        # Navigate up to project root (split on "y_client" to get project root)
+        BASE_DIR = str(BASE_DIR).split("y_client")[0]
+        BASE_DIR = Path(BASE_DIR)
+        
+        db_file = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
+        if not db_file.exists():
             # copy the clean database to the experiments folder
-            shutil.copyfile(
-                f"{BASE_DIR}data_schema{os.sep}database_clean_client.db",
-                f"{BASE_DIR}experiments{os.sep}{self.config['simulation']['name']}.db",
-            )
+            source_db = BASE_DIR / "data_schema" / "database_clean_client.db"
+            dest_db = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
+            shutil.copyfile(source_db, dest_db)
 
         global session, engine, base
         base = declarative_base()
 
+        # SQLite URIs always use forward slashes, use pathlib for robust conversion
+        db_path = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
+        db_uri = db_path.as_posix()
         engine = db.create_engine(
-            f"sqlite:////{BASE_DIR}experiments/{self.config['simulation']['name']}.db",
+            f"sqlite:///{db_uri}",
             connect_args={"check_same_thread": False},
         )
         base.metadata.bind = engine
@@ -167,8 +173,9 @@ class YClientWeb(object):
         globals()["base"] = base
         ##############
 
-        yclient_path = os.path.dirname(os.path.abspath(__file__)).split("y_web")[0]
-        sys.path.append(f"{yclient_path}{os.sep}external{os.sep}YClient{os.sep}")
+        yclient_path = Path(__file__).parent.absolute()
+        yclient_path = str(yclient_path).split("y_web")[0]
+        sys.path.append(str(Path(yclient_path) / "external" / "YClient"))
 
         from y_client.classes import Agent, Agents, SimulationSlot
         from y_client.news_feeds import Feeds
@@ -195,8 +202,8 @@ class YClientWeb(object):
         from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
 
         # population filename
-        self.agents_filename = (
-            f"{self.base_path}{self.config['simulation']['population'].replace(' ', '')}.json"
+        self.agents_filename = os.path.join(
+            self.base_path, f"{self.config['simulation']['population'].replace(' ', '')}.json"
         )
 
         print(f"Loading agents from {self.agents_filename}")
@@ -501,7 +508,7 @@ class YClientWeb(object):
         users_id_map = {}
 
         if self.first_run and self.network is not None:  # self.run
-            with open(f"{self.base_path}{self.network}", "r") as f:
+            with open(os.path.join(self.base_path, self.network), "r") as f:
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
                 for l in f:

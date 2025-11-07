@@ -24,27 +24,32 @@ import json
 import os
 import os.path
 import shutil
+from pathlib import Path
 
 import sqlalchemy as db
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 
 try:
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BASE_DIR = Path(__file__).parent.absolute()
 
     # read the experiment configuration (hardcoded config filename is a big issue!)
-    config = json.load(open(f"experiments{os.sep}current_config.json"))
+    config_path = Path("experiments") / "current_config.json"
+    config = json.load(open(config_path))
 
-    if not os.path.exists(f"experiments{os.sep}{config['simulation']['name']}.db"):
+    db_file = Path("experiments") / f"{config['simulation']['name']}.db"
+    if not db_file.exists():
         # copy the clean database to the experiments folder
-        shutil.copyfile(
-            f"{BASE_DIR}{os.sep}..{os.sep}..{os.sep}data_schema{os.sep}database_clean_client.db",
-            f"{BASE_DIR}{os.sep}..{os.sep}..{os.sep}experiments{os.sep}{config['simulation']['name']}.db",
-        )
+        source_db = BASE_DIR.parent.parent / "data_schema" / "database_clean_client.db"
+        dest_db = BASE_DIR.parent.parent / "experiments" / f"{config['simulation']['name']}.db"
+        shutil.copyfile(source_db, dest_db)
 
     base = declarative_base()
+    # SQLite URIs always use forward slashes, use pathlib for robust conversion
+    db_path = Path("experiments") / f"{config['simulation']['name']}.db"
+    db_uri = db_path.as_posix()
     engine = db.create_engine(
-        f"sqlite:///experiments/{config['simulation']['name']}.db",
+        f"sqlite:///{db_uri}",
         connect_args={"check_same_thread": False},
     )
     base.metadata.bind = engine

@@ -13,6 +13,7 @@ Functions:
 import json
 import os
 import random
+from pathlib import Path
 
 import faker
 
@@ -55,9 +56,11 @@ def generate_user(config, owner=None):
                language, toxicity level, and LLM configuration.
     """
 
-    BASE = os.path.dirname(os.path.abspath(__file__)).split("y_client")[0]
+    BASE = Path(__file__).parent.absolute()
+    BASE = str(BASE).split("y_client")[0]
+    BASE = Path(BASE)
 
-    locales = json.load(open(f"{BASE}config_files{os.sep}nationality_locale.json"))
+    locales = json.load(open(BASE / "config_files" / "nationality_locale.json"))
     try:
         nationality = random.sample(config["agents"]["nationalities"], 1)[0]
     except:

@@ -18,6 +18,7 @@ import json
 import os
 import shutil
 import sys
+from pathlib import Path
 
 import sqlalchemy as db
 from requests import post
@@ -155,10 +156,9 @@ class YClientWeb(object):
         global session, engine, base
         base = declarative_base()
 
-        # SQLite URIs always use forward slashes, so we construct the path properly
-        db_path = os.path.join(BASE_DIR, "experiments", f"{self.config['simulation']['name']}.db")
-        # Convert Windows backslashes to forward slashes for URI
-        db_uri = db_path.replace(os.sep, '/')
+        # SQLite URIs always use forward slashes, use pathlib for robust conversion
+        db_path = Path(BASE_DIR) / "experiments" / f"{self.config['simulation']['name']}.db"
+        db_uri = db_path.as_posix()
         engine = db.create_engine(
             f"sqlite:///{db_uri}",
             connect_args={"check_same_thread": False},

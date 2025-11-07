@@ -98,8 +98,8 @@ if __name__ == "__main__":
     import y_client.clients
     import y_client.recsys
 
-    if not os.path.exists("./experiments"):
-        os.mkdir("./experiments")
+    if not os.path.exists("experiments"):
+        os.mkdir("experiments")
 
     # get recommender systems
     content_recsys = getattr(y_client.recsys, args.crecsys)()

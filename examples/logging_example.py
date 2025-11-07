@@ -23,7 +23,7 @@ def example_custom_log_path():
     # from y_client.clients import YClientBase
     
     # Create logs directory if it doesn't exist
-    log_dir = Path("logs/simulation_run_1")
+    log_dir = Path("logs") / "simulation_run_1"
     log_dir.mkdir(parents=True, exist_ok=True)
     
     log_file = str(log_dir / "agent_execution.log")

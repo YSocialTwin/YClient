@@ -105,7 +105,7 @@ class YClientWeb(object):
         self.base_path = data_base_path
         self.config = config_file
 
-        self.prompts = json.load(open(f"{data_base_path}prompts.json", "r"))
+        self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 
         self.agents_owner = owner
         self.agents_filename = agents_filename
@@ -155,8 +155,12 @@ class YClientWeb(object):
         global session, engine, base
         base = declarative_base()
 
+        # SQLite URIs always use forward slashes, so we construct the path properly
+        db_path = os.path.join(BASE_DIR, "experiments", f"{self.config['simulation']['name']}.db")
+        # Convert Windows backslashes to forward slashes for URI
+        db_uri = db_path.replace(os.sep, '/')
         engine = db.create_engine(
-            f"sqlite:////{BASE_DIR}experiments/{self.config['simulation']['name']}.db",
+            f"sqlite:///{db_uri}",
             connect_args={"check_same_thread": False},
         )
         base.metadata.bind = engine
@@ -195,8 +199,8 @@ class YClientWeb(object):
         from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
 
         # population filename
-        self.agents_filename = (
-            f"{self.base_path}{self.config['simulation']['population'].replace(' ', '')}.json"
+        self.agents_filename = os.path.join(
+            self.base_path, f"{self.config['simulation']['population'].replace(' ', '')}.json"
         )
 
         print(f"Loading agents from {self.agents_filename}")
@@ -501,7 +505,7 @@ class YClientWeb(object):
         users_id_map = {}
 
         if self.first_run and self.network is not None:  # self.run
-            with open(f"{self.base_path}{self.network}", "r") as f:
+            with open(os.path.join(self.base_path, self.network), "r") as f:
                 headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
                 for l in f:

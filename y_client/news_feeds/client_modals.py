@@ -43,8 +43,12 @@ try:
         )
 
     base = declarative_base()
+    # SQLite URIs always use forward slashes, so we construct the path properly
+    db_path = os.path.join("experiments", f"{config['simulation']['name']}.db")
+    # Convert Windows backslashes to forward slashes for URI
+    db_uri = db_path.replace(os.sep, '/')
     engine = db.create_engine(
-        f"sqlite:///experiments/{config['simulation']['name']}.db",
+        f"sqlite:///{db_uri}",
         connect_args={"check_same_thread": False},
     )
     base.metadata.bind = engine

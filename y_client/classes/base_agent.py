@@ -640,6 +640,7 @@ class Agent(object):
         else:
             return json.dumps({"status": 200})
 
+    @log_execution_time
     def __register(self):
         """
         Register the agent to the service.

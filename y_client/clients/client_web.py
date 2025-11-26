@@ -24,6 +24,7 @@ import sqlalchemy as db
 from requests import post
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
+from y_client.logger import log_execution_time, set_logger
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
@@ -95,7 +96,6 @@ class YClientWeb(object):
             - Normalizes action likelihood probabilities to sum to 1.0
             - Configures the global logger for agent execution time tracking
         """
-        from y_client.logger import set_logger
         
         # Configure the logger with the specified log file
         set_logger(log_file)
@@ -393,6 +393,7 @@ class YClientWeb(object):
 
         json.dump(res, open(agent_file, "w"), indent=4)
 
+    @log_execution_time
     def load_existing_agents(self, a_file):
         """
         Load existing agents from a file
@@ -448,6 +449,7 @@ class YClientWeb(object):
             except Exception:
                 print(f"Error loading agent: {a['name']}")
 
+    @log_execution_time
     def churn(self, tid):
         """
         Evaluate churn
@@ -495,6 +497,7 @@ class YClientWeb(object):
         if agent is not None:
             self.agents.add_agent(agent)
 
+    @log_execution_time
     def add_feeds(self):
         for page in self.pages:
             self.feed.add_feed(
@@ -504,6 +507,7 @@ class YClientWeb(object):
                 leaning=page["leaning"],
             )
 
+    @log_execution_time
     def add_network(self):
         users_id_map = {}
 
@@ -536,8 +540,6 @@ class YClientWeb(object):
                             uid.__dict__["_content"].decode("utf-8")
                         )["id"]
 
-                    api_url = f"{self.config['servers']['api']}follow"
-
                     data = {
                         "user_id": users_id_map[l[0]],
                         "target": users_id_map[l[1]],
@@ -545,4 +547,17 @@ class YClientWeb(object):
                         "tid": 0,  # first round
                     }
 
-                    post(f"{api_url}", headers=headers, data=json.dumps(data))
+                    self.add_edge(data)
+
+    @log_execution_time
+    def add_edge(self, data):
+        """
+        Add an edge to the network
+
+        :param data: the edge data
+        """
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        api_url = f"{self.config['servers']['api']}follow"
+
+        post(f"{api_url}", headers=headers, data=json.dumps(data))

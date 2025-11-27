@@ -74,6 +74,9 @@ class AgentLogger:
                 backupCount=self.backup_count,
                 encoding='utf-8'
             )
+            # Use a simple formatter that outputs only the message (JSON entry)
+            formatter = logging.Formatter('%(message)s')
+            self._handler.setFormatter(formatter)
         except (IOError, OSError) as e:
             import sys
             print(f"Warning: Failed to create rotating file handler for {self.log_file}: {e}", file=sys.stderr)

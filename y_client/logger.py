@@ -3,9 +3,11 @@ Logging System Module
 
 This module provides utilities for logging execution time of agent public methods.
 Each log entry is written as a JSON object to a log file with rotating file support.
+It also provides a standardized error logging function for consistent error output.
 """
 
 import json
+import sys
 import time
 import functools
 import logging
@@ -17,6 +19,31 @@ from pathlib import Path
 # Default rotation settings
 DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 DEFAULT_BACKUP_COUNT = 5
+
+
+def log_error(message, context=None):
+    """
+    Log an error message to stderr with optional context information.
+    
+    This function provides a standardized way to log error messages across
+    the YClient codebase. Messages are written to stderr with immediate
+    flushing to ensure they are visible even if the program crashes.
+    
+    Args:
+        message (str): The error message to log
+        context (str, optional): Additional context about the error (e.g., 
+                                function name, agent name). Defaults to None.
+    
+    Example:
+        log_error("Failed to load agent", context="load_existing_agents")
+        log_error(f"Connection error: {e}")
+    """
+    timestamp = datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+    if context:
+        error_msg = f"[{timestamp}] ERROR ({context}): {message}"
+    else:
+        error_msg = f"[{timestamp}] ERROR: {message}"
+    print(error_msg, file=sys.stderr, flush=True)
 
 
 class AgentLogger:

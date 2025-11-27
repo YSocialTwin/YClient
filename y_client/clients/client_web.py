@@ -25,6 +25,8 @@ from requests import post
 from sqlalchemy import orm
 from sqlalchemy.ext.declarative import declarative_base
 
+from y_client.logger import log_error
+
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 session = None
@@ -359,8 +361,8 @@ class YClientWeb(object):
                         }
                     )
 
-                except:
-                    print(f"Error loading page agent: {ag['name']}")
+                except Exception as e:
+                    log_error(f"Error loading page agent: {ag['name']}: {e}", context="read_agents")
                     continue
 
     def set_interests(self):
@@ -445,8 +447,8 @@ class YClientWeb(object):
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)
                     self.pages.append(ag)
-            except Exception:
-                print(f"Error loading agent: {a['name']}")
+            except Exception as e:
+                log_error(f"Error loading agent: {a['name']}: {e}", context="load_existing_agents")
 
     def churn(self, tid):
         """

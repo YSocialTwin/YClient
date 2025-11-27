@@ -104,7 +104,7 @@ class SimulationSlot(object):
 
         _, day_c, slot_c = self.get_current_slot()
 
-        if day >= day_c or slot > slot_c:
+        if day > day_c or (day == day_c and slot > slot_c):
             params = {"day": day, "round": slot}
             st = json.dumps(params)
             response = post(f"{api_url}", headers=headers, data=st)

@@ -11,6 +11,7 @@ import json
 import tqdm
 from y_client import Agent, PageAgent
 from y_client.clients.client_base import YClientBase
+from y_client.logger import log_error
 from y_client.utils import generate_page
 
 
@@ -76,8 +77,8 @@ class YClientWithPages(YClientBase):
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)
                     self.pages.append(ag)
-            except Exception:
-                print(f"Error loading agent: {a['name']}")
+            except Exception as e:
+                log_error(f"Error loading agent: {a['name']}: {e}", context="load_existing_agents")
 
     def add_page_agent(self, agent=None, name=None, feed_url=None):
         """

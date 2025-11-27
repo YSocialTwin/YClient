@@ -13,13 +13,14 @@ Functions:
 import json
 import os
 import random
+import sys
 from pathlib import Path
 
 import faker
 
 try:
     from y_client import Agent, PageAgent
-except:
+except Exception:
     from y_client.classes.base_agent import Agent
     from y_client.classes.page_agent import PageAgent
 
@@ -141,7 +142,7 @@ def generate_user(config, owner=None):
     )
 
     if not hasattr(agent, "user_id"):
-        print("here")
+        print("Agent creation failed: user_id not assigned", file=sys.stderr, flush=True)
         return None
 
     return agent

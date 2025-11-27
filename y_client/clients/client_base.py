@@ -22,7 +22,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from y_client import Agent, Agents, SimulationSlot
-from y_client.logger import set_logger
+from y_client.logger import set_logger, log_error
 from y_client.news_feeds import Articles, Feeds, Images, Websites, session
 from y_client.recsys import *
 from y_client.utils import generate_user
@@ -342,8 +342,8 @@ class YClientBase(object):
                 ag.set_prompts(self.prompts)
                 ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                 self.agents.add_agent(ag)
-            except Exception:
-                print(f"Error loading agent: {a['name']}")
+            except Exception as e:
+                log_error(f"Error loading agent: {a['name']}: {e}", context="load_existing_agents")
 
     def churn(self, tid):
         """

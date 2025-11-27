@@ -120,11 +120,12 @@ class TestIncrementSlotIntegration(unittest.TestCase):
         # Mock config
         config = {"servers": {"api": "http://localhost:5010/"}}
         
-        # Create mock response object properly
-        mock_response = MagicMock()
-        mock_response.text = json.dumps({"day": 5, "round": 10, "id": 130})
-        mock_response.__dict__["_content"] = json.dumps({"day": 5, "round": 10, "id": 130}).encode("utf-8")
-        mock_get.return_value = mock_response
+        # Create mock response object properly using a class
+        class MockResponse:
+            def __init__(self, data):
+                self._content = json.dumps(data).encode("utf-8")
+        
+        mock_get.return_value = MockResponse({"day": 5, "round": 10, "id": 130})
         
         # Create SimulationSlot
         sim_slot = SimulationSlot(config)
@@ -142,12 +143,9 @@ class TestIncrementSlotIntegration(unittest.TestCase):
         # But server is at day=5, slot=10, so should NOT update
         sim_slot.increment_slot()
         
-        # The POST should NOT have been called because we're behind
-        # After fix, post should not be called for time update
-        # (get is called for current_time check)
-        post_calls = [c for c in mock_post.call_args_list 
-                      if 'update_time' in str(c)]
-        self.assertEqual(len(post_calls), 0)
+        # Verify POST was NOT called - the fix should prevent the update
+        # because the calculated time (day=5, slot=6) is behind server time (day=5, slot=10)
+        mock_post.assert_not_called()
 
 
 if __name__ == "__main__":

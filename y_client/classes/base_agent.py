@@ -17,6 +17,7 @@ Classes:
 import json
 import random
 import re
+import time
 
 import numpy as np
 from autogen import AssistantAgent
@@ -678,18 +679,46 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         api_url = f"{self.base_url}/register"
-        post(f"{api_url}", headers=headers, data=st)
+        response = post(f"{api_url}", headers=headers, data=st)
+        
+        # Check if registration was successful
+        if response.status_code != 200:
+            error_msg = f"Registration request failed with status {response.status_code}"
+            try:
+                error_msg += f": {response.text}"
+            except (AttributeError, ValueError):
+                pass
+            raise Exception(f"Failed to register user {self.name}: {error_msg}")
 
-        us = self.__get_user()
-        res = json.loads(us)
-        uid = int(res["id"])
-
-        api_url = f"{self.base_url}/set_user_interests"
-        data = {"user_id": uid, "interests": self.interests, "round": self.joined_on}
-
-        post(f"{api_url}", headers=headers, data=json.dumps(data))
-
-        return uid
+        # Retry mechanism to handle race condition where get_user is called 
+        # before the server has fully processed the registration
+        max_retries = 3
+        retry_delay = 0.5  # seconds
+        
+        for attempt in range(max_retries):
+            us = self.__get_user()
+            res = json.loads(us)
+            
+            # Check if user was successfully retrieved
+            # User must have an 'id' field and not have an error status
+            # The 'status' field is present in error responses (e.g., 404 when user not found)
+            if "id" not in res or ("status" in res and res["status"] != 200):
+                if attempt < max_retries - 1:
+                    print(f"User not found after registration, retrying... (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(retry_delay)
+                    continue
+                else:
+                    print(f"Error: User not found after {max_retries} attempts")
+                    raise Exception(f"Failed to retrieve user after registration: {self.name}")
+            
+            # User found, proceed with setting interests
+            uid = int(res["id"])
+            
+            api_url = f"{self.base_url}/set_user_interests"
+            data = {"user_id": uid, "interests": self.interests, "round": self.joined_on}
+            post(f"{api_url}", headers=headers, data=json.dumps(data))
+            
+            return uid
 
     def __get_interests(self, tid):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}

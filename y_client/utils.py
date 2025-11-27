@@ -20,7 +20,7 @@ import faker
 
 try:
     from y_client import Agent, PageAgent
-except Exception:
+except ImportError:
     from y_client.classes.base_agent import Agent
     from y_client.classes.page_agent import PageAgent
 

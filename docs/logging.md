@@ -166,11 +166,17 @@ The logging system automatically rotates log files to prevent unbounded growth d
 - **Maximum file size**: 10 MB per log file
 - **Backup count**: 5 backup files
 
-With default settings, log files are rotated as follows:
-- `agent_execution.log` - current log file
-- `agent_execution.log.1` - most recent backup
-- `agent_execution.log.2` - older backup
-- ... up to `agent_execution.log.5`
+With default settings, log files are rotated as follows (using your configured log file path):
+- `<log_file>` - current log file
+- `<log_file>.1` - most recent backup
+- `<log_file>.2` - older backup
+- ... up to `<log_file>.5`
+
+For example, if you set `log_file="logs/my_simulation.log"`, the rotated files would be:
+- `logs/my_simulation.log`
+- `logs/my_simulation.log.1`
+- `logs/my_simulation.log.2`
+- etc.
 
 When the backup count is exceeded, the oldest backup file is deleted.
 

@@ -10,6 +10,7 @@ The logging system automatically tracks the execution time of all public methods
 
 - **JSON Format**: Each log entry is a single-line JSON object for easy parsing
 - **Configurable Log Path**: Specify the log file location at client creation time
+- **Rotating Log Files**: Automatic log rotation to prevent unbounded log growth
 - **Automatic Tracking**: Public methods are automatically logged via decorators
 - **Error Handling**: Failed method executions are also logged with error details
 - **Minimal Overhead**: Lightweight decorator with minimal performance impact
@@ -153,9 +154,60 @@ cat agent_execution.log | jq -r '.hour' | sort -n | uniq -c
 ## Best Practices
 
 1. **Use Descriptive Paths**: Place logs in organized directories (e.g., `logs/simulation_name/`)
-2. **Rotate Logs**: For long-running simulations, consider log rotation to prevent large files
-3. **Monitor Performance**: Regularly analyze logs to identify performance bottlenecks
-4. **Archive Logs**: Keep logs for each simulation run for reproducibility and debugging
+2. **Monitor Performance**: Regularly analyze logs to identify performance bottlenecks
+3. **Archive Logs**: Keep logs for each simulation run for reproducibility and debugging
+
+## Log Rotation
+
+The logging system automatically rotates log files to prevent unbounded growth during long-running simulations. When a log file exceeds the configured maximum size, it is renamed with a numeric suffix (e.g., `.1`, `.2`) and a new log file is created.
+
+### Default Settings
+
+- **Maximum file size**: 10 MB per log file
+- **Backup count**: 5 backup files
+
+With default settings, log files are rotated as follows (using your configured log file path):
+- `<log_file>` - current log file
+- `<log_file>.1` - most recent backup
+- `<log_file>.2` - older backup
+- ... up to `<log_file>.5`
+
+For example, if you set `log_file="logs/my_simulation.log"`, the rotated files would be:
+- `logs/my_simulation.log`
+- `logs/my_simulation.log.1`
+- `logs/my_simulation.log.2`
+- etc.
+
+When the backup count is exceeded, the oldest backup file is deleted.
+
+### Configuring Rotation
+
+You can customize log rotation settings using the `set_logger` function:
+
+```python
+from y_client.logger import set_logger
+
+# Configure custom rotation settings
+# max_bytes: Maximum size per log file in bytes (default: 10 MB)
+# backup_count: Number of backup files to keep (default: 5)
+set_logger(
+    log_file="logs/agent_execution.log",
+    max_bytes=5 * 1024 * 1024,  # 5 MB per file
+    backup_count=10  # Keep 10 backup files
+)
+```
+
+### Example Scenarios
+
+**Small simulation (short-term)**:
+```python
+set_logger("simulation.log", max_bytes=1024*1024, backup_count=2)  # 1 MB, 2 backups
+```
+
+**Large-scale simulation (long-term)**:
+```python
+set_logger("simulation.log", max_bytes=50*1024*1024, backup_count=20)  # 50 MB, 20 backups
+```
 
 ## Implementation Details
 
@@ -168,3 +220,12 @@ The logging system uses a decorator pattern (`@log_execution_time`) applied to p
 5. Writes the log entry to the configured log file
 
 The global logger is configured once at client initialization and reused for all subsequent logging operations.
+
+### Rotating File Handler
+
+The logger uses Python's `RotatingFileHandler` from the `logging.handlers` module to implement log rotation. This provides:
+
+- **Automatic rotation**: When a log file exceeds the maximum size, it's automatically rotated
+- **Configurable limits**: Set custom file sizes and backup counts
+- **Thread-safe**: Safe for use in multi-threaded environments
+- **UTF-8 encoding**: Proper handling of Unicode characters in log entries

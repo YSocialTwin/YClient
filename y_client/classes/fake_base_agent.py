@@ -41,7 +41,6 @@ from y_client.classes import Agent
 __all__ = ["FakeAgent"]
 
 
-
 class FakeAgent(Agent):
 
     def __init__(
@@ -70,13 +69,14 @@ class FakeAgent(Agent):
         is_page: int = 0,
         daily_activity_level: int = 1,
         profession: str = None,
+        opinions: dict = None,
         *args,
         **kwargs,
     ):
         super().__init__(name=name, email=email, pwd=pwd, age=age, interests=interests, leaning=leaning, ag_type=ag_type, load=load, recsys=recsys,
                        frecsys=frecsys, config=config, big_five=big_five, language=language, owner=owner, education_level=education_level, joined_on=joined_on,
                        round_actions=round_actions, gender=gender, nationality=nationality, toxicity=toxicity, api_key=api_key, is_page=is_page,
-                       daily_activity_level=daily_activity_level, profession=profession, *args, **kwargs)
+                       daily_activity_level=daily_activity_level, profession=profession, opinions=opinions, *args, **kwargs)
 
 
     def __get_interests(self, tid):
@@ -130,23 +130,7 @@ class FakeAgent(Agent):
         # obtain the most recent (and frequent) interests of the agent
         interests, interests_id = self.__get_interests(tid)
 
-        # get recent sentiment on the selected interests
-        api_url = f"{self.base_url}/get_sentiment"
-        data = {"user_id": self.user_id, "interests": interests}
-        response = post(
-            f"{api_url}",
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            data=json.dumps(data),
-        )
-        sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
-
-        self.topics_opinions = "Your opinion on the topics you are interested in is: "
-        for s in sentiment:
-            self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
-        if len(sentiment) == 0:
-            self.topics_opinions = ""
-
-        post_text = self.__clean_text("sample post")
+        post_text = "sample post"
 
         # avoid posting empty messages
         if len(post_text) < 3:
@@ -155,7 +139,7 @@ class FakeAgent(Agent):
         st = json.dumps(
             {
                 "user_id": self.user_id,
-                "tweet": post_text.replace('"', ""),
+                "tweet": post_text,
                 "emotions": None,
                 "hashtags": None,
                 "mentions": None,
@@ -243,61 +227,13 @@ class FakeAgent(Agent):
         :param max_length_threads: the maximum length of the thread to read for context
         """
 
-        conversation = self.__get_thread(post_id, max_tweets=max_length_threads)
-
-        conv = ""
-
-        if "error" not in conversation:
-            conv = "".join(conversation)
-
-        # obtain the most recent (and frequent) interests of the agent
-        # interests, _ = self.__get_interests(tid)
-
-        # get the post_id topics
-        api_url = f"{self.base_url}/get_post_topics_name"
-        response = get(
-            f"{api_url}",
-            headers={"Content-Type": "application/x-www-form-urlencoded"},
-            data=json.dumps({"post_id": post_id}),
-        )
-        interests = json.loads(response.__dict__["_content"].decode("utf-8"))
-
-        # get the opinion on the topics (if present)
-        self.topics_opinions = ""
-        if len(interests) > 0:
-            # get recent sentiment on the selected interests
-            api_url = f"{self.base_url}/get_sentiment"
-            data = {"user_id": self.user_id, "interests": interests}
-            response = post(
-                f"{api_url}",
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                data=json.dumps(data),
-            )
-            sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
-
-            self.topics_opinions = (
-                "Your opinion on the topics of the post you are responding to are: "
-            )
-            for s in sentiment:
-                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
-            if len(sentiment) == 0:
-                self.topics_opinions = ""
-
-        post_text = self.__clean_text("comment")  # fake comment
-
-
-        # avoid posting empty messages
-        if len(post_text) < 3:
-            return
+        post_text = "comment"  # fake comment
 
         st = json.dumps(
             {
                 "user_id": self.user_id,
                 "post_id": post_id,
-                "text": post_text.replace('"', "")
-                .replace(f"{self.name}", "")
-                .replace(":", "")
-                .replace("*", ""),
+                "text": post_text,
                 "emotions": None,
                 "hashtags": None,
                 "mentions": None,
@@ -325,6 +261,9 @@ class FakeAgent(Agent):
         # if not followed, test unfollow
         if self.probability_of_secondary_follow > 0 and res is None:
             self.__evaluate_follow(post_text, post_id, "unfollow", tid)
+
+        # update opinion
+        self.new_opinions(post_id, tid)
 
     def __update_user_interests(self, post_id, tid):
         """
@@ -428,8 +367,6 @@ class FakeAgent(Agent):
 
         faker = Faker()
         dcision = faker.random_element(["YES", "NO"])
-
-
 
         if dcision == "YES":
             st = json.dumps(
@@ -960,6 +897,7 @@ class FakeAgent(Agent):
             "daily_activity_level": self.daily_activity_level,
             "profession": self.profession,
             "activity_profile": self.activity_profile,
+            "opinions": self.opinions,
         }
 
     def __clean_emotion(self, text):

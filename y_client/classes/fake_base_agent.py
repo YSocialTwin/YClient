@@ -263,7 +263,8 @@ class FakeAgent(Agent):
             self.__evaluate_follow(post_text, post_id, "unfollow", tid)
 
         # update opinion
-        self.new_opinions(post_id, tid)
+        if self.opinions is not None:
+            self.new_opinions(post_id, tid)
 
     def __update_user_interests(self, post_id, tid):
         """

@@ -213,6 +213,10 @@ class Agent(object):
             }
             self.is_page = is_page
             self.opinions = opinions
+            if self.opinions is not None:
+                self.opinions_enabled = True
+            else:
+                self.opinions_enabled = False
 
             print(f"Loading Preexisting simulation: {load}")
 
@@ -242,6 +246,11 @@ class Agent(object):
                 self.profession = profession
                 self.opinions = opinions
 
+                if self.opinions is not None:
+                    self.opinions_enabled = True
+                else:
+                    self.opinions_enabled = False
+
                 uid = self.__register()
 
                 if uid is None:
@@ -261,7 +270,11 @@ class Agent(object):
                         config["agents"]["n_interests"]["max"],
                     )
                     self.interests = self.__get_interests(-1)[0]
-                    self.opinions = self.__get_opinions()
+
+                    if self.opinions_enabled:
+                        self.opinions = self.__get_opinions()
+                    else:
+                        self.opinions = None
 
                 else:
                     self.interests = []
@@ -368,7 +381,11 @@ class Agent(object):
         self.attention_window = int(config["agents"]["attention_window"])
         self.activity_profile = activity_profile
         self.annotate_emotions = config["simulation"]["emotion_annotation"]
-        self.opinions = opinions if opinions is not None else {}
+        self.opinions = opinions
+        if self.opinions is not None:
+            self.opinions_enabled = True
+        else:
+            self.opinions_enabled = False
 
         if "prompts" in kwargs:
             self.prompts = kwargs["prompts"]
@@ -478,7 +495,10 @@ class Agent(object):
             self.nationality = us["nationality"]
             self.is_page = us["is_page"]
 
-            self.opinions = self.__get_opinions()
+            if self.opinions_enabled:
+                self.opinions = self.__get_opinions()
+            else:
+                self.opinions = None
 
         config_list = {
             "model": f"{self.type}",
@@ -696,9 +716,10 @@ class Agent(object):
 
         post(f"{api_url}", headers=headers, data=json.dumps(data))
 
-        api_url = f"{self.base_url}/set_user_opinions"
-        data = {"user_id": uid, "opinions": self.opinions, "round": self.joined_on}
-        post(f"{api_url}", headers=headers, data=json.dumps(data))
+        if self.opinions_enabled:
+            api_url = f"{self.base_url}/set_user_opinions"
+            data = {"user_id": uid, "opinions": self.opinions, "round": self.joined_on}
+            post(f"{api_url}", headers=headers, data=json.dumps(data))
 
         return uid
 
@@ -1046,7 +1067,8 @@ class Agent(object):
             self.__evaluate_follow(post_text, post_id, "unfollow", tid)
 
         # update opinion
-        self.new_opinions(post_id, tid)
+        if self.opinions_enabled:
+            self.new_opinions(post_id, tid)
 
     def __update_user_interests(self, post_id, tid):
         """

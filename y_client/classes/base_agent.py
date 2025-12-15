@@ -36,6 +36,7 @@ from y_client.news_feeds.client_modals import (
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
+import y_client.opinion_dynamics.confidence_bound as op_dynamics
 
 __all__ = ["Agent", "Agents"]
 
@@ -218,6 +219,8 @@ class Agent(object):
             else:
                 self.opinions_enabled = False
 
+            self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+
             print(f"Loading Preexisting simulation: {load}")
 
             if not load:
@@ -250,6 +253,7 @@ class Agent(object):
                     self.opinions_enabled = True
                 else:
                     self.opinions_enabled = False
+                self.opinion_dynamics = config["simulation"]['opinion_dynamics']
 
                 uid = self.__register()
 
@@ -275,6 +279,7 @@ class Agent(object):
                         self.opinions = self.__get_opinions()
                     else:
                         self.opinions = None
+                    self.opinion_dynamics = config["simulation"]['opinion_dynamics']
 
                 else:
                     self.interests = []
@@ -360,6 +365,7 @@ class Agent(object):
         *args,
         **kwargs,
     ):
+
         self.probability_of_secondary_follow = float(config["agents"][
             "probability_of_secondary_follow"
         ])
@@ -386,6 +392,8 @@ class Agent(object):
             self.opinions_enabled = True
         else:
             self.opinions_enabled = False
+
+        self.opinion_dynamics = config["simulation"]['opinion_dynamics']
 
         if "prompts" in kwargs:
             self.prompts = kwargs["prompts"]
@@ -1862,13 +1870,14 @@ class Agent(object):
             if int(t) in interests
         }
 
+        method_name = self.opinion_dynamics['model_name']
+        update = getattr(op_dynamics, method_name)
+
         for topic, opinion in filtered_opinions.items():
             if topic in agent_filtered_opinions:
                 # update the opinion as the average of the two
-                agent_filtered_opinions[topic] = (agent_filtered_opinions[topic] + opinion) / 2.0
-            else:
-                # inherit the opinion
-                agent_filtered_opinions[topic] = opinion
+                agent_filtered_opinions[topic] = update(agent_filtered_opinions[topic], opinion, **self.opinion_dynamics['parameters'],
+                                                        group_classes=self.opinion_dynamics['opinion_groups'])
 
         # set the new opinions
         api_url = f"{self.base_url}/set_user_opinions"

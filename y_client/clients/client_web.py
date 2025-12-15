@@ -130,6 +130,10 @@ class YClientWeb(object):
             k: v / tot for k, v in self.actions_likelihood.items()
         }
 
+        # opinions' parameters
+        self.opinion_dynamics = self.config["simulation"]["opinion_dynamics"] \
+            if "opinion_dynamics" in self.config["simulation"] else {}
+
         # users' parameters
         self.fratio = float(self.config["agents"]["reading_from_follower_ratio"])
         self.max_length_thread_reading = int(

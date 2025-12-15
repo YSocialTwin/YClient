@@ -37,6 +37,7 @@ from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
 import y_client.opinion_dynamics.confidence_bound as op_dynamics
+from y_client.opinion_dynamics.utils import get_opinion_group
 
 __all__ = ["Agent", "Agents"]
 
@@ -185,6 +186,9 @@ class Agent(object):
                 **kwargs,
             )
         else:
+            self.topics_sentiment = ""
+            self.topics_opinions = ""
+
             self.probability_of_daily_follow = float(config["agents"][
                 "probability_of_daily_follow"
             ])
@@ -365,6 +369,8 @@ class Agent(object):
         *args,
         **kwargs,
     ):
+        self.topics_sentiment = ""
+        self.topics_opinions = ""
 
         self.probability_of_secondary_follow = float(config["agents"][
             "probability_of_secondary_follow"
@@ -743,10 +749,11 @@ class Agent(object):
             headers={"Content-Type": "application/x-www-form-urlencoded"},
             data=json.dumps(data))
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
+
         opinions = {}
         try:
-            for d in data:
-                opinions[d['topic']] = d['opinion']
+            for k, v in data.items():
+                opinions[k] = v
         except:
             return {}
 
@@ -826,6 +833,19 @@ class Agent(object):
         # obtain the most recent (and frequent) interests of the agent
         interests, interests_id = self.__get_interests(tid)
 
+        self.topics_opinions = "Your opinions are: "
+        self.topics_sentiment = "Your sentiment is: "
+
+        if self.opinions_enabled:
+            opinions = self.__get_opinions()
+            for interest in interests:
+                opinions[interest] = get_opinion_group(opinions[interest], self.opinion_dynamics['opinion_groups'])
+
+            for s in opinions:
+                self.topics_opinions += f"{s}: {opinions[s]} "
+            if len(opinions) == 0:
+                self.topics_opinions = ""
+
         # get recent sentiment on the selected interests
         api_url = f"{self.base_url}/get_sentiment"
         data = {"user_id": self.user_id, "interests": interests}
@@ -836,11 +856,11 @@ class Agent(object):
         )
         sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-        self.topics_opinions = "Your opinion on the topics you are interested in is: "
         for s in sentiment:
-            self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+            self.topics_sentiment += f"{s['topic']}: {s['sentiment']} "
+
         if len(sentiment) == 0:
-            self.topics_opinions = ""
+            self.topics_sentiment = ""
 
         user_agent = AssistantAgent(
             name=self.name,
@@ -993,8 +1013,21 @@ class Agent(object):
         )
         interests = json.loads(response.__dict__["_content"].decode("utf-8"))
 
+        self.topics_opinions = "Your opinions on the discussion topics are: "
+        self.topics_sentiment = "Your sentiment on the discussion topics are: "
+
+        if self.opinions_enabled:
+            opinions = self.__get_opinions()
+            for interest in interests:
+                opinions[interest] = get_opinion_group(opinions[interest], self.opinion_dynamics['opinion_groups'])
+
+            for s in opinions:
+                self.topics_opinions += f"{s}: {opinions[s]}\n "
+            if len(opinions) == 0:
+                self.topics_opinions = ""
+
         # get the opinion on the topics (if present)
-        self.topics_opinions = ""
+
         if len(interests) > 0:
             # get recent sentiment on the selected interests
             api_url = f"{self.base_url}/get_sentiment"
@@ -1006,13 +1039,10 @@ class Agent(object):
             )
             sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-            self.topics_opinions = (
-                "Your opinion on the topics of the post you are responding to are: "
-            )
             for s in sentiment:
-                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+                self.topics_sentiment += f"{s['topic']}: {s['sentiment']} "
             if len(sentiment) == 0:
-                self.topics_opinions = ""
+                self.topics_sentiment = ""
 
         user_agent = AssistantAgent(
             name=self.name,
@@ -1775,6 +1805,8 @@ class Agent(object):
             ),
             max_consecutive_auto_reply=1,
         )
+
+        self.topics_sentiment = ""
 
         prompt = self.__effify(self.prompts["handler_comment_image"], descr=image.description)
         post_text = user_agent.generate_reply(messages=[{"role": "user", "content": prompt}])

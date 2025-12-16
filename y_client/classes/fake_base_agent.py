@@ -17,6 +17,7 @@ Classes:
 import json
 import random
 import re
+import sys
 
 import numpy as np
 from autogen import AssistantAgent
@@ -70,14 +71,14 @@ class FakeAgent(Agent):
         daily_activity_level: int = 1,
         profession: str = None,
         opinions: dict = None,
+        archetype: str = None,
         *args,
         **kwargs,
     ):
         super().__init__(name=name, email=email, pwd=pwd, age=age, interests=interests, leaning=leaning, ag_type=ag_type, load=load, recsys=recsys,
                        frecsys=frecsys, config=config, big_five=big_five, language=language, owner=owner, education_level=education_level, joined_on=joined_on,
                        round_actions=round_actions, gender=gender, nationality=nationality, toxicity=toxicity, api_key=api_key, is_page=is_page,
-                       daily_activity_level=daily_activity_level, profession=profession, opinions=opinions, *args, **kwargs)
-
+                       daily_activity_level=daily_activity_level, profession=profession, opinions=opinions, archetype=archetype, *args, **kwargs)
 
     def __get_interests(self, tid):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -899,6 +900,7 @@ class FakeAgent(Agent):
             "profession": self.profession,
             "activity_profile": self.activity_profile,
             "opinions": self.opinions,
+            "archetype": self.archetype
         }
 
     def __clean_emotion(self, text):

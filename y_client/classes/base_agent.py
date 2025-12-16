@@ -22,6 +22,7 @@ from pydoc_data.topics import topics
 
 import numpy as np
 from autogen import AssistantAgent
+from pygments.lexers import archetype
 from requests import get, post
 from sqlalchemy.sql.expression import func
 from y_client.classes.annotator import Annotator
@@ -107,6 +108,7 @@ class Agent(object):
         daily_activity_level: int = 1,
         profession: str = None,
         opinions: dict = None,
+        archetype: str = None,
         *args,
         **kwargs,
     ):
@@ -183,6 +185,7 @@ class Agent(object):
                 daily_activity_level=daily_activity_level,
                 profession=profession,
                 opinions=opinions,
+                archetype=archetype,
                 *args,
                 **kwargs,
             )
@@ -224,6 +227,8 @@ class Agent(object):
             else:
                 self.opinions_enabled = False
 
+            self.archetype = archetype
+
             self.opinion_dynamics = config["simulation"]['opinion_dynamics']
 
             print(f"Loading Preexisting simulation: {load}")
@@ -260,6 +265,8 @@ class Agent(object):
                     self.opinions_enabled = False
                 self.opinion_dynamics = config["simulation"]['opinion_dynamics']
 
+                self.archetype = archetype
+
                 uid = self.__register()
 
                 if uid is None:
@@ -285,6 +292,7 @@ class Agent(object):
                     else:
                         self.opinions = None
                     self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+                    self.archetype = archetype
 
                 else:
                     self.interests = []
@@ -307,6 +315,7 @@ class Agent(object):
                 self.toxicity = us["toxicity"]
                 self.nationality = us["nationality"]
                 self.is_page = us["is_page"]
+                self.archetype = us['archetype'] if "archetype" in us else None
 
             config_list = {
                 "model": f"{self.type}",
@@ -367,6 +376,7 @@ class Agent(object):
         profession: str = None,
         activity_profile: str = None,
         opinions: dict = None,
+        archetype: str = None,
         *args,
         **kwargs,
     ):
@@ -400,7 +410,8 @@ class Agent(object):
         else:
             self.opinions_enabled = False
 
-        self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+        self.opinion_dynamics = config["simulation"]['opinion_dynamics'] if 'opinion_dynamics' in config["simulation"] else None
+        self.archetype = archetype
 
         if "prompts" in kwargs:
             self.prompts = kwargs["prompts"]
@@ -460,6 +471,7 @@ class Agent(object):
             self.gender = gender
             self.nationality = nationality
             self.opinions = opinions
+            self.archetype = archetype
 
             uid = self.__register()
             if uid is None:
@@ -509,6 +521,7 @@ class Agent(object):
             self.toxicity = us["toxicity"]
             self.nationality = us["nationality"]
             self.is_page = us["is_page"]
+            self.archetype = us['archetype']
 
             if self.opinions_enabled:
                 self.opinions = self.__get_opinions()
@@ -1611,6 +1624,84 @@ class Agent(object):
         return
 
     @log_execution_time
+    def select_action_lite(self, tid, actions, max_length_thread_reading=5):
+        """
+        Post a message to the service.
+
+        :param actions: The list of actions to select from.
+        :param tid: The time id.
+        :param max_length_thread_reading: The maximum length of the thread to read.
+        """
+        action = np.random.choice(actions)
+
+        if action == "COMMENT":
+            candidates = json.loads(self.read())
+            if len(candidates) > 0:
+                selected_post = random.sample(candidates, 1)
+                self.comment(
+                    int(selected_post[0]),
+                    max_length_threads=max_length_thread_reading,
+                    tid=tid,
+                )
+                self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
+
+        elif action == "POST":
+            self.post(tid=tid)
+
+        elif action == "READ":
+            candidates = json.loads(self.read())
+            try:
+                selected_post = random.sample(candidates, 1)
+                self.reaction(int(selected_post[0]), tid=tid)
+            except:
+                pass
+
+        elif action == "SEARCH":
+            candidates = json.loads(self.search())
+            if "status" not in candidates and len(candidates) > 0:
+                selected_post = random.sample(candidates, 1)
+                self.comment(
+                    int(selected_post[0]),
+                    max_length_threads=max_length_thread_reading,
+                    tid=tid,
+                )
+                self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
+
+        elif action == "FOLLOW":
+            if self.probability_of_daily_follow > 0:
+                candidates = self.search_follow()
+                if len(candidates) > 0:
+                    tot = sum([float(v) for v in candidates.values()])
+                    probs = [v / tot for v in candidates.values()]
+                    selected = np.random.choice(
+                        [int(c) for c in candidates],
+                        p=probs,
+                        size=1,
+                    )[0]
+                    self.follow(tid=tid, target=selected, action="follow")
+
+        elif action == "SHARE":
+            candidates = json.loads(self.read(article=True))
+            if len(candidates) > 0:
+                selected_post = random.sample(candidates, 1)
+                self.share(int(selected_post[0]), tid=tid)
+
+        elif action == "CAST":
+            candidates = json.loads(self.read())
+            try:
+                selected_post = random.sample(candidates, 1)
+                self.cast(int(selected_post[0]), tid=tid)
+            except:
+                pass
+
+        elif action == "IMAGE":
+            image, article_id = self.select_image(tid=tid)
+            if image is not None:
+                self.comment_image(image, tid=tid, article_id=article_id)
+
+        return
+
+    @log_execution_time
     def reply(self, tid: int, max_length_thread_reading: int = 5):
         """
         Reply to a mention.
@@ -1989,6 +2080,7 @@ class Agent(object):
             "profession": self.profession,
             "activity_profile": self.activity_profile,
             "opinions": self.opinions,
+            "archetype": self.archetype,
         }
 
     def __clean_emotion(self, text):

@@ -130,6 +130,8 @@ class YClientWeb(object):
             k: v / tot for k, v in self.actions_likelihood.items()
         }
 
+        self.agent_archetypes = self.config["simulation"]["agent_archetypes"]
+
         # opinions' parameters
         self.opinion_dynamics = self.config["simulation"]["opinion_dynamics"] \
             if "opinion_dynamics" in self.config["simulation"] else {}
@@ -214,6 +216,7 @@ class YClientWeb(object):
 
         data = json.load(open(self.agents_filename, "r"))
         for ag in data["agents"]:
+
             if ag["is_page"] == 0:
                 self.content_recsys = getattr(recsys, ag["rec_sys"])()
                 self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
@@ -250,6 +253,7 @@ class YClientWeb(object):
                         prompt=ag["prompts"] if "prompts" in ag else None,
                         activity_profile=ag["activity_profile"],
                         opinions=ag["opinions"] if "opinions" in ag else None,
+                        archetype=ag["archetype"],
                         )
                 else:
                     agent = FakeAgent(
@@ -282,6 +286,7 @@ class YClientWeb(object):
                         prompt=ag["prompts"] if "prompts" in ag else None,
                         activity_profile=ag["activity_profile"],
                         opinions=ag["opinions"] if "opinions" in ag else None,
+                        archetype=ag["archetype"]
                     )
 
                 agent.set_prompts(self.prompts)

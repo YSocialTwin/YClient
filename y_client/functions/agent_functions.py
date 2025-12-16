@@ -263,7 +263,7 @@ def clean_emotion(text: str, emotions_list: List[str]) -> List[str]:
             .split(" ")
             if e.strip() in emotions_list
         ]
-    except:
+    except (AttributeError, TypeError, ValueError) as e:
         emotion_eval = []
     
     return emotion_eval
@@ -273,9 +273,17 @@ def effify(agent_data, non_f_str: str, **kwargs) -> str:
     """
     Convert a template string to an f-string and evaluate it.
     
-    Note: This function uses eval() for template evaluation, which is necessary
-    to maintain compatibility with the existing prompt system. The template strings
-    are controlled by the application (not user input) via prompts.json configuration.
+    SECURITY NOTE: This function uses eval() for template evaluation, which is necessary
+    to maintain compatibility with the existing prompt system that uses f-string syntax.
+    
+    Security measures:
+    - Template strings are controlled by the application via prompts.json config
+    - NOT user-controllable input
+    - Restricted globals (__builtins__ = {})
+    - Only template variables in kwargs are accessible
+    
+    Future: Consider migrating to jinja2 or string.Template for better security.
+    This would require updating all prompt templates in prompts.json.
     """
     kwargs["self"] = agent_data
     # Only allow safe built-ins, no __builtins__

@@ -319,38 +319,17 @@ def shutdown_ray():
     return False
 
 
-# Export public API
+# Export public API - High-level utilities for users
 __all__ = [
+    # Ray control
     'RAY_AVAILABLE',
     'init_ray',
     'shutdown_ray',
+    # High-level parallel execution
     'execute_parallel_cpu',
     'execute_parallel_gpu',
-    # CPU remote functions
-    'cpu_extract_components',
-    'cpu_get_user_from_post',
-    'cpu_get_article',
-    'cpu_get_post',
-    'cpu_get_thread',
-    'cpu_get_interests',
-    'cpu_get_opinions',
-    'cpu_update_user_interests',
-    'cpu_follow_action',
-    'cpu_read_posts',
-    'cpu_read_mentions',
-    'cpu_search_posts',
-    'cpu_search_follow_suggestions',
-    'cpu_get_followers',
-    'cpu_get_timeline',
-    'cpu_churn_system',
-    # GPU remote functions
-    'gpu_post_content',
-    'gpu_comment_on_post',
-    'gpu_share_post',
-    'gpu_reaction_to_post',
-    'gpu_cast_vote',
-    'gpu_evaluate_follow',
-    'gpu_select_action_llm',
-    'gpu_emotion_annotation',
-    'gpu_update_opinions',
 ]
+
+# Note: Low-level remote functions (cpu_*, gpu_*) are internal and accessed
+# via the function registries. Users should use execute_parallel_* functions.
+# Advanced users can access remote functions directly if needed via the module.

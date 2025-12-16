@@ -1,6 +1,8 @@
 
-def bounded_confidence(x: float, y: float, epsilon: float = 0.25, mu: float = 0.5, theta: float = 0.0,
-                       cold_start: str = "neutral") -> float | str:
+def bounded_confidence(x: float, y: float, epsilon: float = 0.25,
+                       mu: float = 0.5, theta: float = 0.0,
+                       cold_start: str = "neutral", text: str = None, group_classes: dict = None,topic: str = None,
+                       base_url: str = None, llm_config: dict = None, **kwargs) -> float | str:
     """
     Calculate the confidence bound for a given score x and total count y.
 
@@ -12,7 +14,6 @@ def bounded_confidence(x: float, y: float, epsilon: float = 0.25, mu: float = 0.
     - theta (float): The prior strength for Bayesian adjustment.
     - cold_start (str): The label to return when y is 0.
     - discrete (bool): Whether to return discrete class labels.
-    - group_classes (dict): A mapping of score ranges to class labels.
 
     Returns:
     - float | str: The confidence bound score or class label.

@@ -18,6 +18,7 @@ import json
 import random
 import re
 import sys
+from pydoc_data.topics import topics
 
 import numpy as np
 from autogen import AssistantAgent
@@ -36,7 +37,7 @@ from y_client.news_feeds.client_modals import (
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
-import y_client.opinion_dynamics.confidence_bound as op_dynamics
+import y_client.opinion_dynamics as op_dynamics
 from y_client.opinion_dynamics.utils import get_opinion_group
 
 __all__ = ["Agent", "Agents"]
@@ -753,7 +754,7 @@ class Agent(object):
         opinions = {}
         try:
             for k, v in data.items():
-                opinions[k] = v
+                opinions[k] = v[0]
         except:
             return {}
 
@@ -1106,7 +1107,7 @@ class Agent(object):
 
         # update opinion
         if self.opinions_enabled:
-            self.new_opinions(post_id, tid)
+            self.new_opinions(post_id, tid, post_text)
 
     def __update_user_interests(self, post_id, tid):
         """
@@ -1842,11 +1843,13 @@ class Agent(object):
         api_url = f"{self.base_url}/comment_image"
         post(f"{api_url}", headers=headers, data=st)
 
-    def new_opinions(self, post_id: int, tid: int):
+    def new_opinions(self, post_id: int, tid: int, text: str):
         """
         Get new opinions for a given post.
 
         :param post_id: The post id.
+        :param tid: The round id.
+        :param text: The text of the post.
         :return: The new opinions.
         """
         # get post topics
@@ -1880,9 +1883,9 @@ class Agent(object):
 
         # filter opinions to keep only those related to the post topics
         filtered_opinions = {
-            t: v
+            v[1]: v[0]
             for t, v in opinions.items()
-            if int(t) in interests
+            if int(v[1]) in interests
         }
 
         # get recent opinions of the agents on the topics
@@ -1897,9 +1900,15 @@ class Agent(object):
 
         # filter agent opinions to keep only those related to the post topics
         agent_filtered_opinions = {
-            t: v
+            v[1]: v[0]
             for t, v in agent_opinions.items()
-            if int(t) in interests
+            if int(v[1]) in interests
+        }
+
+        filtered_topics = {
+            v[1]: t
+            for t, v in agent_opinions.items()
+            if int(v[1]) in interests
         }
 
         method_name = self.opinion_dynamics['model_name']
@@ -1908,8 +1917,13 @@ class Agent(object):
         for topic, opinion in filtered_opinions.items():
             if topic in agent_filtered_opinions:
                 # update the opinion as the average of the two
-                agent_filtered_opinions[topic] = update(agent_filtered_opinions[topic], opinion, **self.opinion_dynamics['parameters'],
-                                                        group_classes=self.opinion_dynamics['opinion_groups'])
+                tp_name = filtered_topics[topic]
+
+                agent_filtered_opinions[topic] = update(uid=self.user_id, x=agent_filtered_opinions[topic], y=opinion,
+                                                        text=text, topic=tp_name,
+                                                        **self.opinion_dynamics['parameters'],
+                                                        group_classes=self.opinion_dynamics['opinion_groups'],
+                                                        base_url=self.base_url, llm_config=self.llm_config)
 
         # set the new opinions
         api_url = f"{self.base_url}/set_user_opinions"

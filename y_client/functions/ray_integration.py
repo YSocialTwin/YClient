@@ -20,13 +20,16 @@ Usage:
     result = ray.get(result_ref)
 """
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 try:
     import ray
     RAY_AVAILABLE = True
 except ImportError:
     RAY_AVAILABLE = False
-    print("Warning: Ray is not installed. Parallel execution will not be available.")
-    print("Install with: pip install ray")
+    logger.warning("Ray is not installed. Parallel execution will not be available. Install with: pip install ray")
 
 from y_client.functions import agent_functions
 from y_client.functions import agent_llm_functions
@@ -175,6 +178,45 @@ if RAY_AVAILABLE:
 # Batch Execution Utilities
 # ============================================================================
 
+# Registry of CPU-bound remote functions
+CPU_FUNCTION_REGISTRY = {}
+GPU_FUNCTION_REGISTRY = {}
+
+def _register_functions():
+    """Register remote functions to avoid using globals()."""
+    if RAY_AVAILABLE:
+        CPU_FUNCTION_REGISTRY.update({
+            'extract_components': cpu_extract_components,
+            'get_user_from_post': cpu_get_user_from_post,
+            'get_article': cpu_get_article,
+            'get_post': cpu_get_post,
+            'get_thread': cpu_get_thread,
+            'get_interests': cpu_get_interests,
+            'get_opinions': cpu_get_opinions,
+            'update_user_interests': cpu_update_user_interests,
+            'follow_action': cpu_follow_action,
+            'read_posts': cpu_read_posts,
+            'read_mentions': cpu_read_mentions,
+            'search_posts': cpu_search_posts,
+            'search_follow_suggestions': cpu_search_follow_suggestions,
+            'get_followers': cpu_get_followers,
+            'get_timeline': cpu_get_timeline,
+            'churn_system': cpu_churn_system,
+        })
+        
+        GPU_FUNCTION_REGISTRY.update({
+            'post_content': gpu_post_content,
+            'comment_on_post': gpu_comment_on_post,
+            'share_post': gpu_share_post,
+            'reaction_to_post': gpu_reaction_to_post,
+            'cast_vote': gpu_cast_vote,
+            'evaluate_follow': gpu_evaluate_follow,
+            'select_action_llm': gpu_select_action_llm,
+            'emotion_annotation': gpu_emotion_annotation,
+            'update_opinions': gpu_update_opinions,
+        })
+
+
 def execute_parallel_cpu(function_name: str, agent_data_list, *args, **kwargs):
     """
     Execute a CPU-bound function in parallel for multiple agents.
@@ -186,13 +228,19 @@ def execute_parallel_cpu(function_name: str, agent_data_list, *args, **kwargs):
     
     Returns:
         List of results in the same order as agent_data_list
+    
+    Raises:
+        ValueError: If function_name is not a registered CPU function
     """
     if not RAY_AVAILABLE:
         # Fallback to sequential execution
         func = getattr(agent_functions, function_name)
         return [func(agent_data, *args, **kwargs) for agent_data in agent_data_list]
     
-    remote_func = globals()[f'cpu_{function_name}']
+    if function_name not in CPU_FUNCTION_REGISTRY:
+        raise ValueError(f"Unknown CPU function: {function_name}. Available: {list(CPU_FUNCTION_REGISTRY.keys())}")
+    
+    remote_func = CPU_FUNCTION_REGISTRY[function_name]
     refs = [remote_func.remote(agent_data, *args, **kwargs) for agent_data in agent_data_list]
     return ray.get(refs)
 
@@ -208,13 +256,19 @@ def execute_parallel_gpu(function_name: str, agent_data_list, *args, **kwargs):
     
     Returns:
         List of results in the same order as agent_data_list
+    
+    Raises:
+        ValueError: If function_name is not a registered GPU function
     """
     if not RAY_AVAILABLE:
         # Fallback to sequential execution
         func = getattr(agent_llm_functions, function_name)
         return [func(agent_data, *args, **kwargs) for agent_data in agent_data_list]
     
-    remote_func = globals()[f'gpu_{function_name}']
+    if function_name not in GPU_FUNCTION_REGISTRY:
+        raise ValueError(f"Unknown GPU function: {function_name}. Available: {list(GPU_FUNCTION_REGISTRY.keys())}")
+    
+    remote_func = GPU_FUNCTION_REGISTRY[function_name]
     refs = [remote_func.remote(agent_data, *args, **kwargs) for agent_data in agent_data_list]
     return ray.get(refs)
 
@@ -232,11 +286,11 @@ def init_ray(num_cpus=None, num_gpus=None, **kwargs):
         True if Ray was initialized, False if already initialized or not available
     """
     if not RAY_AVAILABLE:
-        print("Ray is not available. Install with: pip install ray")
+        logger.warning("Ray is not available. Install with: pip install ray")
         return False
     
     if ray.is_initialized():
-        print("Ray is already initialized")
+        logger.info("Ray is already initialized")
         return False
     
     init_kwargs = {}
@@ -248,7 +302,11 @@ def init_ray(num_cpus=None, num_gpus=None, **kwargs):
     init_kwargs.update(kwargs)
     
     ray.init(**init_kwargs)
-    print(f"Ray initialized with {ray.available_resources()}")
+    logger.info(f"Ray initialized with {ray.available_resources()}")
+    
+    # Register functions after Ray is initialized
+    _register_functions()
+    
     return True
 
 
@@ -256,7 +314,7 @@ def shutdown_ray():
     """Shutdown Ray if it's running."""
     if RAY_AVAILABLE and ray.is_initialized():
         ray.shutdown()
-        print("Ray shutdown complete")
+        logger.info("Ray shutdown complete")
         return True
     return False
 

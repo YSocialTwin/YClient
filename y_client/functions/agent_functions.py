@@ -118,7 +118,7 @@ def get_interests(agent_data, tid: int) -> Tuple[List[str], List[int]]:
         
         interests = [data[i]["topic"] for i in selected]
         interests_id = [data[i]["id"] for i in selected]
-    except:
+    except (IndexError, KeyError, ValueError, TypeError) as e:
         return [], []
     
     return interests, interests_id
@@ -137,7 +137,7 @@ def get_opinions(agent_data) -> Dict:
     try:
         for k, v in data.items():
             opinions[k] = v[0]
-    except:
+    except (IndexError, KeyError, TypeError) as e:
         return {}
     
     return opinions
@@ -270,6 +270,15 @@ def clean_emotion(text: str, emotions_list: List[str]) -> List[str]:
 
 
 def effify(agent_data, non_f_str: str, **kwargs) -> str:
-    """Convert a template string to an f-string and evaluate it."""
+    """
+    Convert a template string to an f-string and evaluate it.
+    
+    Note: This function uses eval() for template evaluation, which is necessary
+    to maintain compatibility with the existing prompt system. The template strings
+    are controlled by the application (not user input) via prompts.json configuration.
+    """
     kwargs["self"] = agent_data
-    return eval(f'f"""{non_f_str}"""', kwargs)
+    # Only allow safe built-ins, no __builtins__
+    safe_dict = {"__builtins__": {}}
+    safe_dict.update(kwargs)
+    return eval(f'f"""{non_f_str}"""', safe_dict)

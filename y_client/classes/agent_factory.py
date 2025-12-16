@@ -12,8 +12,11 @@ Functions:
     - create_agent: Factory to create Agent instances (delegates to legacy code)
 """
 
+import logging
 from typing import Dict, Any, Optional
 from y_client.classes.agent_data import AgentData, PageAgentData, FakeAgentData, FakePageAgentData
+
+logger = logging.getLogger(__name__)
 
 
 def agent_to_data(agent) -> AgentData:
@@ -217,7 +220,7 @@ class AgentDataWrapper:
                 from y_client.functions import ray_integration
                 self._ray = ray_integration
             except ImportError:
-                print("Warning: Ray not available, falling back to sequential execution")
+                logger.warning("Ray not available, falling back to sequential execution")
                 self.use_ray = False
     
     def __getattr__(self, name):

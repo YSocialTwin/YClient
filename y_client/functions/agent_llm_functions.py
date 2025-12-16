@@ -28,7 +28,8 @@ from requests import get, post
 from y_client.functions.agent_functions import (
     get_interests, get_opinions, get_post, get_thread, get_article,
     extract_components, clean_text, clean_emotion, effify, 
-    update_user_interests, get_user_from_post
+    update_user_interests, get_user_from_post, follow_action,
+    read_posts, search_posts, search_follow_suggestions, read_mentions
 )
 import y_client.opinion_dynamics as op_dynamics
 from y_client.opinion_dynamics.utils import get_opinion_group
@@ -473,7 +474,6 @@ def evaluate_follow(agent_data, post_text: str, post_id: int, action: str, tid: 
     u2.reset()
     
     if "YES" in text.split():
-        from y_client.functions.agent_functions import follow_action
         follow_action(agent_data, tid=tid, post_id=post_id, action=action)
         return action
     else:
@@ -669,9 +669,6 @@ def select_action_llm(agent_data, tid: int, actions: List[str], max_length_threa
     u1.reset()
     u2.reset()
     
-    # Import functions for actions
-    from y_client.functions.agent_functions import read_posts, search_posts, search_follow_suggestions, follow_action, read_mentions
-    
     if "COMMENT" in text.split():
         candidates = json.loads(read_posts(agent_data))
         if len(candidates) > 0:
@@ -687,7 +684,7 @@ def select_action_llm(agent_data, tid: int, actions: List[str], max_length_threa
         try:
             selected_post = random.sample(candidates, 1)
             reaction_to_post(agent_data, int(selected_post[0]), tid)
-        except:
+        except (IndexError, ValueError, KeyError, TypeError):
             pass
     
     elif "SEARCH" in text.split():
@@ -721,5 +718,5 @@ def select_action_llm(agent_data, tid: int, actions: List[str], max_length_threa
         try:
             selected_post = random.sample(candidates, 1)
             cast_vote(agent_data, int(selected_post[0]), tid)
-        except:
+        except (IndexError, ValueError, KeyError, TypeError):
             pass

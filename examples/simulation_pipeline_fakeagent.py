@@ -172,7 +172,7 @@ def execute_page_posts_parallel(pages: List["FakeAgent"], tid: int):
 
 
 def execute_agent_actions_sequential(
-    agents: List[FakeAgent],
+    agents: List["FakeAgent"],
     tid: int,
     actions_pool: List[str],
     max_rounds: int = 3
@@ -204,7 +204,7 @@ def execute_agent_actions_sequential(
 
 
 def execute_agent_actions_parallel(
-    agents: List[FakeAgent],
+    agents: List["FakeAgent"],
     tid: int,
     actions_pool: List[str],
     max_rounds: int = 3
@@ -276,12 +276,12 @@ def handle_churn(agents: List["FakeAgent"], tid: int, churn_rate: float = 0.01) 
 
 
 def add_new_agents(
-    agents: List[FakeAgent],
+    agents: List["FakeAgent"],
     base_url: str,
     config: Dict,
     n_new: int,
     agent_counter: int
-) -> Tuple[List[FakeAgent], int]:
+) -> Tuple[List["FakeAgent"], int]:
     """
     Add new agents to the simulation.
     

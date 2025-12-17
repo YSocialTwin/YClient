@@ -49,7 +49,7 @@ def example_1_create_agent_data():
     print("="*60)
     
     # Load configuration
-    config = json.load(open('config_files/config.json', 'r'))
+    config = json.load(open('config.json', 'r'))
     
     # Create AgentData using factory
     agent_data = create_agent_data(
@@ -107,7 +107,7 @@ def example_3_parallel_cpu_operations():
     init_ray(num_cpus=4, num_gpus=0)
     
     # Load configuration
-    config = json.load(open('config_files/config.json', 'r'))
+    config = json.load(open('config.json', 'r'))
     
     # Create multiple AgentData instances
     agent_data_list = [
@@ -147,7 +147,7 @@ def example_4_parallel_gpu_operations():
     init_ray(num_cpus=4, num_gpus=1)
     
     # Load configuration
-    config = json.load(open('config_files/config.json', 'r'))
+    config = json.load(open('config.json', 'r'))
     
     # Create multiple AgentData instances
     agent_data_list = [
@@ -184,7 +184,7 @@ def example_5_wrapper_interface():
     print("="*60)
     
     # Load configuration
-    config = json.load(open('config_files/config.json', 'r'))
+    config = json.load(open('config.json', 'r'))
     
     # Create AgentData
     agent_data = create_agent_data(

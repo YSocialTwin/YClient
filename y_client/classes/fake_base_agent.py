@@ -37,7 +37,7 @@ from y_client.news_feeds.client_modals import (
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
-from y_client.classes import Agent
+from y_client.classes.base_agent import Agent
 
 __all__ = ["FakeAgent"]
 

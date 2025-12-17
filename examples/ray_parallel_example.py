@@ -10,6 +10,12 @@ with Ray for parallel agent execution. It shows:
 4. Using Ray for parallel GPU-bound (LLM) operations
 5. Batch processing multiple agents efficiently
 
+Prerequisites:
+    Install required dependencies:
+        pip install -r requirements_client.txt
+    
+    This will install numpy, requests, and other required packages.
+
 Usage:
     python examples/ray_parallel_example.py --config config_files/config.json
 """
@@ -68,28 +74,23 @@ def example_2_convert_legacy_agent():
     print("Example 2: Converting Legacy Agent to AgentData")
     print("="*60)
     
-    from y_client.classes import Agent
-    
-    # Load configuration
-    config = json.load(open('config_files/config.json', 'r'))
-    prompts = json.load(open('config_files/prompts.json', 'r'))
-    
-    # Create a legacy Agent (commented out to avoid actual API calls)
-    # agent = Agent(
-    #     name="legacy_user",
-    #     email="legacy@example.com",
-    #     pwd="password",
-    #     age=30,
-    #     config=config,
-    #     ...
-    # )
-    
-    # Convert to AgentData
-    # agent_data = agent_to_data(agent)
+    # Note: Importing legacy Agent requires all dependencies (sqlalchemy, etc.)
+    # For this example, we'll demonstrate the concept without importing
     
     print("Legacy Agent -> AgentData conversion")
     print("  This preserves all state while enabling functional operations")
     print("  Use agent_to_data(agent) to convert")
+    print()
+    print("Example code (requires full dependencies):")
+    print("  from y_client.classes import Agent")
+    print("  from y_client.classes.agent_factory import agent_to_data")
+    print()
+    print("  agent = Agent(name='user', email='user@example.com', ...)")
+    print("  agent_data = agent_to_data(agent)")
+    print()
+    print("  # Now use with functional operations or Ray")
+    print("  from y_client.functions import post_content")
+    print("  post_content(agent_data, tid=1)")
 
 
 def example_3_parallel_cpu_operations():

@@ -31,8 +31,9 @@ except ImportError:
     RAY_AVAILABLE = False
     logger.warning("Ray is not installed. Parallel execution will not be available. Install with: pip install ray")
 
-from y_client.functions import agent_functions
-from y_client.functions import agent_llm_functions
+# Use relative imports to avoid triggering package __init__.py
+from . import agent_functions
+from . import agent_llm_functions
 
 
 # ============================================================================

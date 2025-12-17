@@ -24,16 +24,24 @@ import numpy as np
 from autogen import AssistantAgent
 from requests import get, post
 
-# Import CPU-bound functions that LLM functions may need
-from y_client.functions.agent_functions import (
+# Import CPU-bound functions that LLM functions may need (using relative import)
+from .agent_functions import (
     get_interests, get_opinions, get_post, get_thread, get_article,
     extract_components, clean_text, clean_emotion, effify, 
     update_user_interests, get_user_from_post, follow_action,
     read_posts, search_posts, search_follow_suggestions, read_mentions
 )
-import y_client.opinion_dynamics as op_dynamics
-from y_client.opinion_dynamics.utils import get_opinion_group
-from y_client.logger import log_execution_time
+
+# Import opinion dynamics - these are in different package, need absolute import with fallback
+try:
+    import y_client.opinion_dynamics as op_dynamics
+    from y_client.opinion_dynamics.utils import get_opinion_group
+    from y_client.logger import log_execution_time
+except ImportError:
+    # Fallback if full package isn't available
+    op_dynamics = None
+    get_opinion_group = None
+    log_execution_time = lambda func: func  # No-op decorator
 
 
 def emotion_annotation(agent_data, text_to_annotate: str) -> List[str]:

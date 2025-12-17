@@ -335,13 +335,15 @@ This refactoring successfully modernizes YClient with:
 ## Support
 
 - **Documentation:** `docs/` directory
-- **Examples:** `examples/ray_parallel_example.py`
+- **Examples:** 
+  - `examples/ray_parallel_example.py` - Basic Ray parallelization examples
+  - `examples/simulation_pipeline_example.py` - Complete simulation pipeline with daily/hourly pattern
 - **Issues:** GitHub issue tracker
 
 For questions, see the documentation or open an issue.
 
 ---
 
-**Version:** 1.0.0  
+**Version:** 1.0.1  
 **Date:** December 2024  
 **Author:** YClient Development Team

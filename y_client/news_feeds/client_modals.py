@@ -35,29 +35,39 @@ try:
 
     # read the experiment configuration (hardcoded config filename is a big issue!)
     config_path = Path("experiments") / "current_config.json"
-    config = json.load(open(config_path))
+    if config_path.exists():
+        config = json.load(open(config_path))
 
-    db_file = Path("experiments") / f"{config['simulation']['name']}.db"
-    if not db_file.exists():
-        # copy the clean database to the experiments folder
-        source_db = BASE_DIR.parent.parent / "data_schema" / "database_clean_client.db"
-        dest_db = BASE_DIR.parent.parent / "experiments" / f"{config['simulation']['name']}.db"
-        shutil.copyfile(source_db, dest_db)
+        db_file = Path("experiments") / f"{config['simulation']['name']}.db"
+        if not db_file.exists():
+            # copy the clean database to the experiments folder
+            source_db = BASE_DIR.parent.parent / "data_schema" / "database_clean_client.db"
+            dest_db = BASE_DIR.parent.parent / "experiments" / f"{config['simulation']['name']}.db"
+            shutil.copyfile(source_db, dest_db)
 
-    base = declarative_base()
-    # SQLite URIs always use forward slashes, use pathlib for robust conversion
-    db_path = Path("experiments") / f"{config['simulation']['name']}.db"
-    db_uri = db_path.as_posix()
-    engine = db.create_engine(
-        f"sqlite:///{db_uri}",
-        connect_args={"check_same_thread": False},
-    )
-    base.metadata.bind = engine
-    session = orm.scoped_session(orm.sessionmaker())(bind=engine)
-except:
-    from y_client.clients.client_web import base, session
-
-    pass
+        base = declarative_base()
+        # SQLite URIs always use forward slashes, use pathlib for robust conversion
+        db_path = Path("experiments") / f"{config['simulation']['name']}.db"
+        db_uri = db_path.as_posix()
+        engine = db.create_engine(
+            f"sqlite:///{db_uri}",
+            connect_args={"check_same_thread": False},
+        )
+        base.metadata.bind = engine
+        session = orm.scoped_session(orm.sessionmaker())(bind=engine)
+    else:
+        # Config file doesn't exist, try fallback
+        from y_client.clients.client_web import base, session
+except Exception:
+    # Fallback to client_web session if anything goes wrong
+    try:
+        from y_client.clients.client_web import base, session
+    except Exception:
+        # Create a minimal dummy base and session to avoid import errors
+        base = declarative_base()
+        engine = db.create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False})
+        base.metadata.bind = engine
+        session = orm.scoped_session(orm.sessionmaker())(bind=engine)
 
 
 class Articles(base):

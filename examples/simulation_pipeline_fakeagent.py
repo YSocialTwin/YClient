@@ -52,7 +52,7 @@ from datetime import datetime
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from y_client.classes.agent_data import FakeAgentData, FakePageAgentData
+from y_client.classes import FakeAgent
 from y_client.functions.ray_integration import (
     init_ray,
     shutdown_ray,
@@ -82,71 +82,50 @@ def create_fake_agent(
     name: str,
     email: str,
     base_url: str,
+    config: Dict,
     is_page: bool = False
-) -> FakeAgentData:
+) -> FakeAgent:
     """
-    Create a FakeAgentData instance.
+    Create a FakeAgent instance that communicates with YServer.
     
     Args:
         name: Agent username
         email: Agent email
         base_url: YServer base URL
+        config: Configuration dictionary
         is_page: Whether this is a page agent
     
     Returns:
-        FakeAgentData instance
+        FakeAgent instance
     """
-    if is_page:
-        return FakePageAgentData(
-            name=name,
-            email=email,
-            pwd="password123",
-            age=random.randint(25, 50),
-            gender=random.choice(["male", "female", "non-binary"]),
-            nationality="American",
-            language="english",
-            interests=random.sample([
-                "technology", "science", "politics", "sports", "entertainment",
-                "business", "health", "education", "travel", "food"
-            ], k=random.randint(3, 6)),
-            leaning=random.choice(["Democrat", "Republican", "Independent"]),
-            education_level=random.choice(["bachelor", "master", "phd"]),
-            profession=random.choice(["engineer", "teacher", "doctor", "journalist"]),
-            toxicity="no",
-            round_actions=random.randint(1, 3),
-            daily_activity_level=random.randint(1, 3),
-            base_url=base_url,
-            is_page=1,
-            type="fake",  # FakeAgent type
-            archetype=None,
-        )
-    else:
-        return FakeAgentData(
-            name=name,
-            email=email,
-            pwd="password123",
-            age=random.randint(18, 65),
-            gender=random.choice(["male", "female", "non-binary"]),
-            nationality="American",
-            language="english",
-            interests=random.sample([
-                "technology", "science", "politics", "sports", "entertainment",
-                "business", "health", "education", "travel", "food"
-            ], k=random.randint(3, 6)),
-            leaning=random.choice(["Democrat", "Republican", "Independent"]),
-            education_level=random.choice(["high school", "bachelor", "master"]),
-            profession=random.choice(["engineer", "teacher", "nurse", "writer", "student"]),
-            toxicity=random.choice(["no", "low"]),
-            round_actions=random.randint(1, 3),
-            daily_activity_level=random.randint(1, 3),
-            base_url=base_url,
-            is_page=0,
-            type="fake",  # FakeAgent type
-            archetype=random.choice(["validator", "broadcaster", "explorer"]),
-        )
+    agent = FakeAgent(
+        name=name,
+        email=email,
+        pwd="password123",
+        age=random.randint(25 if is_page else 18, 50 if is_page else 65),
+        gender=random.choice(["male", "female", "non-binary"]),
+        nationality="American",
+        language="english",
+        interests=random.sample([
+            "technology", "science", "politics", "sports", "entertainment",
+            "business", "health", "education", "travel", "food"
+        ], k=random.randint(3, 6)),
+        leaning=random.choice(["Democrat", "Republican", "Independent"]),
+        education_level=random.choice(["bachelor", "master", "phd"] if is_page 
+                                     else ["high school", "bachelor", "master"]),
+        profession=random.choice(["engineer", "teacher", "doctor", "journalist"] if is_page
+                                else ["engineer", "teacher", "nurse", "writer", "student"]),
+        toxicity="no" if is_page else random.choice(["no", "low"]),
+        round_actions=random.randint(1, 3),
+        daily_activity_level=random.randint(1, 3),
+        config=config,
+        is_page=1 if is_page else 0,
+        archetype=None if is_page else random.choice(["validator", "broadcaster", "explorer"]),
+    )
+    return agent
 
 
-def execute_page_posts_sequential(pages: List[FakePageAgentData], tid: int):
+def execute_page_posts_sequential(pages: List[FakeAgent], tid: int):
     """
     Execute page posting sequentially (non-Ray fallback).
     
@@ -157,14 +136,13 @@ def execute_page_posts_sequential(pages: List[FakePageAgentData], tid: int):
     print(f"    [{len(pages)} pages] Posting content (sequential)...")
     for page in pages:
         try:
-            # FakeAgent pages just perform simple actions
-            # They would call backend API to create posts
-            pass
+            # FakeAgent pages use select_action_lite which calls backend API
+            page.select_action_lite(tid=tid, actions=[])
         except Exception as e:
             print(f"    Error posting for {page.name}: {e}")
 
 
-def execute_page_posts_parallel(pages: List[FakePageAgentData], tid: int):
+def execute_page_posts_parallel(pages: List[FakeAgent], tid: int):
     """
     Execute page posting in parallel using Ray (if available).
     
@@ -180,7 +158,7 @@ def execute_page_posts_parallel(pages: List[FakePageAgentData], tid: int):
     try:
         # In a real implementation, this would use Ray to parallelize
         # page posting actions across multiple workers
-        # For FakeAgents, these are simpler operations without LLM calls
+        # For now, using sequential fallback
         execute_page_posts_sequential(pages, tid)
     except Exception as e:
         print(f"    Error in parallel page posting: {e}")
@@ -188,7 +166,7 @@ def execute_page_posts_parallel(pages: List[FakePageAgentData], tid: int):
 
 
 def execute_agent_actions_sequential(
-    agents: List[FakeAgentData],
+    agents: List[FakeAgent],
     tid: int,
     actions_pool: List[str],
     max_rounds: int = 3
@@ -206,22 +184,21 @@ def execute_agent_actions_sequential(
         rounds = random.randint(1, max_rounds)
         for _ in range(rounds):
             try:
-                # FakeAgents perform simplified actions
-                # Sample actions without LLM decision-making
+                # Sample actions for the agent
                 if len(actions_pool) > 1:
                     candidates = random.choices(actions_pool, k=2)
                     candidates.append("NONE")
                 else:
                     candidates = actions_pool + ["NONE"]
                 
-                selected_action = random.choice(candidates)
-                # In real simulation: agent would call backend API with selected action
+                # FakeAgent's select_action method will call backend API
+                agent.select_action(tid=tid, actions=candidates)
             except Exception as e:
                 print(f"    Error executing action for {agent.name}: {e}")
 
 
 def execute_agent_actions_parallel(
-    agents: List[FakeAgentData],
+    agents: List[FakeAgent],
     tid: int,
     actions_pool: List[str],
     max_rounds: int = 3
@@ -243,13 +220,14 @@ def execute_agent_actions_parallel(
     try:
         # In a real implementation, this would use Ray to parallelize
         # agent actions across multiple workers
+        # For now, using sequential fallback
         execute_agent_actions_sequential(agents, tid, actions_pool, max_rounds)
     except Exception as e:
         print(f"    Error in parallel agent actions: {e}")
         execute_agent_actions_sequential(agents, tid, actions_pool, max_rounds)
 
 
-def handle_daily_follows(agents: List[FakeAgentData], tid: int, probability: float = 0.1):
+def handle_daily_follows(agents: List[FakeAgent], tid: int, probability: float = 0.1):
     """
     Handle end-of-day follow evaluation.
     
@@ -263,14 +241,13 @@ def handle_daily_follows(agents: List[FakeAgentData], tid: int, probability: flo
         print(f"  End-of-day: {len(eligible)} agents evaluating follows...")
         for agent in eligible:
             try:
-                # FakeAgent would perform simplified follow evaluation
-                # Could call backend API to follow/unfollow users
-                pass
+                # FakeAgent's select_action will call backend API for FOLLOW action
+                agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
             except Exception as e:
                 print(f"  Error in follow evaluation for {agent.name}: {e}")
 
 
-def handle_churn(agents: List[FakeAgentData], tid: int, churn_rate: float = 0.01) -> List[FakeAgentData]:
+def handle_churn(agents: List[FakeAgent], tid: int, churn_rate: float = 0.01) -> List[FakeAgent]:
     """
     Handle agent churn (removal).
     
@@ -293,17 +270,19 @@ def handle_churn(agents: List[FakeAgentData], tid: int, churn_rate: float = 0.01
 
 
 def add_new_agents(
-    agents: List[FakeAgentData],
+    agents: List[FakeAgent],
     base_url: str,
+    config: Dict,
     n_new: int,
     agent_counter: int
-) -> Tuple[List[FakeAgentData], int]:
+) -> Tuple[List[FakeAgent], int]:
     """
     Add new agents to the simulation.
     
     Args:
         agents: Current list of agents
         base_url: YServer base URL
+        config: Configuration dictionary
         n_new: Number of new agents to add
         agent_counter: Current agent counter for naming
     
@@ -316,7 +295,7 @@ def add_new_agents(
         for i in range(n_new):
             name = f"fake_user_{agent_counter + i}"
             email = f"fake_user_{agent_counter + i}@example.com"
-            new_agents.append(create_fake_agent(name, email, base_url, is_page=False))
+            new_agents.append(create_fake_agent(name, email, base_url, config, is_page=False))
         
         agents.extend(new_agents)
         agent_counter += n_new
@@ -381,6 +360,18 @@ def run_simulation_pipeline(
         print("📋 Using sequential execution (Ray not available or disabled)")
     print()
     
+    # Create configuration for agents
+    config = {
+        "server": {"host": server_host, "port": server_port},
+        "agents": {
+            "probability_of_daily_follow": 0.1,
+            "probability_of_secondary_follow": 0.05,
+        },
+        "simulation": {
+            "max_length_thread_reading": 3,
+        }
+    }
+    
     # Create agents
     print("Creating agents...")
     user_agents = []
@@ -390,13 +381,13 @@ def run_simulation_pipeline(
     for i in range(n_agents):
         name = f"fake_user_{i}"
         email = f"fake_user_{i}@example.com"
-        user_agents.append(create_fake_agent(name, email, base_url, is_page=False))
+        user_agents.append(create_fake_agent(name, email, base_url, config, is_page=False))
         agent_counter += 1
     
     for i in range(n_pages):
         name = f"fake_page_{i}"
         email = f"fake_page_{i}@example.com"
-        page_agents.append(create_fake_agent(name, email, base_url, is_page=True))
+        page_agents.append(create_fake_agent(name, email, base_url, config, is_page=True))
     
     all_agents = user_agents + page_agents
     print(f"  Created {len(user_agents)} user agents and {len(page_agents)} page agents")
@@ -480,7 +471,7 @@ def run_simulation_pipeline(
             
             # Add new agents
             n_new = max(1, int(len(daily_active) * 0.07))
-            user_agents, agent_counter = add_new_agents(user_agents, base_url, n_new, agent_counter)
+            user_agents, agent_counter = add_new_agents(user_agents, base_url, config, n_new, agent_counter)
             
             print(f"  Current population: {len(user_agents)} users, {len(page_agents)} pages")
         

@@ -67,7 +67,7 @@ from datetime import datetime
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from y_client.classes.agent_data import AgentData, PageAgentData
+from y_client.classes import Agent
 from y_client.functions.ray_integration import (
     init_ray,
     shutdown_ray,
@@ -120,61 +120,57 @@ def create_llm_agent(
     name: str,
     email: str,
     yserver_url: str,
-    ollama_url: str,
+    config: Dict,
+    ollama_url: str = "http://127.0.0.1:11434/v1",
     is_page: bool = False
-) -> AgentData:
+) -> Agent:
     """
-    Create an AgentData instance configured for LLM (Ollama).
+    Create an Agent instance configured for LLM (Ollama).
     
     Args:
         name: Agent username
         email: Agent email
         yserver_url: YServer base URL
+        config: Configuration dictionary  
         ollama_url: Ollama API endpoint
         is_page: Whether this is a page agent
     
     Returns:
-        AgentData or PageAgentData instance
+        Agent instance
     """
     llm_config = create_llm_config(ollama_url)
     
-    common_attrs = {
-        "name": name,
-        "email": email,
-        "pwd": "password123",
-        "age": random.randint(25 if is_page else 18, 50 if is_page else 65),
-        "gender": random.choice(["male", "female", "non-binary"]),
-        "nationality": "American",
-        "language": "english",
-        "interests": random.sample([
+    agent = Agent(
+        name=name,
+        email=email,
+        pwd="password123",
+        age=random.randint(25 if is_page else 18, 50 if is_page else 65),
+        gender=random.choice(["male", "female", "non-binary"]),
+        nationality="American",
+        language="english",
+        interests=random.sample([
             "technology", "science", "politics", "sports", "entertainment",
             "business", "health", "education", "travel", "food",
             "art", "music", "literature", "environment", "philosophy"
         ], k=random.randint(4, 8)),
-        "leaning": random.choice(["Democrat", "Republican", "Independent"]),
-        "education_level": random.choice(["bachelor", "master", "phd"] if is_page else ["high school", "bachelor", "master"]),
-        "profession": random.choice([
+        leaning=random.choice(["Democrat", "Republican", "Independent"]),
+        education_level=random.choice(["bachelor", "master", "phd"] if is_page else ["high school", "bachelor", "master"]),
+        profession=random.choice([
             "engineer", "teacher", "doctor", "journalist", "writer",
             "scientist", "analyst", "designer", "manager", "consultant"
         ]),
-        "toxicity": "no",
-        "round_actions": random.randint(1, 3),
-        "daily_activity_level": random.randint(1, 3),
-        "base_url": yserver_url,
-        "llm_base": ollama_url,
-        "llm_config": llm_config,
-        "is_page": 1 if is_page else 0,
-        "type": "llama3.2",  # Using llama3.2 via Ollama
-        "archetype": None if is_page else random.choice(["validator", "broadcaster", "explorer"]),
-    }
-    
-    if is_page:
-        return PageAgentData(**common_attrs)
-    else:
-        return AgentData(**common_attrs)
+        toxicity="no",
+        round_actions=random.randint(1, 3),
+        daily_activity_level=random.randint(1, 3),
+        config=config,
+        ag_type="llama3.2",  # Using llama3.2 via Ollama
+        is_page=1 if is_page else 0,
+        archetype=None if is_page else random.choice(["validator", "broadcaster", "explorer"]),
+    )
+    return agent
 
 
-def execute_page_posts_sequential(pages: List[PageAgentData], tid: int):
+def execute_page_posts_sequential(pages: List[Agent], tid: int):
     """
     Execute page posting sequentially with LLM (non-Ray fallback).
     
@@ -185,17 +181,13 @@ def execute_page_posts_sequential(pages: List[PageAgentData], tid: int):
     print(f"    [{len(pages)} pages] Posting content with LLM (sequential)...")
     for page in pages:
         try:
-            # In a real implementation:
-            # from y_client.functions.agent_llm_functions import post_content
-            # post_content(page, tid, content_type="news")
-            
-            # For demonstration, just print
-            print(f"      {page.name} posted content (LLM-generated)")
+            # Agent's select_action_lite will call LLM and post to backend
+            page.select_action_lite(tid=tid, actions=[])
         except Exception as e:
             print(f"    Error posting for {page.name}: {e}")
 
 
-def execute_page_posts_parallel(pages: List[PageAgentData], tid: int):
+def execute_page_posts_parallel(pages: List[Agent], tid: int):
     """
     Execute page posting in parallel using Ray with GPU allocation.
     
@@ -221,7 +213,7 @@ def execute_page_posts_parallel(pages: List[PageAgentData], tid: int):
 
 
 def execute_agent_actions_sequential(
-    agents: List[AgentData],
+    agents: List[Agent],
     tid: int,
     actions_pool: List[str],
     max_rounds: int = 3
@@ -239,27 +231,22 @@ def execute_agent_actions_sequential(
         rounds = random.randint(1, max_rounds)
         for _ in range(rounds):
             try:
-                # In a real implementation:
-                # from y_client.functions.agent_llm_functions import select_action_llm
-                # selected = select_action_llm(agent, tid, actions_pool)
-                
-                # Sample actions with LLM decision
+                # Sample candidate actions
                 if len(actions_pool) > 1:
                     candidates = random.choices(actions_pool, k=2)
                     candidates.append("NONE")
                 else:
                     candidates = actions_pool + ["NONE"]
                 
-                # LLM would decide which action to take
-                selected_action = random.choice(candidates)
-                print(f"      {agent.name} performed {selected_action} (LLM-decided)")
+                # Agent's select_action will use LLM to decide and call backend
+                agent.select_action(tid=tid, actions=candidates)
                 
             except Exception as e:
                 print(f"    Error executing action for {agent.name}: {e}")
 
 
 def execute_agent_actions_parallel(
-    agents: List[AgentData],
+    agents: List[Agent],
     tid: int,
     actions_pool: List[str],
     max_rounds: int = 3
@@ -300,7 +287,7 @@ def execute_agent_actions_parallel(
         execute_agent_actions_sequential(agents, tid, actions_pool, max_rounds)
 
 
-def handle_daily_follows(agents: List[AgentData], tid: int, probability: float = 0.1):
+def handle_daily_follows(agents: List[Agent], tid: int, probability: float = 0.1):
     """
     Handle end-of-day follow evaluation with LLM.
     
@@ -314,16 +301,13 @@ def handle_daily_follows(agents: List[AgentData], tid: int, probability: float =
         print(f"  End-of-day: {len(eligible)} agents evaluating follows (LLM)...")
         for agent in eligible:
             try:
-                # In a real implementation:
-                # from y_client.functions.agent_llm_functions import evaluate_follow
-                # evaluate_follow(agent, tid)
-                
-                print(f"    {agent.name} evaluated potential follows (LLM)")
+                # Agent's select_action will use LLM for FOLLOW decision
+                agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
             except Exception as e:
                 print(f"  Error in follow evaluation for {agent.name}: {e}")
 
 
-def handle_churn(agents: List[AgentData], tid: int, churn_rate: float = 0.01) -> List[AgentData]:
+def handle_churn(agents: List[Agent], tid: int, churn_rate: float = 0.01) -> List[Agent]:
     """
     Handle agent churn (removal).
     
@@ -347,18 +331,20 @@ def handle_churn(agents: List[AgentData], tid: int, churn_rate: float = 0.01) ->
 
 
 def add_new_agents(
-    agents: List[AgentData],
+    agents: List[Agent],
     yserver_url: str,
+    config: Dict,
     ollama_url: str,
     n_new: int,
     agent_counter: int
-) -> Tuple[List[AgentData], int]:
+) -> Tuple[List[Agent], int]:
     """
     Add new LLM agents to the simulation.
     
     Args:
         agents: Current list of agents
         yserver_url: YServer base URL
+        config: Configuration dictionary
         ollama_url: Ollama API endpoint
         n_new: Number of new agents to add
         agent_counter: Current agent counter for naming
@@ -372,7 +358,7 @@ def add_new_agents(
         for i in range(n_new):
             name = f"llm_user_{agent_counter + i}"
             email = f"llm_user_{agent_counter + i}@example.com"
-            new_agents.append(create_llm_agent(name, email, yserver_url, ollama_url, is_page=False))
+            new_agents.append(create_llm_agent(name, email, yserver_url, config, ollama_url, is_page=False))
         
         agents.extend(new_agents)
         agent_counter += n_new
@@ -444,6 +430,29 @@ def run_simulation_pipeline(
         print("📋 Using sequential execution (Ray not available or disabled)")
     print()
     
+    # Create configuration for agents
+    config = {
+        "server": {"host": yserver_host, "port": yserver_port},
+        "agents": {
+            "probability_of_daily_follow": 0.1,
+            "probability_of_secondary_follow": 0.05,
+        },
+        "simulation": {
+            "max_length_thread_reading": 3,
+        },
+        "llm": {
+            "config_list": [
+                {
+                    "model": "llama3.2",
+                    "base_url": ollama_url,
+                    "api_key": "NULL",
+                }
+            ],
+            "temperature": 1.5,
+            "max_tokens": -1,
+        }
+    }
+    
     # Create agents
     print("Creating LLM agents...")
     user_agents = []
@@ -453,13 +462,13 @@ def run_simulation_pipeline(
     for i in range(n_agents):
         name = f"llm_user_{i}"
         email = f"llm_user_{i}@example.com"
-        user_agents.append(create_llm_agent(name, email, yserver_url, ollama_url, is_page=False))
+        user_agents.append(create_llm_agent(name, email, yserver_url, config, ollama_url, is_page=False))
         agent_counter += 1
     
     for i in range(n_pages):
         name = f"llm_page_{i}"
         email = f"llm_page_{i}@example.com"
-        page_agents.append(create_llm_agent(name, email, yserver_url, ollama_url, is_page=True))
+        page_agents.append(create_llm_agent(name, email, yserver_url, config, ollama_url, is_page=True))
     
     all_agents = user_agents + page_agents
     print(f"  Created {len(user_agents)} LLM user agents and {len(page_agents)} LLM page agents")
@@ -544,7 +553,7 @@ def run_simulation_pipeline(
             # Add new LLM agents
             n_new = max(1, int(len(daily_active) * 0.07))
             user_agents, agent_counter = add_new_agents(
-                user_agents, yserver_url, ollama_url, n_new, agent_counter
+                user_agents, yserver_url, config, ollama_url, n_new, agent_counter
             )
             
             print(f"  Current population: {len(user_agents)} users, {len(page_agents)} pages")

@@ -176,7 +176,7 @@ def create_llm_agent(
     return agent
 
 
-def execute_page_posts_sequential(pages: List[Agent], tid: int):
+def execute_page_posts_sequential(pages: List["Agent"], tid: int):
     """
     Execute page posting sequentially with LLM (non-Ray fallback).
     
@@ -193,7 +193,7 @@ def execute_page_posts_sequential(pages: List[Agent], tid: int):
             print(f"    Error posting for {page.name}: {e}")
 
 
-def execute_page_posts_parallel(pages: List[Agent], tid: int):
+def execute_page_posts_parallel(pages: List["Agent"], tid: int):
     """
     Execute page posting in parallel using Ray with GPU allocation.
     
@@ -293,7 +293,7 @@ def execute_agent_actions_parallel(
         execute_agent_actions_sequential(agents, tid, actions_pool, max_rounds)
 
 
-def handle_daily_follows(agents: List[Agent], tid: int, probability: float = 0.1):
+def handle_daily_follows(agents: List["Agent"], tid: int, probability: float = 0.1):
     """
     Handle end-of-day follow evaluation with LLM.
     
@@ -313,7 +313,7 @@ def handle_daily_follows(agents: List[Agent], tid: int, probability: float = 0.1
                 print(f"  Error in follow evaluation for {agent.name}: {e}")
 
 
-def handle_churn(agents: List[Agent], tid: int, churn_rate: float = 0.01) -> List[Agent]:
+def handle_churn(agents: List["Agent"], tid: int, churn_rate: float = 0.01) -> List["Agent"]:
     """
     Handle agent churn (removal).
     

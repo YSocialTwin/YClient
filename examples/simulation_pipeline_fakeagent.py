@@ -131,7 +131,7 @@ def create_fake_agent(
     return agent
 
 
-def execute_page_posts_sequential(pages: List[FakeAgent], tid: int):
+def execute_page_posts_sequential(pages: List["FakeAgent"], tid: int):
     """
     Execute page posting sequentially (non-Ray fallback).
     
@@ -148,7 +148,7 @@ def execute_page_posts_sequential(pages: List[FakeAgent], tid: int):
             print(f"    Error posting for {page.name}: {e}")
 
 
-def execute_page_posts_parallel(pages: List[FakeAgent], tid: int):
+def execute_page_posts_parallel(pages: List["FakeAgent"], tid: int):
     """
     Execute page posting in parallel using Ray (if available).
     
@@ -233,7 +233,7 @@ def execute_agent_actions_parallel(
         execute_agent_actions_sequential(agents, tid, actions_pool, max_rounds)
 
 
-def handle_daily_follows(agents: List[FakeAgent], tid: int, probability: float = 0.1):
+def handle_daily_follows(agents: List["FakeAgent"], tid: int, probability: float = 0.1):
     """
     Handle end-of-day follow evaluation.
     
@@ -253,7 +253,7 @@ def handle_daily_follows(agents: List[FakeAgent], tid: int, probability: float =
                 print(f"  Error in follow evaluation for {agent.name}: {e}")
 
 
-def handle_churn(agents: List[FakeAgent], tid: int, churn_rate: float = 0.01) -> List[FakeAgent]:
+def handle_churn(agents: List["FakeAgent"], tid: int, churn_rate: float = 0.01) -> List["FakeAgent"]:
     """
     Handle agent churn (removal).
     

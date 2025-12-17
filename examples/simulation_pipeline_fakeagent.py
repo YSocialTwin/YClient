@@ -46,13 +46,16 @@ import sys
 import os
 import random
 import argparse
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, TYPE_CHECKING
 from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from y_client.classes import FakeAgent
+# Import only for type checking to avoid triggering dependencies at module level
+if TYPE_CHECKING:
+    from y_client.classes import FakeAgent
+
 from y_client.functions.ray_integration import (
     init_ray,
     shutdown_ray,
@@ -84,7 +87,7 @@ def create_fake_agent(
     base_url: str,
     config: Dict,
     is_page: bool = False
-) -> FakeAgent:
+) -> "FakeAgent":
     """
     Create a FakeAgent instance that communicates with YServer.
     
@@ -98,6 +101,9 @@ def create_fake_agent(
     Returns:
         FakeAgent instance
     """
+    # Import here to avoid triggering dependencies at module level
+    from y_client.classes import FakeAgent
+    
     agent = FakeAgent(
         name=name,
         email=email,

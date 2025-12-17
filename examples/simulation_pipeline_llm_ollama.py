@@ -61,13 +61,16 @@ import sys
 import os
 import random
 import argparse
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, TYPE_CHECKING
 from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from y_client.classes import Agent
+# Import only for type checking to avoid triggering dependencies at module level
+if TYPE_CHECKING:
+    from y_client.classes import Agent
+
 from y_client.functions.ray_integration import (
     init_ray,
     shutdown_ray,
@@ -123,7 +126,7 @@ def create_llm_agent(
     config: Dict,
     ollama_url: str = "http://127.0.0.1:11434/v1",
     is_page: bool = False
-) -> Agent:
+) -> "Agent":
     """
     Create an Agent instance configured for LLM (Ollama).
     
@@ -138,6 +141,9 @@ def create_llm_agent(
     Returns:
         Agent instance
     """
+    # Import here to avoid triggering dependencies at module level
+    from y_client.classes import Agent
+    
     llm_config = create_llm_config(ollama_url)
     
     agent = Agent(

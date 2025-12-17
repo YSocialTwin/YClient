@@ -72,8 +72,11 @@ shutdown_ray()
 ### 4. Command-Line Interface
 
 ```bash
-# Basic usage
+# Basic usage (no GPU)
 python examples/simulation_pipeline_example.py --days 2 --slots 4 --agents 10
+
+# With GPU (if available)
+python examples/simulation_pipeline_example.py --days 2 --slots 4 --agents 10 --ray-gpus 1
 
 # Full configuration
 python examples/simulation_pipeline_example.py \
@@ -81,6 +84,8 @@ python examples/simulation_pipeline_example.py \
     --slots 24 \
     --agents 100 \
     --pages 10 \
+    --ray-cpus 8 \
+    --ray-gpus 0 \
     --config config_files/config.json
 
 # Without Ray (sequential)
@@ -93,7 +98,15 @@ python examples/simulation_pipeline_example.py --no-ray
 - `--agents N` - Number of user agents (default: 10)
 - `--pages N` - Number of page agents (default: 2)
 - `--no-ray` - Disable Ray, use sequential execution
+- `--ray-cpus N` - Number of CPUs for Ray (default: 4)
+- `--ray-gpus N` - Number of GPUs for Ray (default: 0, **must be whole number**)
 - `--config PATH` - Path to config.json (default: config_files/config.json)
+
+**Important GPU Note:**
+- Ray requires whole numbers for GPU allocation during initialization (0, 1, 2, etc.)
+- Individual Ray tasks can use fractional GPU (0.1 per task = 10 tasks per GPU)
+- Default is 0 GPUs - set `--ray-gpus 1` only if you have a GPU
+- If you get GPU errors, ensure `--ray-gpus 0` (or omit the flag)
 
 ## Demonstration vs Production
 

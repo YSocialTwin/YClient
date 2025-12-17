@@ -37,17 +37,26 @@ Prerequisites:
         pip install ray
 
 Usage:
-    # Run a 2-day simulation with 4 hours per day, 10 agents
+    # Run a 2-day simulation with 4 hours per day, 10 agents (no GPU)
     python examples/simulation_pipeline_example.py --days 2 --slots 4 --agents 10
+    
+    # Run with Ray using 4 CPUs and 1 GPU
+    python examples/simulation_pipeline_example.py --days 2 --slots 4 --agents 10 --ray-cpus 4 --ray-gpus 1
     
     # Run without Ray (sequential)
     python examples/simulation_pipeline_example.py --no-ray
     
-    # Customize all parameters
-    python examples/simulation_pipeline_example.py --days 3 --slots 24 --agents 50 --pages 5
+    # Customize all parameters (CPUs only, no GPU)
+    python examples/simulation_pipeline_example.py --days 3 --slots 24 --agents 50 --pages 5 --ray-cpus 8
     
-    # Full day simulation (24 hours)
-    python examples/simulation_pipeline_example.py --days 7 --slots 24 --agents 100 --pages 10
+    # Full day simulation (24 hours) with GPU
+    python examples/simulation_pipeline_example.py --days 7 --slots 24 --agents 100 --pages 10 --ray-gpus 1
+
+Important Notes:
+    - Ray requires WHOLE NUMBER for num_gpus during initialization (e.g., 0, 1, 2)
+    - Individual Ray tasks can use fractional GPU allocation (e.g., 0.1 per task)
+    - Default is 0 GPUs; set --ray-gpus 1 if you have GPU and want to use it
+    - If you don't have a GPU or get GPU errors, use --ray-gpus 0 (default)
 
 Real Simulation Integration:
     To integrate this pattern into a real simulation:
@@ -337,7 +346,9 @@ def run_simulation_pipeline(
     slots_per_day: int = 24,
     num_agents: int = 10,
     num_pages: int = 2,
-    use_ray: bool = True
+    use_ray: bool = True,
+    ray_cpus: int = 4,
+    ray_gpus: int = 0
 ):
     """
     Run a complete simulation pipeline with daily/hourly pattern.
@@ -349,6 +360,8 @@ def run_simulation_pipeline(
         num_agents: Number of user agents
         num_pages: Number of page agents
         use_ray: Whether to use Ray for parallelization
+        ray_cpus: Number of CPUs for Ray (default: 4)
+        ray_gpus: Number of GPUs for Ray (default: 0, must be whole number)
     """
     print("="*80)
     print("SIMULATION PIPELINE WITH RAY PARALLELIZATION")
@@ -359,11 +372,16 @@ def run_simulation_pipeline(
     print(f"  User agents: {num_agents}")
     print(f"  Page agents: {num_pages}")
     print(f"  Ray parallelization: {use_ray and RAY_AVAILABLE}")
+    if use_ray and RAY_AVAILABLE:
+        print(f"  Ray CPUs: {ray_cpus}")
+        print(f"  Ray GPUs: {ray_gpus}")
     
     # Initialize Ray if requested
     if use_ray and RAY_AVAILABLE:
-        print("\n Initializing Ray...")
-        init_ray(num_cpus=4, num_gpus=0.5)
+        print("\nInitializing Ray...")
+        # Note: num_gpus must be a whole number for Ray initialization
+        # Individual tasks can use fractional GPU allocation (e.g., 0.1 per task)
+        init_ray(num_cpus=ray_cpus, num_gpus=ray_gpus)
     elif use_ray and not RAY_AVAILABLE:
         print("\nWARNING: Ray not available, falling back to sequential execution")
     
@@ -540,6 +558,18 @@ def main():
         action='store_true',
         help='Disable Ray parallelization'
     )
+    parser.add_argument(
+        '--ray-cpus',
+        type=int,
+        default=4,
+        help='Number of CPUs to allocate to Ray (default: 4)'
+    )
+    parser.add_argument(
+        '--ray-gpus',
+        type=int,
+        default=0,
+        help='Number of GPUs to allocate to Ray (default: 0, must be whole number)'
+    )
     
     args = parser.parse_args()
     
@@ -582,7 +612,9 @@ def main():
             slots_per_day=args.slots,
             num_agents=args.agents,
             num_pages=args.pages,
-            use_ray=not args.no_ray
+            use_ray=not args.no_ray,
+            ray_cpus=args.ray_cpus,
+            ray_gpus=args.ray_gpus
         )
     except KeyboardInterrupt:
         print("\n\nSimulation interrupted by user")

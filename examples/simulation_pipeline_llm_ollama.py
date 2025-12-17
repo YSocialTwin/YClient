@@ -61,7 +61,7 @@ import sys
 import os
 import random
 import argparse
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from datetime import datetime
 
 # Add parent directory to path
@@ -352,7 +352,7 @@ def add_new_agents(
     ollama_url: str,
     n_new: int,
     agent_counter: int
-) -> tuple[List[AgentData], int]:
+) -> Tuple[List[AgentData], int]:
     """
     Add new LLM agents to the simulation.
     

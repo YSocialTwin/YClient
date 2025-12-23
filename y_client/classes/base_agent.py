@@ -1632,6 +1632,8 @@ class Agent(object):
         :param tid: The time id.
         :param max_length_thread_reading: The maximum length of the thread to read.
         """
+        if len(actions) == 0:
+            return
         action = np.random.choice(actions)
 
         if action == "COMMENT":

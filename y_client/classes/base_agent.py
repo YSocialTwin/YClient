@@ -17,9 +17,12 @@ Classes:
 import json
 import random
 import re
+import sys
+from pydoc_data.topics import topics
 
 import numpy as np
 from autogen import AssistantAgent
+from pygments.lexers import archetype
 from requests import get, post
 from sqlalchemy.sql.expression import func
 from y_client.classes.annotator import Annotator
@@ -35,6 +38,8 @@ from y_client.news_feeds.client_modals import (
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
+import y_client.opinion_dynamics as op_dynamics
+from y_client.opinion_dynamics.utils import get_opinion_group
 
 __all__ = ["Agent", "Agents"]
 
@@ -102,6 +107,8 @@ class Agent(object):
         is_page: int = 0,
         daily_activity_level: int = 1,
         profession: str = None,
+        opinions: dict = None,
+        archetype: str = None,
         *args,
         **kwargs,
     ):
@@ -177,10 +184,15 @@ class Agent(object):
                 is_page=is_page,
                 daily_activity_level=daily_activity_level,
                 profession=profession,
+                opinions=opinions,
+                archetype=archetype,
                 *args,
                 **kwargs,
             )
         else:
+            self.topics_sentiment = ""
+            self.topics_opinions = ""
+
             self.probability_of_daily_follow = float(config["agents"][
                 "probability_of_daily_follow"
             ])
@@ -209,6 +221,15 @@ class Agent(object):
                 "max_tokens": config["servers"]["llm_v_max_tokens"],
             }
             self.is_page = is_page
+            self.opinions = opinions
+            if self.opinions is not None:
+                self.opinions_enabled = True
+            else:
+                self.opinions_enabled = False
+
+            self.archetype = archetype
+
+            self.opinion_dynamics = config["simulation"]['opinion_dynamics']
 
             print(f"Loading Preexisting simulation: {load}")
 
@@ -236,6 +257,15 @@ class Agent(object):
                 self.toxicity = toxicity
                 self.daily_activity_level = daily_activity_level
                 self.profession = profession
+                self.opinions = opinions
+
+                if self.opinions is not None:
+                    self.opinions_enabled = True
+                else:
+                    self.opinions_enabled = False
+                self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+
+                self.archetype = archetype
 
                 uid = self.__register()
 
@@ -256,6 +286,14 @@ class Agent(object):
                         config["agents"]["n_interests"]["max"],
                     )
                     self.interests = self.__get_interests(-1)[0]
+
+                    if self.opinions_enabled:
+                        self.opinions = self.__get_opinions()
+                    else:
+                        self.opinions = None
+                    self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+                    self.archetype = archetype
+
                 else:
                     self.interests = []
 
@@ -277,6 +315,7 @@ class Agent(object):
                 self.toxicity = us["toxicity"]
                 self.nationality = us["nationality"]
                 self.is_page = us["is_page"]
+                self.archetype = us['archetype'] if "archetype" in us else None
 
             config_list = {
                 "model": f"{self.type}",
@@ -336,9 +375,14 @@ class Agent(object):
         daily_activity_level: int = 1,
         profession: str = None,
         activity_profile: str = None,
+        opinions: dict = None,
+        archetype: str = None,
         *args,
         **kwargs,
     ):
+        self.topics_sentiment = ""
+        self.topics_opinions = ""
+
         self.probability_of_secondary_follow = float(config["agents"][
             "probability_of_secondary_follow"
         ])
@@ -360,6 +404,14 @@ class Agent(object):
         self.attention_window = int(config["agents"]["attention_window"])
         self.activity_profile = activity_profile
         self.annotate_emotions = config["simulation"]["emotion_annotation"]
+        self.opinions = opinions
+        if self.opinions is not None:
+            self.opinions_enabled = True
+        else:
+            self.opinions_enabled = False
+
+        self.opinion_dynamics = config["simulation"]['opinion_dynamics'] if 'opinion_dynamics' in config["simulation"] else None
+        self.archetype = archetype
 
         if "prompts" in kwargs:
             self.prompts = kwargs["prompts"]
@@ -418,6 +470,8 @@ class Agent(object):
             self.round_actions = round_actions
             self.gender = gender
             self.nationality = nationality
+            self.opinions = opinions
+            self.archetype = archetype
 
             uid = self.__register()
             if uid is None:
@@ -466,7 +520,14 @@ class Agent(object):
             self.gender = us["gender"]
             self.toxicity = us["toxicity"]
             self.nationality = us["nationality"]
-            self.is_page = us["is_page"]
+            self.is_page = int(us["is_page"])
+            if self.is_page == 0:
+                self.archetype = us['archetype']
+
+            if self.opinions_enabled:
+                self.opinions = self.__get_opinions()
+            else:
+                self.opinions = None
 
         config_list = {
             "model": f"{self.type}",
@@ -605,11 +666,6 @@ class Agent(object):
 
         :return: the user
         """
-        #res = json.loads(self._check_credentials())
-
-        #if res["status"] == 404:
-        #    return json.dumps({"status": 404, "error": "User not found"})
-
         api_url = f"{self.base_url}/get_user"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -689,7 +745,34 @@ class Agent(object):
 
         post(f"{api_url}", headers=headers, data=json.dumps(data))
 
+        if self.opinions_enabled:
+            api_url = f"{self.base_url}/set_user_opinions"
+            data = {"user_id": uid, "opinions": self.opinions, "round": self.joined_on}
+            post(f"{api_url}", headers=headers, data=json.dumps(data))
+
         return uid
+
+    def __get_opinions(self):
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        api_url = f"{self.base_url}/get_user_opinions"
+
+        data = {
+            "user_id": self.user_id,
+        }
+        response = post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data))
+        data = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        opinions = {}
+        try:
+            for k, v in data.items():
+                opinions[k] = v[0]
+        except:
+            return {}
+
+        return opinions
 
     def __get_interests(self, tid):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -765,6 +848,19 @@ class Agent(object):
         # obtain the most recent (and frequent) interests of the agent
         interests, interests_id = self.__get_interests(tid)
 
+        self.topics_opinions = "Your opinions are: "
+        self.topics_sentiment = "Your sentiment is: "
+
+        if self.opinions_enabled:
+            opinions = self.__get_opinions()
+            for interest in interests:
+                opinions[interest] = get_opinion_group(opinions[interest], self.opinion_dynamics['opinion_groups'])
+
+            for s in opinions:
+                self.topics_opinions += f"{s}: {opinions[s]} "
+            if len(opinions) == 0:
+                self.topics_opinions = ""
+
         # get recent sentiment on the selected interests
         api_url = f"{self.base_url}/get_sentiment"
         data = {"user_id": self.user_id, "interests": interests}
@@ -775,11 +871,11 @@ class Agent(object):
         )
         sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-        self.topics_opinions = "Your opinion on the topics you are interested in is: "
         for s in sentiment:
-            self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+            self.topics_sentiment += f"{s['topic']}: {s['sentiment']} "
+
         if len(sentiment) == 0:
-            self.topics_opinions = ""
+            self.topics_sentiment = ""
 
         user_agent = AssistantAgent(
             name=self.name,
@@ -932,8 +1028,21 @@ class Agent(object):
         )
         interests = json.loads(response.__dict__["_content"].decode("utf-8"))
 
+        self.topics_opinions = "Your opinions on the discussion topics are: "
+        self.topics_sentiment = "Your sentiment on the discussion topics are: "
+
+        if self.opinions_enabled:
+            opinions = self.__get_opinions()
+            for interest in interests:
+                opinions[interest] = get_opinion_group(opinions[interest], self.opinion_dynamics['opinion_groups'])
+
+            for s in opinions:
+                self.topics_opinions += f"{s}: {opinions[s]}\n "
+            if len(opinions) == 0:
+                self.topics_opinions = ""
+
         # get the opinion on the topics (if present)
-        self.topics_opinions = ""
+
         if len(interests) > 0:
             # get recent sentiment on the selected interests
             api_url = f"{self.base_url}/get_sentiment"
@@ -945,13 +1054,10 @@ class Agent(object):
             )
             sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-            self.topics_opinions = (
-                "Your opinion on the topics of the post you are responding to are: "
-            )
             for s in sentiment:
-                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+                self.topics_sentiment += f"{s['topic']}: {s['sentiment']} "
             if len(sentiment) == 0:
-                self.topics_opinions = ""
+                self.topics_sentiment = ""
 
         user_agent = AssistantAgent(
             name=self.name,
@@ -1012,6 +1118,10 @@ class Agent(object):
         # if not followed, test unfollow
         if self.probability_of_secondary_follow > 0 and res is None:
             self.__evaluate_follow(post_text, post_id, "unfollow", tid)
+
+        # update opinion
+        if self.opinions_enabled:
+            self.new_opinions(post_id, tid, post_text)
 
     def __update_user_interests(self, post_id, tid):
         """
@@ -1515,6 +1625,86 @@ class Agent(object):
         return
 
     @log_execution_time
+    def select_action_lite(self, tid, actions, max_length_thread_reading=5):
+        """
+        Post a message to the service.
+
+        :param actions: The list of actions to select from.
+        :param tid: The time id.
+        :param max_length_thread_reading: The maximum length of the thread to read.
+        """
+        if len(actions) == 0:
+            return
+        action = np.random.choice(actions)
+
+        if action == "COMMENT":
+            candidates = json.loads(self.read())
+            if len(candidates) > 0:
+                selected_post = random.sample(candidates, 1)
+                self.comment(
+                    int(selected_post[0]),
+                    max_length_threads=max_length_thread_reading,
+                    tid=tid,
+                )
+                self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
+
+        elif action == "POST":
+            self.post(tid=tid)
+
+        elif action == "READ":
+            candidates = json.loads(self.read())
+            try:
+                selected_post = random.sample(candidates, 1)
+                self.reaction(int(selected_post[0]), tid=tid)
+            except:
+                pass
+
+        elif action == "SEARCH":
+            candidates = json.loads(self.search())
+            if "status" not in candidates and len(candidates) > 0:
+                selected_post = random.sample(candidates, 1)
+                self.comment(
+                    int(selected_post[0]),
+                    max_length_threads=max_length_thread_reading,
+                    tid=tid,
+                )
+                self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
+
+        elif action == "FOLLOW":
+            if self.probability_of_daily_follow > 0:
+                candidates = self.search_follow()
+                if len(candidates) > 0:
+                    tot = sum([float(v) for v in candidates.values()])
+                    probs = [v / tot for v in candidates.values()]
+                    selected = np.random.choice(
+                        [int(c) for c in candidates],
+                        p=probs,
+                        size=1,
+                    )[0]
+                    self.follow(tid=tid, target=selected, action="follow")
+
+        elif action == "SHARE":
+            candidates = json.loads(self.read(article=True))
+            if len(candidates) > 0:
+                selected_post = random.sample(candidates, 1)
+                self.share(int(selected_post[0]), tid=tid)
+
+        elif action == "CAST":
+            candidates = json.loads(self.read())
+            try:
+                selected_post = random.sample(candidates, 1)
+                self.cast(int(selected_post[0]), tid=tid)
+            except:
+                pass
+
+        elif action == "IMAGE":
+            image, article_id = self.select_image(tid=tid)
+            if image is not None:
+                self.comment_image(image, tid=tid, article_id=article_id)
+
+        return
+
+    @log_execution_time
     def reply(self, tid: int, max_length_thread_reading: int = 5):
         """
         Reply to a mention.
@@ -1711,6 +1901,8 @@ class Agent(object):
             max_consecutive_auto_reply=1,
         )
 
+        self.topics_sentiment = ""
+
         prompt = self.__effify(self.prompts["handler_comment_image"], descr=image.description)
         post_text = user_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
         post_text = self.__clean_text(post_text)
@@ -1744,6 +1936,107 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         api_url = f"{self.base_url}/comment_image"
         post(f"{api_url}", headers=headers, data=st)
+
+    def new_opinions(self, post_id: int, tid: int, text: str):
+        """
+        Get new opinions for a given post.
+
+        :param post_id: The post id.
+        :param tid: The round id.
+        :param text: The text of the post.
+        :return: The new opinions.
+        """
+        # get post topics
+        api_url = f"{self.base_url}/get_post_topics"
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
+        interests = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # get author of the post
+        api_url = f"{self.base_url}/get_post_author"
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
+        author_data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        author_id = author_data.get("user_id", None)
+
+        # get opinions of the author on the topics
+        api_url = f"{self.base_url}/get_user_opinions"
+        data = {"user_id": author_id}
+        response = post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data),
+        )
+        opinions = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # filter opinions to keep only those related to the post topics
+        filtered_opinions = {
+            v[1]: v[0]
+            for t, v in opinions.items()
+            if int(v[1]) in interests
+        }
+
+        # get recent opinions of the agents on the topics
+        api_url = f"{self.base_url}/get_user_opinions"
+        data = {"user_id": self.user_id}
+        response = post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data),
+        )
+        agent_opinions = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # filter agent opinions to keep only those related to the post topics
+        agent_filtered_opinions = {
+            v[1]: v[0]
+            for t, v in agent_opinions.items()
+            if int(v[1]) in interests
+        }
+
+        filtered_topics = {
+            v[1]: t
+            for t, v in agent_opinions.items()
+            if int(v[1]) in interests
+        }
+
+        method_name = self.opinion_dynamics['model_name']
+        update = getattr(op_dynamics, method_name)
+
+        for topic, opinion in filtered_opinions.items():
+            if topic in agent_filtered_opinions:
+                # update the opinion as the average of the two
+                tp_name = filtered_topics[topic]
+
+                agent_filtered_opinions[topic] = update(uid=self.user_id, x=agent_filtered_opinions[topic], y=opinion,
+                                                        text=text, topic=tp_name,
+                                                        **self.opinion_dynamics['parameters'],
+                                                        group_classes=self.opinion_dynamics['opinion_groups'],
+                                                        base_url=self.base_url, llm_config=self.llm_config)
+
+        # set the new opinions
+        api_url = f"{self.base_url}/set_user_opinions"
+
+        data = {
+                "user_id": self.user_id,
+                "opinions": agent_filtered_opinions,
+                "id_post": int(post_id),
+                "id_interacted_with": int(author_id),
+                "round": int(tid),
+            }
+
+        post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data),
+        )
+
+        return True
 
     def __str__(self):
         """
@@ -1789,6 +2082,8 @@ class Agent(object):
             "daily_activity_level": self.daily_activity_level,
             "profession": self.profession,
             "activity_profile": self.activity_profile,
+            "opinions": self.opinions,
+            "archetype": self.archetype,
         }
 
     def __clean_emotion(self, text):

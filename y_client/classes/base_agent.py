@@ -520,8 +520,9 @@ class Agent(object):
             self.gender = us["gender"]
             self.toxicity = us["toxicity"]
             self.nationality = us["nationality"]
-            self.is_page = us["is_page"]
-            self.archetype = us['archetype']
+            self.is_page = int(us["is_page"])
+            if self.is_page == 0:
+                self.archetype = us['archetype']
 
             if self.opinions_enabled:
                 self.opinions = self.__get_opinions()

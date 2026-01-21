@@ -34,7 +34,7 @@ def bounded_confidence(x: float, y: float, epsilon: float = 0.25,
                     x = max(x-theta, 0)
 
         else:
-            x += mu * abs(x-y)
+            x += mu * (y - x)
 
     return x
 

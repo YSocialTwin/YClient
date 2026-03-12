@@ -5,12 +5,15 @@ from y_client.classes.annotator import Annotator
 from sqlalchemy.sql.expression import func
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.classes.time import SimulationSlot
+from y_client.memory_runtime import build_agent_memory_engine
 import random
 from requests import get, post
 import json
 from autogen import AssistantAgent
 import numpy as np
 import re
+import logging
+from yclient_memory.contracts import BrowseMemoryRequest, CommentMemoryEvent, PostMemoryEvent, PostStyleRequest, ReplyMemoryRequest, VoteMemoryEvent
 
 __all__ = ["Agent", "Agents"]
 
@@ -172,6 +175,7 @@ class Agent(object):
                 # max response length, -1 no limits. Imposing limits may lead to truncated responses
                 "temperature": config['servers']['llm_temperature'],
             }
+            self._init_memory_config(config)
 
             # add and configure the content recsys
             self.content_rec_sys = recsys
@@ -334,6 +338,7 @@ class Agent(object):
             # max response length, -1 no limits. Imposing limits may lead to truncated responses
             "temperature": float(config['servers']['llm_temperature']),
         }
+        self._init_memory_config(config)
 
         self.set_rec_sys(recsys, frecsys)
 
@@ -376,6 +381,172 @@ class Agent(object):
                 self.prompts["agent_roleplay_comments_share"] = f"{aprompt.prompt} - Act as requested by the Handler."
         except:
             pass
+
+    def _init_memory_config(self, config):
+        agents_cfg = (config or {}).get("agents", {}) if isinstance(config, dict) else {}
+        self.memory_enabled = bool(agents_cfg.get("memory_enabled", False))
+        self.memory_backend = str(agents_cfg.get("memory_backend") or "hybrid_semantic").strip().lower()
+        self.memory_prompt_mode = str(agents_cfg.get("memory_prompt_mode") or "subtle_timeline").strip().lower()
+        self.memory_vote_signal_only = bool(agents_cfg.get("memory_vote_signal_only", True))
+        self.memory_reply_context_max_chars = int(agents_cfg.get("memory_reply_context_max_chars", 220))
+        self.memory_nuance_enabled = bool(agents_cfg.get("memory_nuance_enabled", True))
+        self.memory_nuance_min_score = float(agents_cfg.get("memory_nuance_min_score", 0.35))
+        self.memory_nuance_callback_probability = float(
+            agents_cfg.get("memory_nuance_callback_probability", 0.55)
+        )
+        self.memory_nuance_cues_max_chars = int(agents_cfg.get("memory_nuance_cues_max_chars", 320))
+        self.memory_cross_thread_callback_min_score = float(
+            agents_cfg.get("memory_cross_thread_callback_min_score", 0.80)
+        )
+        self.memory_high_affect_enabled = bool(agents_cfg.get("memory_high_affect_enabled", False))
+        self.memory_high_affect_rule_threshold = float(
+            agents_cfg.get("memory_high_affect_rule_threshold", 0.55)
+        )
+        self.memory_high_affect_uncertain_low = float(
+            agents_cfg.get("memory_high_affect_uncertain_low", 0.35)
+        )
+        self.memory_high_affect_uncertain_high = float(
+            agents_cfg.get("memory_high_affect_uncertain_high", 0.70)
+        )
+        self.memory_high_affect_search_k = int(agents_cfg.get("memory_high_affect_search_k", 12))
+        self.memory_high_affect_max_items = int(agents_cfg.get("memory_high_affect_max_items", 6))
+        self.memory_high_affect_max_chars = int(agents_cfg.get("memory_high_affect_max_chars", 900))
+        self.memory_high_affect_llm_fallback = bool(
+            agents_cfg.get("memory_high_affect_llm_fallback", False)
+        )
+        self.memory_run_id = str(
+            agents_cfg.get("memory_run_id") or f"{self.name}:{getattr(self, 'user_id', 'unknown')}"
+        )
+        self._external_memory_runtime = None
+        self._external_memory_engine = None
+        self._external_memory_disabled = False
+
+    def _memory_warn(self, message):
+        logging.warning("[memory][%s] %s", getattr(self, "name", "agent"), message)
+
+    def _memory_extract_json(self, response):
+        try:
+            if response is None:
+                return {}
+            if hasattr(response, "json"):
+                data = response.json()
+            else:
+                raw = getattr(response, "__dict__", {}).get("_content", b"")
+                if isinstance(raw, bytes):
+                    raw = raw.decode("utf-8")
+                data = json.loads(raw or "{}")
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    def _memory_api_post(self, path: str, payload: dict, timeout_s: float = 4.0):
+        if not getattr(self, "memory_enabled", False):
+            return {}
+        try:
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            api_url = f"{self.base_url.rstrip('/')}/{path.lstrip('/')}"
+            response = post(f"{api_url}", headers=headers, data=json.dumps(payload), timeout=timeout_s)
+            return self._memory_extract_json(response)
+        except Exception:
+            return {}
+
+    def _memory_truncate(self, text_value, max_chars):
+        text = str(text_value or "").strip()
+        if max_chars is None:
+            return text
+        try:
+            max_chars = int(max_chars)
+        except Exception:
+            return text
+        if max_chars <= 0 or len(text) <= max_chars:
+            return text
+        return text[: max_chars - 3].rstrip() + "..."
+
+    def _memory_build_query_text(self, *parts):
+        clean = []
+        for part in parts:
+            text = re.sub(r"\s+", " ", str(part or "")).strip()
+            if text:
+                clean.append(text)
+        return " | ".join(clean)
+
+    def _memory_fetch_context(self, *, other_user_id=None, thread_root_id=None):
+        payload = {
+            "run_id": self.memory_run_id,
+            "agent_user_id": getattr(self, "user_id", None),
+            "other_user_id": other_user_id,
+            "thread_root_id": thread_root_id,
+        }
+        return self._memory_api_post("/memory/get_context", payload) or {}
+
+    def _memory_search(self, **kwargs):
+        payload = {
+            "run_id": self.memory_run_id,
+            "agent_user_id": getattr(self, "user_id", None),
+        }
+        payload.update(kwargs)
+        return self._memory_api_post("/memory/search", payload) or {}
+
+    def _memory_get_author_id_and_username(self, post_id: int):
+        try:
+            user_id = self.get_user_from_post(int(post_id))
+            return (int(user_id), None) if user_id is not None else (None, None)
+        except Exception:
+            return None, None
+
+    def _memory_get_thread_root_id(self, post_id: int):
+        try:
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            api_url = f"{self.base_url}/get_thread_root"
+            response = get(
+                f"{api_url}", headers=headers, data=json.dumps({"post_id": int(post_id)})
+            )
+            data = self._memory_extract_json(response)
+            return int(data.get("id") or data.get("post_id") or post_id)
+        except Exception:
+            return int(post_id)
+
+    def _memory_get_recent_root_posts(self, tid: int, limit=24, rounds_back=18):
+        return []
+
+    def _memory_get_external_engine(self):
+        if not getattr(self, "memory_enabled", False):
+            return None
+        if getattr(self, "_external_memory_disabled", False):
+            return None
+        engine = getattr(self, "_external_memory_engine", None)
+        if engine is None:
+            try:
+                runtime, engine = build_agent_memory_engine(self)
+            except Exception as exc:
+                self._memory_warn(f"external engine unavailable, falling back to legacy behavior: {exc}")
+                self._external_memory_disabled = True
+                return None
+            self._external_memory_runtime = runtime
+            self._external_memory_engine = engine
+        return self._memory_sync_external_engine()
+
+    def _memory_sync_external_engine(self):
+        engine = getattr(self, "_external_memory_engine", None)
+        if engine is None:
+            return None
+        if hasattr(engine, "_fetch_context"):
+            engine._fetch_context = (
+                lambda *, other_user_id=None, thread_root_id=None: self._memory_fetch_context(
+                    other_user_id=other_user_id,
+                    thread_root_id=thread_root_id,
+                ) or {}
+            )
+        if hasattr(engine, "_search"):
+            engine._search = lambda **kwargs: self._memory_search(**kwargs) or {
+                "retrieval_meta": {
+                    "degraded_mode": False,
+                    "embedding_degraded": False,
+                    "no_ready_candidates": True,
+                },
+                "items": [],
+            }
+        return engine
 
     def set_rec_sys(self, content_recsys, follow_recsys):
         """

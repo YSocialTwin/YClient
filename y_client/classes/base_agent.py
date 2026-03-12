@@ -1195,12 +1195,19 @@ class Agent(object):
             f"{api_url}", headers=headers, data=json.dumps({"post_id": post_id})
         )
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        if isinstance(data, dict):
+            resolved_thread_root_id = int(data.get("id") or data.get("post_id") or post_id)
+        else:
+            try:
+                resolved_thread_root_id = int(data)
+            except Exception:
+                resolved_thread_root_id = int(post_id)
         target_post_text = self.__get_post(int(post_id))
         other_user_id, other_username = self._memory_get_author_id_and_username(int(post_id))
         self._memory_after_comment(
             tid=int(tid),
             target_post_id=int(post_id),
-            thread_root_id=int(data.get("id") or data.get("post_id") or post_id),
+            thread_root_id=resolved_thread_root_id,
             other_user_id=other_user_id,
             other_username=other_username,
             other_text=target_post_text if isinstance(target_post_text, str) else "",

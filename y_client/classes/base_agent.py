@@ -18,6 +18,22 @@ from yclient_memory.contracts import BrowseMemoryRequest, CommentMemoryEvent, Po
 __all__ = ["Agent", "Agents"]
 
 
+def _json_loads_maybe(value):
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        try:
+            return json.loads(text)
+        except Exception:
+            return None
+    return None
+
+
 class Agent(object):
     def __init__(
         self,
@@ -384,6 +400,7 @@ class Agent(object):
 
     def _init_memory_config(self, config):
         agents_cfg = (config or {}).get("agents", {}) if isinstance(config, dict) else {}
+        simulation_cfg = (config or {}).get("simulation", {}) if isinstance(config, dict) else {}
         self.memory_enabled = bool(agents_cfg.get("memory_enabled", False))
         self.memory_backend = str(agents_cfg.get("memory_backend") or "hybrid_semantic").strip().lower()
         self.memory_prompt_mode = str(agents_cfg.get("memory_prompt_mode") or "subtle_timeline").strip().lower()
@@ -415,7 +432,9 @@ class Agent(object):
             agents_cfg.get("memory_high_affect_llm_fallback", False)
         )
         self.memory_run_id = str(
-            agents_cfg.get("memory_run_id") or f"{self.name}:{getattr(self, 'user_id', 'unknown')}"
+            agents_cfg.get("memory_run_id")
+            or simulation_cfg.get("name")
+            or "memory_run"
         )
         self._external_memory_runtime = None
         self._external_memory_engine = None
@@ -581,6 +600,149 @@ class Agent(object):
         }
         return result.rendered_text, meta
 
+    def _memory_record_event(
+        self,
+        *,
+        tid: int,
+        event_type: str,
+        target_user_id=None,
+        thread_root_id=None,
+        target_post_id=None,
+        relation_label=None,
+        tone_label=None,
+        topics=None,
+        salient_claim=None,
+        weight: float = 1.0,
+    ):
+        if not getattr(self, "memory_enabled", False):
+            return {}
+        payload = {
+            "run_id": self.memory_run_id,
+            "round_id": int(tid),
+            "actor_user_id": int(self.user_id),
+            "event_type": str(event_type).strip().lower(),
+            "weight": float(weight if weight is not None else 1.0),
+        }
+        if target_user_id is not None:
+            payload["target_user_id"] = int(target_user_id)
+        if thread_root_id is not None:
+            payload["thread_root_id"] = int(thread_root_id)
+        if target_post_id is not None:
+            payload["target_post_id"] = int(target_post_id)
+        if relation_label:
+            payload["relation_label"] = str(relation_label).strip().lower()[:16]
+        if tone_label:
+            payload["tone_label"] = str(tone_label).strip().lower()[:16]
+        if topics is not None:
+            payload["topics"] = topics
+        if salient_claim:
+            payload["salient_claim"] = str(salient_claim).strip()[:200]
+        return self._memory_api_post("/memory/event", payload)
+
+    def _memory_upsert_social_card(
+        self,
+        *,
+        tid: int,
+        other_user_id: int,
+        thread_root_id=None,
+        deltas: dict,
+        relation_label=None,
+        tone_label=None,
+        salient_claim=None,
+        include_evidence=True,
+        count_as_event=True,
+    ):
+        if not getattr(self, "memory_enabled", False):
+            return
+        ctx = self._memory_fetch_context(other_user_id=other_user_id, thread_root_id=thread_root_id) or {}
+        card = ctx.get("social_card") if isinstance(ctx, dict) else {}
+        if not isinstance(card, dict):
+            card = {}
+
+        def _getf(key):
+            try:
+                return float(card.get(key) or 0.0)
+            except Exception:
+                return 0.0
+
+        def _clip(value):
+            return max(-5.0, min(5.0, float(value)))
+
+        evidence_tail = _json_loads_maybe(card.get("evidence_tail")) if hasattr(card, "get") else None
+        if not isinstance(evidence_tail, list):
+            evidence_tail = []
+        if include_evidence and salient_claim:
+            evidence_tail.append(
+                {
+                    "round_id": int(tid),
+                    "thread_root_id": int(thread_root_id) if thread_root_id is not None else None,
+                    "relation_label": relation_label,
+                    "tone_label": tone_label,
+                    "salient_claim": str(salient_claim)[:200],
+                }
+            )
+            evidence_tail = evidence_tail[-8:]
+
+        event_count = int(card.get("event_count") or 0) if isinstance(card, dict) else 0
+        if count_as_event:
+            event_count += 1
+        summary_bits = []
+        if salient_claim:
+            summary_bits.append(str(salient_claim)[:120])
+        if relation_label:
+            summary_bits.append(f"relation={relation_label}")
+        if tone_label:
+            summary_bits.append(f"tone={tone_label}")
+        summary_text = "; ".join(summary_bits)[:400] if summary_bits else (card.get("summary_text") if isinstance(card, dict) else None)
+
+        payload = {
+            "run_id": self.memory_run_id,
+            "agent_user_id": int(self.user_id),
+            "other_user_id": int(other_user_id),
+            "affinity": _clip(_getf("affinity") + float(deltas.get("affinity_delta", 0.0) or 0.0)),
+            "conflict": _clip(_getf("conflict") + float(deltas.get("conflict_delta", 0.0) or 0.0)),
+            "humor": _clip(_getf("humor") + float(deltas.get("humor_delta", 0.0) or 0.0)),
+            "trust": _clip(_getf("trust") + float(deltas.get("trust_delta", 0.0) or 0.0)),
+            "last_relation_label": relation_label,
+            "last_round_id": int(tid),
+            "last_thread_root_id": int(thread_root_id) if thread_root_id is not None else None,
+            "last_updated_round": int(tid),
+            "event_count": int(event_count),
+            "summary_text": summary_text,
+            "evidence_tail": evidence_tail,
+        }
+        payload = {key: value for key, value in payload.items() if value is not None}
+        self._memory_api_post("/memory/social/upsert", payload)
+
+    def _memory_upsert_thread_card(self, *, tid: int, thread_root_id: int, conv_text: str):
+        if not getattr(self, "memory_enabled", False):
+            return
+        gist_text = self._memory_truncate(conv_text, 300)
+        payload = {
+            "run_id": self.memory_run_id,
+            "agent_user_id": int(self.user_id),
+            "thread_root_id": int(thread_root_id),
+            "gist_text": gist_text,
+            "my_role": "participant",
+            "last_seen_round_id": int(tid),
+        }
+        self._memory_api_post("/memory/thread/upsert", payload)
+
+    def _memory_maybe_update_community_digest(self, *, tid: int, post_text: str = ""):
+        if not getattr(self, "memory_enabled", False):
+            return
+        if not isinstance(post_text, str) or not post_text.strip():
+            return
+        payload = {
+            "run_id": self.memory_run_id,
+            "round_id": int(tid),
+            "digest_text": self._memory_truncate(
+                f"Recent timeline posts include short personal takes and reactions. Latest example: {post_text}",
+                400,
+            ),
+        }
+        self._memory_api_post("/memory/community/update", payload)
+
     def _memory_build_thread_browse_context(self, *, thread_root_id: int, tid: int):
         engine = self._memory_get_external_engine()
         if engine is None:
@@ -650,54 +812,113 @@ class Agent(object):
         conv_text: str,
     ):
         engine = self._memory_get_external_engine()
-        if engine is None:
-            return
-        try:
-            engine.record_comment(
-                CommentMemoryEvent(
-                    round_id=int(tid),
-                    target_post_id=int(target_post_id),
-                    thread_root_id=int(thread_root_id),
-                    other_user_id=int(other_user_id) if other_user_id is not None else None,
-                    other_username=other_username,
-                    other_text=other_text or "",
-                    my_text=my_text or "",
-                    conv_text=conv_text or "",
+        if engine is not None:
+            try:
+                engine.record_comment(
+                    CommentMemoryEvent(
+                        round_id=int(tid),
+                        target_post_id=int(target_post_id),
+                        thread_root_id=int(thread_root_id),
+                        other_user_id=int(other_user_id) if other_user_id is not None else None,
+                        other_username=other_username,
+                        other_text=other_text or "",
+                        my_text=my_text or "",
+                        conv_text=conv_text or "",
+                    )
                 )
+            except Exception as exc:
+                self._memory_warn(f"comment engine write failed: {exc}")
+        relation_label = "engaged"
+        tone_label = "neutral"
+        deltas = {"affinity_delta": 0.35, "conflict_delta": 0.0, "humor_delta": 0.0, "trust_delta": 0.15}
+        salient_claim = self._memory_truncate(my_text or other_text, 160)
+        self._memory_record_event(
+            tid=int(tid),
+            event_type="comment",
+            target_user_id=other_user_id,
+            thread_root_id=thread_root_id,
+            target_post_id=target_post_id,
+            relation_label=relation_label,
+            tone_label=tone_label,
+            salient_claim=salient_claim,
+            weight=1.0,
+        )
+        if other_user_id is not None:
+            self._memory_upsert_social_card(
+                tid=int(tid),
+                other_user_id=int(other_user_id),
+                thread_root_id=thread_root_id,
+                deltas=deltas,
+                relation_label=relation_label,
+                tone_label=tone_label,
+                salient_claim=salient_claim,
             )
-        except Exception as exc:
-            self._memory_warn(f"comment write failed: {exc}")
+        self._memory_upsert_thread_card(tid=int(tid), thread_root_id=int(thread_root_id), conv_text=conv_text or "")
 
     def _memory_after_vote(self, *, tid: int, post_id: int, vote_type: str):
         engine = self._memory_get_external_engine()
-        if engine is None:
-            return
-        try:
-            engine.record_vote(
-                VoteMemoryEvent(
-                    round_id=int(tid),
-                    post_id=int(post_id),
-                    vote_type=str(vote_type),
+        if engine is not None:
+            try:
+                engine.record_vote(
+                    VoteMemoryEvent(
+                        round_id=int(tid),
+                        post_id=int(post_id),
+                        vote_type=str(vote_type),
+                    )
                 )
+            except Exception as exc:
+                self._memory_warn(f"vote engine write failed: {exc}")
+        other_user_id, _ = self._memory_get_author_id_and_username(int(post_id))
+        thread_root_id = self._memory_get_thread_root_id(int(post_id))
+        if other_user_id is not None:
+            if vote_type == "like":
+                deltas = {"affinity_delta": 0.5, "conflict_delta": -0.1, "humor_delta": 0.0, "trust_delta": 0.2}
+            else:
+                deltas = {"affinity_delta": -0.3, "conflict_delta": 0.6, "humor_delta": 0.0, "trust_delta": -0.2}
+            self._memory_upsert_social_card(
+                tid=int(tid),
+                other_user_id=int(other_user_id),
+                thread_root_id=thread_root_id,
+                deltas=deltas,
+                relation_label="reacted",
+                tone_label="positive" if vote_type == "like" else "negative",
+                salient_claim=f"{vote_type} on post {int(post_id)}",
+                include_evidence=not getattr(self, "memory_vote_signal_only", True),
+                count_as_event=not getattr(self, "memory_vote_signal_only", True),
             )
-        except Exception as exc:
-            self._memory_warn(f"vote write failed: {exc}")
+            if not getattr(self, "memory_vote_signal_only", True):
+                self._memory_record_event(
+                    tid=int(tid),
+                    event_type="upvote" if vote_type == "like" else "downvote",
+                    target_user_id=other_user_id,
+                    thread_root_id=thread_root_id,
+                    target_post_id=post_id,
+                    salient_claim=f"{vote_type} on post {int(post_id)}",
+                    weight=0.4,
+                )
 
     def _memory_after_post(self, *, tid: int, post_text: str, origin_kind="text_post"):
         engine = self._memory_get_external_engine()
-        if engine is None:
-            return
-        try:
-            engine.record_post(
-                PostMemoryEvent(
-                    round_id=int(tid),
-                    text=post_text or "",
-                    user_id=int(getattr(self, "user_id", -1) or -1),
-                    origin_kind=str(origin_kind or "text_post"),
+        if engine is not None:
+            try:
+                engine.record_post(
+                    PostMemoryEvent(
+                        round_id=int(tid),
+                        text=post_text or "",
+                        user_id=int(getattr(self, "user_id", -1) or -1),
+                        origin_kind=str(origin_kind or "text_post"),
+                    )
                 )
-            )
-        except Exception as exc:
-            self._memory_warn(f"post write failed: {exc}")
+            except Exception as exc:
+                self._memory_warn(f"post engine write failed: {exc}")
+        salient = self._memory_truncate(post_text or "", 180)
+        self._memory_record_event(
+            tid=int(tid),
+            event_type="post",
+            salient_claim=salient,
+            weight=1.0,
+        )
+        self._memory_maybe_update_community_digest(tid=int(tid), post_text=salient)
 
     def set_rec_sys(self, content_recsys, follow_recsys):
         """

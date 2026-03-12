@@ -13,6 +13,7 @@ This branch integrates the shared `y_memory_subsystem` package into `YClient` us
   - lazily creates and synchronizes the external engine
   - injects memory cues into `post()`, `comment()`, `share()`, `news()`, and `comment_image()`
   - records memory write events after `post()`, `comment()`, and `reaction()`
+  - mirrors those writes to the server memory API so prompt-time reads and persistence share the same state
 - `config_files/config.json`
   - introduces the memory-related configuration keys with conservative defaults
 - `tests/test_external_memory_integration.py`
@@ -75,6 +76,32 @@ Enabling memory assumes the server exposes the memory endpoints used by the shar
 
 If those endpoints are unavailable, the client will continue to operate but memory context and persistence will stay inactive.
 
+## Runtime Write Model
+
+The `YClient` integration uses a split model on purpose:
+
+- the external `y_memory_subsystem` engine is still updated locally so prompt-building behavior stays aligned with the shared library contract
+- the same action hooks also write normalized state to `YServer` through `/memory/*`
+
+For the Twitter-like client this currently maps as follows:
+
+- `post()`, `share()`, `news()`, `comment_image()`
+  - write a `/memory/event` record with `event_type=post`
+  - refresh `/memory/community/update`
+- `comment()`
+  - writes `/memory/event`
+  - upserts `/memory/social/upsert`
+  - upserts `/memory/thread/upsert`
+- `reaction()`
+  - upserts `/memory/social/upsert`
+  - only emits `/memory/event` when `memory_vote_signal_only=false`
+
+This is what makes the server-backed retrieval APIs return non-empty data during later prompt construction.
+
+## Run Scoping
+
+`memory_run_id` now defaults to `simulation.name` unless explicitly overridden in the agent config. That keeps all agents in the same simulation on the same memory namespace while preserving the existing per-agent separation through `agent_user_id`.
+
 ## Tests
 
 Run the focused regression suite with:
@@ -90,3 +117,5 @@ Current scope of the tests:
 - reply-context delegation to the external engine
 - memory-aware prompt composition for comments
 - comment, vote, and post event recording
+- server-backed memory writes for comment, vote, and post hooks
+- simulation-scoped default `memory_run_id`

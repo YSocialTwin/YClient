@@ -142,6 +142,41 @@ def test_memory_after_vote_records_vote_event(monkeypatch):
     assert recorded["event"].vote_type == "like"
 
 
+def test_memory_after_comment_writes_server_memory(monkeypatch):
+    agent = make_agent()
+    calls = []
+
+    monkeypatch.setattr(agent, "_memory_get_external_engine", lambda: None)
+    monkeypatch.setattr(
+        agent,
+        "_memory_fetch_context",
+        lambda **kwargs: {"social_card": {"affinity": 0.1, "event_count": 2, "evidence_tail": "[]"}},
+    )
+    monkeypatch.setattr(agent, "_memory_api_post", lambda path, payload, timeout_s=4.0: calls.append((path, payload)) or {})
+
+    agent._memory_after_comment(
+        tid=4,
+        target_post_id=88,
+        thread_root_id=12,
+        other_user_id=77,
+        other_username="alice",
+        other_text="original post",
+        my_text="my reply",
+        conv_text="@alice - original post",
+    )
+
+    assert [path for path, _ in calls] == [
+        "/memory/event",
+        "/memory/social/upsert",
+        "/memory/thread/upsert",
+    ]
+    assert calls[0][1]["event_type"] == "comment"
+    assert calls[0][1]["target_user_id"] == 77
+    assert calls[1][1]["other_user_id"] == 77
+    assert calls[1][1]["event_count"] == 3
+    assert calls[2][1]["thread_root_id"] == 12
+
+
 def test_memory_after_comment_records_comment_event(monkeypatch):
     agent = make_agent()
     recorded = {}
@@ -168,6 +203,39 @@ def test_memory_after_comment_records_comment_event(monkeypatch):
     assert recorded["event"].my_text == "my reply"
 
 
+def test_memory_after_vote_writes_social_signal_only(monkeypatch):
+    agent = make_agent()
+    calls = []
+
+    monkeypatch.setattr(agent, "_memory_get_external_engine", lambda: None)
+    monkeypatch.setattr(agent, "_memory_get_author_id_and_username", lambda post_id: (22, "alice"))
+    monkeypatch.setattr(agent, "_memory_get_thread_root_id", lambda post_id: 90)
+    monkeypatch.setattr(agent, "_memory_fetch_context", lambda **kwargs: {"social_card": {}})
+    monkeypatch.setattr(agent, "_memory_api_post", lambda path, payload, timeout_s=4.0: calls.append((path, payload)) or {})
+
+    agent._memory_after_vote(tid=5, post_id=101, vote_type="like")
+
+    assert [path for path, _ in calls] == ["/memory/social/upsert"]
+    assert calls[0][1]["other_user_id"] == 22
+    assert calls[0][1]["last_thread_root_id"] == 90
+    assert calls[0][1]["event_count"] == 0
+
+
+def test_memory_after_post_writes_server_event_and_digest(monkeypatch):
+    agent = make_agent()
+    calls = []
+
+    monkeypatch.setattr(agent, "_memory_get_external_engine", lambda: None)
+    monkeypatch.setattr(agent, "_memory_api_post", lambda path, payload, timeout_s=4.0: calls.append((path, payload)) or {})
+
+    agent._memory_after_post(tid=6, post_text="shared article", origin_kind="share_link")
+
+    assert [path for path, _ in calls] == ["/memory/event", "/memory/community/update"]
+    assert calls[0][1]["event_type"] == "post"
+    assert calls[0][1]["salient_claim"] == "shared article"
+    assert "shared article" in calls[1][1]["digest_text"]
+
+
 def test_memory_after_post_records_origin_kind(monkeypatch):
     agent = make_agent()
     recorded = {}
@@ -182,3 +250,13 @@ def test_memory_after_post_records_origin_kind(monkeypatch):
     assert recorded["event"].round_id == 6
     assert recorded["event"].text == "shared article"
     assert recorded["event"].origin_kind == "share_link"
+
+
+def test_memory_run_id_defaults_to_simulation_name():
+    agent = Agent.__new__(Agent)
+    agent.name = "tester"
+    agent.user_id = 11
+
+    agent._init_memory_config({"agents": {}, "simulation": {"name": "sim-memory"}})
+
+    assert agent.memory_run_id == "sim-memory"

@@ -548,6 +548,157 @@ class Agent(object):
             }
         return engine
 
+    def _memory_build_reply_context(
+        self,
+        *,
+        query_text: str,
+        other_user_id=None,
+        thread_root_id=None,
+        other_username=None,
+        round_id=None,
+    ):
+        engine = self._memory_get_external_engine()
+        if engine is None:
+            return "", {"usage": "none"}
+        result = engine.build_reply_context(
+            ReplyMemoryRequest(
+                query_text=query_text,
+                other_user_id=other_user_id,
+                other_username=other_username,
+                thread_root_id=thread_root_id,
+                round_id=round_id,
+                mode="comment",
+            )
+        )
+        meta = {
+            "search_used": bool(result.diagnostics.search_used),
+            "degraded_mode": bool(result.diagnostics.degraded_mode),
+            "embedding_degraded": bool(result.diagnostics.embedding_degraded),
+            "no_ready_candidates": bool(result.diagnostics.no_ready_candidates),
+            "retrieved_item_count": int(result.diagnostics.retrieved_item_count or 0),
+            "top_score": result.diagnostics.top_score,
+            "continuity_text": result.continuity_text,
+        }
+        return result.rendered_text, meta
+
+    def _memory_build_thread_browse_context(self, *, thread_root_id: int, tid: int):
+        engine = self._memory_get_external_engine()
+        if engine is None:
+            return "", {"usage": "none"}
+        result = engine.build_browse_context(
+            BrowseMemoryRequest(thread_root_id=thread_root_id, round_id=int(tid))
+        )
+        return result.rendered_text, {"usage": result.diagnostics.usage or "none"}
+
+    def _memory_build_post_style_context(self, *, tid: int):
+        engine = self._memory_get_external_engine()
+        if engine is None:
+            return "", {"usage": "none"}
+        result = engine.build_post_style_context(PostStyleRequest(round_id=int(tid)))
+        meta = {
+            "usage": result.diagnostics.usage or "none",
+            "root_count": int(result.diagnostics.metadata.get("root_count") or 0),
+            "distinct_author_count": int(result.diagnostics.metadata.get("distinct_author_count") or 0),
+            "mature": bool(result.diagnostics.metadata.get("mature", False)),
+        }
+        return result.rendered_text, meta
+
+    def _memory_compose_prompt(self, base_prompt: str, *blocks):
+        text = str(base_prompt or "").strip()
+        extras = [str(block or "").strip() for block in blocks if str(block or "").strip()]
+        if not extras:
+            return text
+        return f"{text}\n\n##MEMORY CONTEXT##\n" + "\n\n".join(extras) + "\n##END MEMORY CONTEXT##"
+
+    def _memory_prompt_with_post_context(self, *, base_prompt: str, tid: int):
+        memory_text, _ = self._memory_build_post_style_context(tid=int(tid))
+        return self._memory_compose_prompt(base_prompt, memory_text)
+
+    def _memory_prompt_with_comment_context(
+        self,
+        *,
+        base_prompt: str,
+        post_id: int,
+        tid: int,
+        conv_text: str,
+    ):
+        other_user_id, other_username = self._memory_get_author_id_and_username(int(post_id))
+        thread_root_id = self._memory_get_thread_root_id(int(post_id))
+        reply_text, _ = self._memory_build_reply_context(
+            query_text=self._memory_build_query_text(conv_text),
+            other_user_id=other_user_id,
+            thread_root_id=thread_root_id,
+            other_username=other_username,
+            round_id=int(tid),
+        )
+        browse_text, _ = self._memory_build_thread_browse_context(
+            thread_root_id=int(thread_root_id),
+            tid=int(tid),
+        )
+        return self._memory_compose_prompt(base_prompt, reply_text, browse_text)
+
+    def _memory_after_comment(
+        self,
+        *,
+        tid: int,
+        target_post_id: int,
+        thread_root_id: int,
+        other_user_id: int | None,
+        other_username: str | None,
+        other_text: str,
+        my_text: str,
+        conv_text: str,
+    ):
+        engine = self._memory_get_external_engine()
+        if engine is None:
+            return
+        try:
+            engine.record_comment(
+                CommentMemoryEvent(
+                    round_id=int(tid),
+                    target_post_id=int(target_post_id),
+                    thread_root_id=int(thread_root_id),
+                    other_user_id=int(other_user_id) if other_user_id is not None else None,
+                    other_username=other_username,
+                    other_text=other_text or "",
+                    my_text=my_text or "",
+                    conv_text=conv_text or "",
+                )
+            )
+        except Exception as exc:
+            self._memory_warn(f"comment write failed: {exc}")
+
+    def _memory_after_vote(self, *, tid: int, post_id: int, vote_type: str):
+        engine = self._memory_get_external_engine()
+        if engine is None:
+            return
+        try:
+            engine.record_vote(
+                VoteMemoryEvent(
+                    round_id=int(tid),
+                    post_id=int(post_id),
+                    vote_type=str(vote_type),
+                )
+            )
+        except Exception as exc:
+            self._memory_warn(f"vote write failed: {exc}")
+
+    def _memory_after_post(self, *, tid: int, post_text: str, origin_kind="text_post"):
+        engine = self._memory_get_external_engine()
+        if engine is None:
+            return
+        try:
+            engine.record_post(
+                PostMemoryEvent(
+                    round_id=int(tid),
+                    text=post_text or "",
+                    user_id=int(getattr(self, "user_id", -1) or -1),
+                    origin_kind=str(origin_kind or "text_post"),
+                )
+            )
+        except Exception as exc:
+            self._memory_warn(f"post write failed: {exc}")
+
     def set_rec_sys(self, content_recsys, follow_recsys):
         """
         Set the recommendation systems.
@@ -751,7 +902,10 @@ class Agent(object):
 
         u2.initiate_chat(
             u1,
-            message=self.__effify(self.prompts["handler_post"]),
+            message=self._memory_prompt_with_post_context(
+                base_prompt=self.__effify(self.prompts["handler_post"]),
+                tid=int(tid),
+            ),
             silent=True,
             max_round=1,
         )
@@ -789,6 +943,7 @@ class Agent(object):
 
         api_url = f"{self.base_url}/post"
         post(f"{api_url}", headers=headers, data=st)
+        self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="text_post")
 
         # update topic of interest with the ones used to generate the post
         api_url = f"{self.base_url}/set_user_interests"
@@ -820,8 +975,11 @@ class Agent(object):
 
         u2.initiate_chat(
             u1,
-            message=self.__effify(
-                self.prompts["handler_news"], website=website, article=article
+            message=self._memory_prompt_with_post_context(
+                base_prompt=self.__effify(
+                    self.prompts["handler_news"], website=website, article=article
+                ),
+                tid=int(tid),
             ),
             silent=True,
             max_round=1,
@@ -876,6 +1034,7 @@ class Agent(object):
 
         api_url = f"{self.base_url}/news"
         res = post(f"{api_url}", headers=headers, data=st)
+        self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="share_link")
         return res
 
     def __get_thread(self, post_id: int, max_tweets=None):
@@ -984,7 +1143,12 @@ class Agent(object):
 
         u2.initiate_chat(
             u1,
-            message=self.__effify(self.prompts["handler_comment"], conv=conv),
+            message=self._memory_prompt_with_comment_context(
+                base_prompt=self.__effify(self.prompts["handler_comment"], conv=conv),
+                post_id=int(post_id),
+                tid=int(tid),
+                conv_text=conv,
+            ),
             silent=True,
             max_round=1,
         )
@@ -1031,6 +1195,18 @@ class Agent(object):
             f"{api_url}", headers=headers, data=json.dumps({"post_id": post_id})
         )
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        target_post_text = self.__get_post(int(post_id))
+        other_user_id, other_username = self._memory_get_author_id_and_username(int(post_id))
+        self._memory_after_comment(
+            tid=int(tid),
+            target_post_id=int(post_id),
+            thread_root_id=int(data.get("id") or data.get("post_id") or post_id),
+            other_user_id=other_user_id,
+            other_username=other_username,
+            other_text=target_post_text if isinstance(target_post_text, str) else "",
+            my_text=post_text,
+            conv_text=conv,
+        )
         self.__update_user_interests(data, tid)
 
         # if not followed, test unfollow
@@ -1090,8 +1266,11 @@ class Agent(object):
 
         u2.initiate_chat(
             u1,
-            message=self.__effify(
-                self.prompts["handler_share"], article=article, post_text=post_text
+            message=self._memory_prompt_with_post_context(
+                base_prompt=self.__effify(
+                    self.prompts["handler_share"], article=article, post_text=post_text
+                ),
+                tid=int(tid),
             ),
             silent=True,
             max_round=1,
@@ -1134,6 +1313,7 @@ class Agent(object):
 
         api_url = f"{self.base_url}/share"
         post(f"{api_url}", headers=headers, data=st)
+        self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="share_link")
 
     def reaction(self, post_id: int, tid: int, check_follow=True):
         """
@@ -1205,6 +1385,7 @@ class Agent(object):
 
         api_url = f"{self.base_url}/reaction"
         post(f"{api_url}", headers=headers, data=st)
+        self._memory_after_vote(tid=int(tid), post_id=int(post_id), vote_type=json.loads(st)["type"])
 
         # evaluate follow only upon explicit request
         if check_follow and flag == "follow":
@@ -1753,8 +1934,11 @@ class Agent(object):
 
         u2.initiate_chat(
             u1,
-            message=self.__effify(
-                self.prompts["handler_comment_image"], descr=image.description
+            message=self._memory_prompt_with_post_context(
+                base_prompt=self.__effify(
+                    self.prompts["handler_comment_image"], descr=image.description
+                ),
+                tid=int(tid),
             ),
             silent=True,
             max_round=1,
@@ -1794,6 +1978,7 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         api_url = f"{self.base_url}/comment_image"
         post(f"{api_url}", headers=headers, data=st)
+        self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="share_image")
 
     def __str__(self):
         """

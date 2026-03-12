@@ -119,3 +119,42 @@ Current scope of the tests:
 - comment, vote, and post event recording
 - server-backed memory writes for comment, vote, and post hooks
 - simulation-scoped default `memory_run_id`
+
+## End-To-End Validation
+
+The integration was validated against the `YServer` `codex/memory_integration` branch with a deterministic two-agent scenario using local `ollama` and `llama3.2`.
+
+Validation setup:
+
+- `YServer`
+  - temporary config with `name=memory_eval`
+  - host `127.0.0.1`
+  - port `5042`
+- `YClient`
+  - one run with `agents.memory_enabled=false`
+  - one run with `agents.memory_enabled=true`
+  - same scripted action sequence in both runs:
+    - agent A creates a root post
+    - agent B comments on that post
+    - agent B attempts a reaction
+
+Expected outcomes:
+
+- memory disabled
+  - the post/comment/reaction flow completes
+  - all `memory_*` tables remain empty
+- memory enabled
+  - the post/comment flow still completes without prompt regressions
+  - `memory_interaction_events`, `memory_items`, `memory_social_cards`, `memory_thread_cards`, and `memory_community_digests` become non-zero
+  - `/memory/get_context` returns social/thread/community state for the comment author pair
+  - `/memory/search` returns the recorded comment event
+
+Observed enabled-run result in the validation scenario:
+
+- `memory_interaction_events = 2`
+- `memory_items = 2`
+- `memory_social_cards = 1`
+- `memory_thread_cards = 1`
+- `memory_community_digests = 1`
+
+This confirms that the Twitter-like client now persists memory state into the server-backed subsystem and can immediately read it back during later prompt construction.

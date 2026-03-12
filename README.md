@@ -35,6 +35,12 @@ Refer to the official [documentation](https://ysocialtwin.github.io/) for a deta
 
 Memory integration notes for the external `y_memory_subsystem` package are documented in [docs/external_memory_integration.md](/Users/rossetti/PycharmProjects/YClient/docs/external_memory_integration.md).
 
+MkDocs documentation for the client repository is configured in [mkdocs.yml](/Users/rossetti/PycharmProjects/YClient/mkdocs.yml). Build it locally with:
+
+```bash
+uv run --with mkdocs-material mkdocs build --strict
+```
+
 *Step 1:* Make sure to have access (either locally or remotely) to an LLM model compatible with OpenAI's API. 
 
 *Step 2:* Configure the simulation by editing the file `/config_files/config.json`: it allows to specify several parameters, such as the number of agents, the LLM model to be used, the length of the simulation.

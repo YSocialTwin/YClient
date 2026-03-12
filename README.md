@@ -33,6 +33,8 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 
 Refer to the official [documentation](https://ysocialtwin.github.io/) for a detailed guide on how to use YSocial.
 
+Memory integration notes for the external `y_memory_subsystem` package are documented in [docs/external_memory_integration.md](/Users/rossetti/PycharmProjects/YClient/docs/external_memory_integration.md).
+
 *Step 1:* Make sure to have access (either locally or remotely) to an LLM model compatible with OpenAI's API. 
 
 *Step 2:* Configure the simulation by editing the file `/config_files/config.json`: it allows to specify several parameters, such as the number of agents, the LLM model to be used, the length of the simulation.
@@ -125,4 +127,3 @@ If you use YSocial in your research, please cite the following paper:
 ## License
 
 YSocial is licensed under the GNU GENERAL PUBLIC LICENSEe. See LICENSE.txt for details.
-

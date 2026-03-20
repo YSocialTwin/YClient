@@ -6,9 +6,11 @@ from sqlalchemy.sql.expression import func
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.classes.time import SimulationSlot
 from y_client.memory_runtime import build_agent_memory_engine
+from y_client.logger import log_execution_time
 import random
 from requests import get, post
 import json
+import os
 from autogen import AssistantAgent
 import numpy as np
 import re
@@ -192,6 +194,11 @@ class Agent(object):
                 "temperature": config['servers']['llm_temperature'],
             }
             self._init_memory_config(config)
+            # Prompt templates still interpolate this field on the Standard branch.
+            # Keep a safe default so posting/comment flows do not fail when no
+            # topic-level sentiment has been materialized yet.
+            self.topics_opinions = ""
+            self.topics_sentiment = ""
 
             # add and configure the content recsys
             self.content_rec_sys = recsys
@@ -238,10 +245,16 @@ class Agent(object):
         self.follow_rec_sys_name = None
         self.content_rec_sys = None
         self.follow_rec_sys = None
+        self.topics_opinions = ""
+        self.topics_sentiment = ""
 
         self.name = name
         self.email = email
         self.attention_window = int(config["agents"]["attention_window"])
+        self.daily_activity_level = kwargs.get("daily_activity_level", 1)
+        self.profession = kwargs.get("profession")
+        self.activity_profile = kwargs.get("activity_profile")
+        self.archetype = kwargs.get("archetype")
 
         if "prompts" in kwargs:
             self.prompts = kwargs["prompts"]
@@ -343,7 +356,7 @@ class Agent(object):
             "base_url": self.llm_base,
             "timeout": 10000,
             "api_type": "open_ai",
-            "api_key": api_key,
+            "api_key": api_key if (api_key is not None and api_key != "") else "NULL",
             "price": [0, 0],
         }
 
@@ -1095,6 +1108,7 @@ class Agent(object):
 
         return interests, interests_id
 
+    @log_execution_time
     def post(self, tid):
         """
         Post a message to the service.
@@ -1171,6 +1185,7 @@ class Agent(object):
         data = {"user_id": self.user_id, "interests": interests, "round": tid}
         post(f"{api_url}", headers=headers, data=json.dumps(data))
 
+    @log_execution_time
     def news(self, tid, article, website):
         """
         Post a message to the service.
@@ -1331,6 +1346,7 @@ class Agent(object):
         res = json.loads(response.__dict__["_content"].decode("utf-8"))
         return res
 
+    @log_execution_time
     def comment(self, post_id: int, tid, max_length_threads=None):
         """
         Generate a comment to an existing post
@@ -1458,6 +1474,7 @@ class Agent(object):
             data = {"user_id": self.user_id, "interests": data, "round": tid}
             post(f"{api_url}", headers=headers, data=json.dumps(data))
 
+    @log_execution_time
     def share(self, post_id: int, tid):
         """
         Share a post containing a news article.
@@ -1543,6 +1560,7 @@ class Agent(object):
         post(f"{api_url}", headers=headers, data=st)
         self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="share_link")
 
+    @log_execution_time
     def reaction(self, post_id: int, tid: int, check_follow=True):
         """
         Generate a reaction to a post/comment.
@@ -1667,6 +1685,7 @@ class Agent(object):
         else:
             return None
 
+    @log_execution_time
     def follow(
         self, tid: int, target: int = None, post_id: int = None, action="follow"
     ):
@@ -1808,6 +1827,7 @@ class Agent(object):
 
         return response.__dict__["_content"].decode("utf-8")
 
+    @log_execution_time
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """
         Post a message to the service.
@@ -1925,6 +1945,7 @@ class Agent(object):
 
         return
 
+    @log_execution_time
     def reply(self, tid: int, max_length_thread_reading: int = 5):
         """
         Reply to a mention.
@@ -1942,6 +1963,7 @@ class Agent(object):
             )
         return
 
+    @log_execution_time
     def read(self, article=False):
         """
         Read n_posts from the service.
@@ -1959,6 +1981,7 @@ class Agent(object):
         """
         return self.content_rec_sys.read_mentions(self.base_url)
 
+    @log_execution_time
     def search(self):
         """
         Read n_posts from the service.
@@ -2249,6 +2272,10 @@ class Agent(object):
             "toxicity": self.toxicity,
             "joined_on": self.joined_on,
             "is_page": self.is_page,
+            "daily_activity_level": getattr(self, "daily_activity_level", 1),
+            "profession": getattr(self, "profession", None),
+            "activity_profile": getattr(self, "activity_profile", None),
+            "archetype": getattr(self, "archetype", None),
         }
 
     def __clean_emotion(self, text):

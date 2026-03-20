@@ -1,6 +1,7 @@
 from y_client.classes.base_agent import Agent
 from y_client.news_feeds.client_modals import Websites, session
 from y_client.news_feeds.feed_reader import NewsFeed
+from y_client.logger import log_execution_time
 from requests import post
 from autogen import AssistantAgent
 import json
@@ -12,7 +13,9 @@ class PageAgent(Agent):
         super().__init__(*args, **kwargs)
         self.feed_url = kwargs.get("feed_url")
         self.name = kwargs.get("name")
+        self.activity_profile = kwargs.get("activity_profile")
 
+    @log_execution_time
     def select_action(self, tid, actions, max_length_thread_reading=5):
         """
         Post a message to the service.
@@ -48,6 +51,7 @@ class PageAgent(Agent):
         article = website_feed.get_random_news()
         return article, website
 
+    @log_execution_time
     def news(self, tid, article, website):
         """
         Post a message to the service.
@@ -60,7 +64,9 @@ class PageAgent(Agent):
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["page_roleplay"]),
+            system_message=self.__effify(
+                self.prompts["page_roleplay"], website=website
+            ),
             max_consecutive_auto_reply=1,
         )
 
@@ -194,5 +200,5 @@ class PageAgent(Agent):
             "joined_on": self.joined_on,
             "is_page": self.is_page,
             "feed_url": self.feed_url,
+            "activity_profile": getattr(self, "activity_profile", None),
         }
-

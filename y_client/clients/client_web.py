@@ -2,9 +2,10 @@ import json
 import sys
 import os
 import shutil
+import csv
 from sqlalchemy.ext.declarative import declarative_base
 import sqlalchemy as db
-from requests import post
+from requests import get, post
 from sqlalchemy import orm
 
 
@@ -109,45 +110,93 @@ class YClientWeb(object):
         self.feed = Feeds()
         self.content_recsys = None
         self.follow_recsys = None
+        self.network_file = network if self.first_run and network else None
 
         users_id_map = {}
 
-        if self.first_run and network is not None:
-            with open(f"{data_base_path}{network}", "r") as f:
-                headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-                for l in f:
-                    l = l.strip().split(",")
-
-                    # from username to id on the server
-                    if l[0] not in users_id_map:
-                        api_url = f"{self.config['servers']['api']}get_user_id"
-                        data = {
-                            "username": l[0],
-                        }
-                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
-                        users_id_map[l[0]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
-
-                    if l[1] not in users_id_map:
-                        api_url = f"{self.config['servers']['api']}get_user_id"
-                        data = {
-                            "username": l[1],
-                        }
-                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
-                        users_id_map[l[1]] = json.loads(uid.__dict__["_content"].decode("utf-8"))["id"]
-
-                    api_url = f"{self.config['servers']['api']}follow"
-
-                    data = {
-                        "user_id": users_id_map[l[0]],
-                        "target": users_id_map[l[1]],
-                        "action": "follow",
-                        "round": 0,
-                    }
-
-                    post(f"{api_url}", headers=headers, data=json.dumps(data))
-
         self.pages = []
+
+    @staticmethod
+    def _extract_user_id_response(response, username):
+        raw = ""
+        try:
+            raw = response.text or ""
+        except Exception:
+            raw = ""
+        try:
+            payload = json.loads(raw)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Invalid /get_user_id response for username '{username}': "
+                f"status={getattr(response, 'status_code', 'n/a')} body={raw[:200]!r}"
+            ) from exc
+        if not isinstance(payload, dict):
+            raise RuntimeError(
+                f"Unexpected /get_user_id payload for username '{username}': {payload!r}"
+            )
+        return payload.get("id")
+
+    def add_network(self):
+        if not self.first_run or not self.network_file:
+            return
+        network_path = f"{self.base_path}{self.network_file}"
+        if not os.path.exists(network_path):
+            return
+
+        users_id_map = {}
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        with open(network_path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if len(row) < 2:
+                    continue
+                source_name = str(row[0] or "").strip()
+                target_name = str(row[1] or "").strip()
+                if not source_name or not target_name:
+                    continue
+                # Standard generated networks are headerless CSV files. Still skip
+                # explicit headers when present for backward compatibility.
+                lowered = {source_name.lower(), target_name.lower()}
+                if lowered <= {"source", "target", "from", "to", "user", "user_id", "follower", "followed"}:
+                    continue
+
+                if source_name not in users_id_map:
+                    api_url = f"{self.config['servers']['api']}get_user_id"
+                    uid = get(
+                        f"{api_url}",
+                        headers=headers,
+                        params={"username": source_name},
+                    )
+                    users_id_map[source_name] = self._extract_user_id_response(
+                        uid, source_name
+                    )
+
+                if target_name not in users_id_map:
+                    api_url = f"{self.config['servers']['api']}get_user_id"
+                    uid = get(
+                        f"{api_url}",
+                        headers=headers,
+                        params={"username": target_name},
+                    )
+                    users_id_map[target_name] = self._extract_user_id_response(
+                        uid, target_name
+                    )
+
+                if (
+                    users_id_map.get(source_name) is None
+                    or users_id_map.get(target_name) is None
+                ):
+                    continue
+
+                api_url = f"{self.config['servers']['api']}follow"
+                data = {
+                    "user_id": users_id_map[source_name],
+                    "target": users_id_map[target_name],
+                    "action": "follow",
+                    "round": 0,
+                }
+                post(f"{api_url}", headers=headers, data=json.dumps(data))
 
     def read_agents(self):
         """
@@ -193,7 +242,11 @@ class YClientWeb(object):
                     config=self.config,
                     load=not self.first_run,
                     web=True,
-                    prompt=ag["prompts"],
+                    prompt=ag.get("prompts"),
+                    daily_activity_level=ag.get("daily_activity_level") or 1,
+                    profession=ag.get("profession"),
+                    activity_profile=ag.get("activity_profile") or "Always On",
+                    archetype=ag.get("archetype"),
                 )
 
                 agent.set_prompts(self.prompts)
@@ -231,6 +284,7 @@ class YClientWeb(object):
                     toxicity=None,
                     api_key="",
                     feed_url=ag["feed_url"],
+                    activity_profile=ag.get("activity_profile") or "Always On",
                     recsys=content_recsys,
                     frecsys=follow_recsys,
                     is_page=1,

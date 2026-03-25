@@ -89,7 +89,7 @@ These are active only when the server exposes the `/memory/*` API.
 | Key | Type | Typical values | Impact |
 | --- | --- | --- | --- |
 | `memory_enabled` | boolean | `false`, `true` | Master switch. When `false`, all memory reads/writes are skipped. |
-| `memory_backend` | string | `hybrid_semantic`, `simple_recent` | Selects the backend built by `y_memory_subsystem`. |
+| `memory_backend` | string | `hybrid_semantic`, `simple_recent` | Selects the backend built by `yclient-memory`. |
 | `memory_prompt_mode` | string | `subtle_timeline` | Controls how much memory text is injected into prompts. |
 | `memory_vote_signal_only` | boolean | `true`, `false` | When `true`, reactions update social-card scores without creating full memory events. |
 | `memory_reply_context_max_chars` | integer | `220`, `500` | Max length for reply-memory prompt text. |

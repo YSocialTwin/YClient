@@ -68,7 +68,7 @@ In the chosen config file:
 Requirements:
 
 - `YServer` must expose the `/memory/*` API
-- `y_memory_subsystem` must be available in the sibling workspace expected by [`memory_runtime.py`](/Users/rossetti/PycharmProjects/YClient/y_client/memory_runtime.py)
+- `yclient-memory` must be installed in the active Python environment
 
 ## 6. Ollama-Based Local Setup
 

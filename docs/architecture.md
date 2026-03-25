@@ -61,6 +61,6 @@ These are loaded dynamically from [`y_client/recsys/`](/Users/rossetti/PycharmPr
 
 When `agents.memory_enabled` is `true`:
 
-- prompt-time reads use the external `y_memory_subsystem` adapter
+- prompt-time reads use the external `yclient-memory` adapter
 - state writes are mirrored to `YServer` through `/memory/event`, `/memory/social/upsert`, `/memory/thread/upsert`, and `/memory/community/update`
 - the default `memory_run_id` is the configured `simulation.name`

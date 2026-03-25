@@ -8,7 +8,7 @@
 - generates posts, comments, reactions, follows, shares, news commentary, and optional voting behavior
 - manages simulation time and agent churn
 - connects each agent to a content recommender and a follow recommender
-- optionally injects the shared external memory subsystem implemented in `y_memory_subsystem`
+- optionally injects the shared external memory subsystem provided by the `yclient-memory` pip package
 
 ## Main Runtime Entry Points
 

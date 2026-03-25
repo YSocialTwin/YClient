@@ -33,7 +33,7 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 
 Refer to the official [documentation](https://ysocialtwin.github.io/) for a detailed guide on how to use YSocial.
 
-Memory integration notes for the external `y_memory_subsystem` package are documented in [docs/external_memory_integration.md](/Users/rossetti/PycharmProjects/YClient/docs/external_memory_integration.md).
+Memory integration notes for the external `yclient-memory` pip package are documented in [docs/external_memory_integration.md](/Users/rossetti/PycharmProjects/YClient/docs/external_memory_integration.md).
 
 MkDocs documentation for the client repository is configured in [mkdocs.yml](/Users/rossetti/PycharmProjects/YClient/mkdocs.yml). Build it locally with:
 

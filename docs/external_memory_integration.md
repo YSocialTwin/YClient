@@ -1,11 +1,11 @@
 # External Memory Integration
 
-This branch integrates the shared `y_memory_subsystem` package into `YClient` using the same lazy runtime-adapter pattern adopted in `YClientReddit`, but adapted to the Twitter-like interaction model used here.
+This branch integrates the shared `yclient-memory` pip package into `YClient` using the same lazy runtime-adapter pattern adopted in `YClientReddit`, but adapted to the Twitter-like interaction model used here.
 
 ## What Was Added
 
 - `y_client/memory_runtime.py`
-  - loads the sibling `y_memory_subsystem` package from `../y_memory_subsystem/src`
+  - imports the installed `yclient-memory` package lazily at runtime
   - builds a `yclient_memory` engine from the current agent configuration
   - exposes the runtime hooks required by the package
 - `y_client/classes/base_agent.py`
@@ -42,7 +42,7 @@ This keeps the package integration compatible with the Twitter-like platform beh
 ## Safety And Regression Posture
 
 - Memory is disabled by default: `agents.memory_enabled = false`
-- If the external package cannot be imported or the engine cannot be built, the client silently falls back to the pre-integration behavior
+- If the `yclient-memory` package is not installed and memory is enabled, engine creation fails with a clear runtime error naming the missing dependency
 - If `/memory/*` API calls fail, the agent keeps running and prompt injection collapses to empty strings
 - Existing non-memory actions do not become dependent on the server memory API unless memory is explicitly enabled
 
@@ -80,7 +80,7 @@ If those endpoints are unavailable, the client will continue to operate but memo
 
 The `YClient` integration uses a split model on purpose:
 
-- the external `y_memory_subsystem` engine is still updated locally so prompt-building behavior stays aligned with the shared library contract
+- the external `yclient-memory` engine is still updated locally so prompt-building behavior stays aligned with the shared library contract
 - the same action hooks also write normalized state to `YServer` through `/memory/*`
 
 For the Twitter-like client this currently maps as follows:

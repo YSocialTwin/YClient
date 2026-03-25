@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-
-
-MEMORY_SRC = Path(__file__).resolve().parents[2] / "y_memory_subsystem" / "src"
-if MEMORY_SRC.exists() and str(MEMORY_SRC) not in sys.path:
-    sys.path.insert(0, str(MEMORY_SRC))
-
-from yclient_memory import build_memory_engine  # type: ignore
-from yclient_memory.config import MemoryConfig  # type: ignore
+def _load_memory_package():
+    try:
+        from yclient_memory import build_memory_engine  # type: ignore
+        from yclient_memory.config import MemoryConfig  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(
+            "The external memory integration requires the pip package "
+            "'yclient-memory'. Install it before enabling agent memory."
+        ) from exc
+    return build_memory_engine, MemoryConfig
 
 
 class YClientMemoryRuntime:
@@ -57,6 +57,7 @@ class YClientMemoryRuntime:
 
 
 def build_agent_memory_engine(agent):
+    build_memory_engine, MemoryConfig = _load_memory_package()
     prompt_mode = str(getattr(agent, "memory_prompt_mode", "subtle_timeline") or "subtle_timeline")
     raw = {
         "memory_enabled": getattr(agent, "memory_enabled", False),

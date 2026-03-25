@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
 from y_client.news_feeds.client_modals import Websites, Images, Articles, session, Agent_Custom_Prompt
@@ -1456,6 +1458,50 @@ class Agent(object):
 
         return interests, interests_id
 
+    def _extract_news_topics(self, article, website):
+        """
+        Extract topic labels for a news item so `/news` posts can participate in topic dynamics.
+
+        :param article: the article being shared
+        :param website: the source website metadata
+        :return: a list of topic labels
+        """
+        if not self._has_usable_llm_config():
+            return []
+
+        topic_agent = AssistantAgent(
+            name=f"{self.name}_topic_extractor",
+            llm_config=self.llm_config,
+            system_message=self.prompts["agent_roleplay_base"],
+            max_consecutive_auto_reply=1,
+        )
+
+        handler = AssistantAgent(
+            name="TopicHandler",
+            llm_config=self.llm_config,
+            system_message=self.prompts["handler_instructions_topics"],
+            max_consecutive_auto_reply=1,
+        )
+
+        try:
+            handler.initiate_chat(
+                topic_agent,
+                message=self.__effify(
+                    self.prompts["handler_news"], website=website, article=article
+                ),
+                silent=True,
+                max_round=1,
+            )
+            topic_eval = handler.chat_messages[topic_agent][-1]["content"]
+        except Exception:
+            return []
+        finally:
+            topic_agent.reset()
+            handler.reset()
+
+        topics = re.findall(r"[#T]: \w+ \w+", topic_eval)
+        return [topic.split(": ")[1] for topic in topics if "Topic" not in topic]
+
     @log_execution_time
     def post(self, tid):
         """
@@ -1571,6 +1617,8 @@ class Agent(object):
         :param website: the website
         """
 
+        topics = self._extract_news_topics(article=article, website=website)
+
         u1 = AssistantAgent(
             name=f"{self.name}",
             llm_config=self.llm_config,
@@ -1636,6 +1684,7 @@ class Agent(object):
                 "language": website.language,
                 "category": website.category,
                 "fetched_on": website.last_fetched,
+                "topics": topics,
             }
         )
 
@@ -2727,7 +2776,7 @@ class Agent(object):
             name=f"{self.name}",
             llm_config=self.llm_config,
             system_message=self.__effify(
-                self.prompts["agent_roleplay_comments_share"], interest=[]  # interests
+                self.prompts["agent_roleplay_comments_share"], interest=interests
             ),
             max_consecutive_auto_reply=1,
         )

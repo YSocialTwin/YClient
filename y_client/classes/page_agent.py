@@ -5,7 +5,6 @@ from y_client.logger import log_execution_time
 from requests import post
 from autogen import AssistantAgent
 import json
-import re
 
 
 class PageAgent(Agent):
@@ -62,6 +61,7 @@ class PageAgent(Agent):
         """
 
         if self._has_usable_llm_config():
+            topics = self._extract_news_topics(article=article, website=website)
             u1 = AssistantAgent(
                 name=f"{self.name}",
                 llm_config=self.llm_config,
@@ -74,7 +74,7 @@ class PageAgent(Agent):
             u2 = AssistantAgent(
                 name=f"Handler",
                 llm_config=self.llm_config,
-                system_message=self.__effify(self.prompts["handler_instructions_topics"]),
+                system_message=self.__effify(self.prompts["handler_instructions"]),
                 max_consecutive_auto_reply=1,
             )
 
@@ -86,11 +86,6 @@ class PageAgent(Agent):
                 silent=True,
                 max_round=1,
             )
-
-            topic_eval = u2.chat_messages[u1][-1]["content"]
-
-            topics = re.findall(r"[#T]: \w+ \w+", topic_eval)
-            topics = [x.split(": ")[1] for x in topics if "Topic" not in x]
 
             post_text = u2.chat_messages[u1][-2]["content"]
             post_text = post_text.replace(f"@{self.name}", "")

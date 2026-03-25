@@ -157,6 +157,8 @@ class FakeAgent(Agent):
 
         api_url = f"{self.base_url}/post"
         post(f"{api_url}", headers=headers, data=st)
+        if self.opinions_enabled and interests_id:
+            self._record_self_post_opinions(topic_ids=interests_id, tid=int(tid))
 
         # update topic of interest with the ones used to generate the post
         api_url = f"{self.base_url}/set_user_interests"
@@ -357,6 +359,8 @@ class FakeAgent(Agent):
 
         api_url = f"{self.base_url}/share"
         post(f"{api_url}", headers=headers, data=st)
+        if self.opinions_enabled:
+            self.new_opinions(post_id, tid, post_text)
 
     @log_execution_time
     def reaction(self, post_id: int, tid: int, check_follow=True):
@@ -405,6 +409,8 @@ class FakeAgent(Agent):
 
         api_url = f"{self.base_url}/reaction"
         post(f"{api_url}", headers=headers, data=st)
+        if self.opinions_enabled:
+            self.new_opinions(post_id, tid, post_text)
 
         # evaluate follow only upon explicit request
         if self.probability_of_secondary_follow > 0:

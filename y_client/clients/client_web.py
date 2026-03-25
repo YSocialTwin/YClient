@@ -136,6 +136,9 @@ class YClientWeb(object):
             )
         return payload.get("id")
 
+    def _rule_based_agents_enabled(self):
+        return not bool(self.config.get("agents", {}).get("llm_agents"))
+
     def add_network(self):
         if not self.first_run or not self.network_file:
             return
@@ -204,9 +207,12 @@ class YClientWeb(object):
 
         :return:
         """
-        from y_client.classes import Agent, PageAgent
+        from y_client.classes import Agent, FakeAgent, FakePageAgent, PageAgent
         import y_client.recsys as recsys
         import y_client.recsys as frecsys
+
+        AgentClass = FakeAgent if self._rule_based_agents_enabled() else Agent
+        PageClass = FakePageAgent if self._rule_based_agents_enabled() else PageAgent
 
         # population filename
         self.agents_filename = f"{self.base_path}{self.config['simulation']['population']}.json"
@@ -217,7 +223,7 @@ class YClientWeb(object):
                 content_recsys = getattr(recsys, ag["rec_sys"])()
                 follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
-                agent = Agent(
+                agent = AgentClass(
                     name=ag["name"],
                     email=ag["email"],
                     pwd=ag["password"],
@@ -247,6 +253,8 @@ class YClientWeb(object):
                     profession=ag.get("profession"),
                     activity_profile=ag.get("activity_profile") or "Always On",
                     archetype=ag.get("archetype"),
+                    opinions=ag.get("opinions"),
+                    experiment_db_path=os.path.join(self.base_path, "database_server.db"),
                 )
 
                 agent.set_prompts(self.prompts)
@@ -265,7 +273,7 @@ class YClientWeb(object):
                 content_recsys = getattr(recsys, "ReverseChronoPopularity")()
                 follow_recsys = getattr(frecsys, "Jaccard")(leaning_bias=1.5)
 
-                page = PageAgent(
+                page = PageClass(
                     name=ag["name"],
                     pwd="",
                     email=ag["email"],
@@ -336,19 +344,22 @@ class YClientWeb(object):
         :param a_file: the JSON file containing the agents
         """
         agents = json.load(open(a_file, "r"))
-        from y_client.classes import Agent, PageAgent
+        from y_client.classes import Agent, FakeAgent, FakePageAgent, PageAgent
+
+        AgentClass = FakeAgent if self._rule_based_agents_enabled() else Agent
+        PageClass = FakePageAgent if self._rule_based_agents_enabled() else PageAgent
 
         for a in agents["agents"]:
             try:
                 if a["is_page"] == 0:
-                    ag = Agent(
+                    ag = AgentClass(
                         name=a["name"], email=a["email"], load=True, config=self.config, web=True
                     )
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)
                 else:
-                    ag = PageAgent(
+                    ag = PageClass(
                         a["name"], email=a["email"], load=True, config=self.config, web=True
                     )
                     ag.set_prompts(self.prompts)

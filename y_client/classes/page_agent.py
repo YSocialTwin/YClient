@@ -61,38 +61,51 @@ class PageAgent(Agent):
         :param website: the website
         """
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
-            llm_config=self.llm_config,
-            system_message=self.__effify(
-                self.prompts["page_roleplay"], website=website
-            ),
-            max_consecutive_auto_reply=1,
-        )
+        if self._has_usable_llm_config():
+            u1 = AssistantAgent(
+                name=f"{self.name}",
+                llm_config=self.llm_config,
+                system_message=self.__effify(
+                    self.prompts["page_roleplay"], website=website
+                ),
+                max_consecutive_auto_reply=1,
+            )
 
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions_topics"]),
-            max_consecutive_auto_reply=1,
-        )
+            u2 = AssistantAgent(
+                name=f"Handler",
+                llm_config=self.llm_config,
+                system_message=self.__effify(self.prompts["handler_instructions_topics"]),
+                max_consecutive_auto_reply=1,
+            )
 
-        u2.initiate_chat(
-            u1,
-            message=self.__effify(
-                self.prompts["handler_news"], website=website, article=article
-            ),
-            silent=True,
-            max_round=1,
-        )
+            u2.initiate_chat(
+                u1,
+                message=self.__effify(
+                    self.prompts["handler_news"], website=website, article=article
+                ),
+                silent=True,
+                max_round=1,
+            )
 
-        topic_eval = u2.chat_messages[u1][-1]["content"]
+            topic_eval = u2.chat_messages[u1][-1]["content"]
 
-        topics = re.findall(r"[#T]: \w+ \w+", topic_eval)
-        topics = [x.split(": ")[1] for x in topics if "Topic" not in x]
+            topics = re.findall(r"[#T]: \w+ \w+", topic_eval)
+            topics = [x.split(": ")[1] for x in topics if "Topic" not in x]
 
-        post_text = u2.chat_messages[u1][-2]["content"]
-        post_text = post_text.replace(f"@{self.name}", "")
+            post_text = u2.chat_messages[u1][-2]["content"]
+            post_text = post_text.replace(f"@{self.name}", "")
+
+            u1.reset()
+            u2.reset()
+        else:
+            topics = []
+            title = str(getattr(article, "title", "") or "").strip()
+            summary = str(getattr(article, "summary", "") or "").strip()
+            link = str(getattr(article, "link", "") or "").strip()
+            parts = [p for p in [title, summary] if p]
+            post_text = " - ".join(parts) if parts else title or summary or "News update"
+            if link:
+                post_text = f"{post_text} {link}".strip()
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -118,9 +131,6 @@ class PageAgent(Agent):
                 "topics": topics,
             }
         )
-
-        u1.reset()
-        u2.reset()
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 

@@ -1,12 +1,8 @@
 import json
 import sys
 import os
-import shutil
 import csv
-from sqlalchemy.ext.declarative import declarative_base
-import sqlalchemy as db
 from requests import get, post
-from sqlalchemy import orm
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +10,8 @@ sys.path.append(os.path.dirname(SCRIPT_DIR))
 session = None
 engine = None
 base = None
+
+from y_client.content_store import initialize_content_store
 
 
 class YClientWeb(object):
@@ -76,26 +74,14 @@ class YClientWeb(object):
         # posts' parameters
         self.visibility_rd = int(self.config["posts"]["visibility_rounds"])
 
-        ##############
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__)).split("y_client")[0]
-        if not os.path.exists(f"{BASE_DIR}experiments/{self.config['simulation']['name']}.db"):
-            # copy the clean database to the experiments folder
-            shutil.copyfile(
-                f"{BASE_DIR}data_schema/database_clean_client.db",
-                f"{BASE_DIR}experiments/{self.config['simulation']['name']}.db",
-            )
-
         global session, engine, base
-        base = declarative_base()
-
-        engine = db.create_engine(f"sqlite:////{BASE_DIR}experiments/{self.config['simulation']['name']}.db")
-        base.metadata.bind = engine
-        session = orm.scoped_session(orm.sessionmaker())(bind=engine)
-
+        session, engine, base = initialize_content_store(
+            data_base_path=data_base_path,
+            experiment_name=self.config["simulation"]["name"],
+        )
         globals()["session"] = session
         globals()["engine"] = engine
         globals()["base"] = base
-        ##############
 
         yclient_path = os.path.dirname(os.path.abspath(__file__)).split("y_web")[0]
         sys.path.append(f'{yclient_path}{os.sep}external{os.sep}YClient/')
@@ -259,7 +245,6 @@ class YClientWeb(object):
                     activity_profile=ag.get("activity_profile") or "Always On",
                     archetype=ag.get("archetype"),
                     opinions=ag.get("opinions"),
-                    experiment_db_path=os.path.join(self.base_path, "database_server.db"),
                 )
 
                 agent.set_prompts(self.prompts)

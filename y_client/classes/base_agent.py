@@ -40,6 +40,16 @@ def _json_loads_maybe(value):
     return None
 
 
+def _llm_agents_enabled_from_config(config):
+    agents_cfg = (config or {}).get("agents", {}) if isinstance(config, dict) else {}
+    llm_agents = agents_cfg.get("llm_agents")
+    return not (
+        isinstance(llm_agents, list)
+        and len(llm_agents) == 1
+        and llm_agents[0] is None
+    )
+
+
 class Agent(object):
     def __init__(
         self,
@@ -118,7 +128,7 @@ class Agent(object):
                 "temperature": config["servers"]["llm_v_temperature"],
                 "max_tokens": config["servers"]["llm_v_max_tokens"]
             }
-            self.llm_agents_enabled = bool(config.get("agents", {}).get("llm_agents"))
+            self.llm_agents_enabled = _llm_agents_enabled_from_config(config)
             self.is_page = is_page
 
             if not load:
@@ -289,7 +299,7 @@ class Agent(object):
             "temperature": config["servers"]["llm_v_temperature"],
             "max_tokens": int(config["servers"]["llm_v_max_tokens"])
         }
-        self.llm_agents_enabled = bool(config.get("agents", {}).get("llm_agents"))
+        self.llm_agents_enabled = _llm_agents_enabled_from_config(config)
         try:
             self.llm_v_config["model"] = config["servers"]["llm_v_agent"]
         except:

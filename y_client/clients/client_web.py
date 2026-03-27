@@ -137,7 +137,12 @@ class YClientWeb(object):
         return payload.get("id")
 
     def _rule_based_agents_enabled(self):
-        return not bool(self.config.get("agents", {}).get("llm_agents"))
+        llm_agents = self.config.get("agents", {}).get("llm_agents")
+        return (
+            isinstance(llm_agents, list)
+            and len(llm_agents) == 1
+            and llm_agents[0] is None
+        )
 
     def add_network(self):
         if not self.first_run or not self.network_file:

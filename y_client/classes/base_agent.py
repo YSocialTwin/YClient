@@ -15,11 +15,32 @@ import json
 import os
 import sqlite3
 import uuid
-from autogen import AssistantAgent
 import numpy as np
 import re
 import logging
-from yclient_memory.contracts import BrowseMemoryRequest, CommentMemoryEvent, PostMemoryEvent, PostStyleRequest, ReplyMemoryRequest, VoteMemoryEvent
+from y_client.llm import AssistantAgent
+
+try:
+    from yclient_memory.contracts import (
+        BrowseMemoryRequest,
+        CommentMemoryEvent,
+        PostMemoryEvent,
+        PostStyleRequest,
+        ReplyMemoryRequest,
+        VoteMemoryEvent,
+    )
+except ImportError:
+    class _MemoryContractFallback:
+        def __init__(self, **kwargs):
+            for key, value in kwargs.items():
+                setattr(self, key, value)
+
+    BrowseMemoryRequest = _MemoryContractFallback
+    CommentMemoryEvent = _MemoryContractFallback
+    PostMemoryEvent = _MemoryContractFallback
+    PostStyleRequest = _MemoryContractFallback
+    ReplyMemoryRequest = _MemoryContractFallback
+    VoteMemoryEvent = _MemoryContractFallback
 
 __all__ = ["Agent", "Agents"]
 

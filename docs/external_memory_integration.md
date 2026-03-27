@@ -107,7 +107,7 @@ This is what makes the server-backed retrieval APIs return non-empty data during
 Run the focused regression suite with:
 
 ```bash
-PYTHONPATH=. uv run --python 3.12 --with requests --with sqlalchemy --with tqdm --with numpy --with pyautogen==0.2.31 --with bs4 --with pillow --with faker --with feedparser --with networkx --with pytest python -m pytest -q tests/test_external_memory_integration.py
+PYTHONPATH=. uv run --python 3.12 --with requests --with sqlalchemy --with tqdm --with numpy --with langchain --with langchain-core --with langchain-openai --with bs4 --with pillow --with faker --with feedparser --with networkx --with pytest python -m pytest -q tests/test_external_memory_integration.py
 ```
 
 Current scope of the tests:

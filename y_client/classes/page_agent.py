@@ -3,8 +3,8 @@ from y_client.news_feeds.client_modals import Websites, session
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.logger import log_execution_time
 from requests import post
-from autogen import AssistantAgent
 import json
+from y_client.llm import AssistantAgent
 
 
 class PageAgent(Agent):

@@ -1,7 +1,4 @@
-import autogen
-from autogen.agentchat.contrib.multimodal_conversable_agent import (
-    MultimodalConversableAgent,
-)
+from y_client.llm import AssistantAgent, MultimodalConversableAgent
 
 
 class Annotator(object):
@@ -28,7 +25,7 @@ class Annotator(object):
             human_input_mode="NEVER",
         )
 
-        self.user_proxy = autogen.AssistantAgent(
+        self.user_proxy = AssistantAgent(
             name="User_proxy",
             max_consecutive_auto_reply=0,
         )

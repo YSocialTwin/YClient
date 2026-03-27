@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import base64
 from dataclasses import dataclass
+import json
+import mimetypes
 import re
 from typing import Any
+import requests
 
 
 _IMAGE_TAG_RE = re.compile(r"<img\s+([^>\s]+)\s*>", re.IGNORECASE)
@@ -58,10 +62,8 @@ def _normalize_llm_config(llm_config: dict | None) -> _NormalizedLLMConfig:
 def _build_chat_model(llm_config: dict | None):
     try:
         from langchain_openai import ChatOpenAI
-    except ImportError as exc:
-        raise RuntimeError(
-            "LangChain OpenAI support is required. Install `langchain-openai`."
-        ) from exc
+    except Exception:
+        return None
 
     cfg = _normalize_llm_config(llm_config)
     kwargs = {}
@@ -80,21 +82,91 @@ def _build_chat_model(llm_config: dict | None):
     return ChatOpenAI(**kwargs)
 
 
+def _chat_completions_url(base_url: str | None) -> str:
+    base = str(base_url or "").strip().rstrip("/")
+    if not base:
+        raise RuntimeError("LLM base_url is required")
+    if base.endswith("/chat/completions"):
+        return base
+    return f"{base}/chat/completions"
+
+
+def _image_url_to_data_url(image_url: str) -> str:
+    source = str(image_url or "").strip()
+    if not source or source.startswith("data:"):
+        return source
+    response = requests.get(
+        source,
+        timeout=120,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+            )
+        },
+    )
+    response.raise_for_status()
+    content_type = (response.headers.get("Content-Type") or "").split(";")[0].strip()
+    if not content_type:
+        guessed, _ = mimetypes.guess_type(source)
+        content_type = guessed or "image/jpeg"
+    encoded = base64.b64encode(response.content).decode("ascii")
+    return f"data:{content_type};base64,{encoded}"
+
+
+def _invoke_chat_completions(*, llm_config: dict | None, messages: list[dict[str, Any]]) -> str:
+    cfg = _normalize_llm_config(llm_config)
+    payload: dict[str, Any] = {
+        "model": cfg.model,
+        "messages": messages,
+    }
+    if cfg.temperature is not None:
+        payload["temperature"] = cfg.temperature
+    if cfg.max_tokens is not None and int(cfg.max_tokens) > 0:
+        payload["max_tokens"] = int(cfg.max_tokens)
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {cfg.api_key or 'EMPTY'}",
+    }
+    response = requests.post(
+        _chat_completions_url(cfg.base_url),
+        headers=headers,
+        data=json.dumps(payload),
+        timeout=cfg.timeout or 120,
+    )
+    response.raise_for_status()
+    data = response.json()
+    try:
+        return _coerce_content_to_text(data["choices"][0]["message"]["content"]).strip()
+    except Exception as exc:
+        raise RuntimeError(f"Unexpected LLM response schema: {data!r}") from exc
+
+
 def _invoke_text_model(*, llm_config: dict | None, system_prompt: str, user_prompt: str) -> str:
     try:
         from langchain_core.messages import HumanMessage, SystemMessage
-    except ImportError as exc:
-        raise RuntimeError(
-            "LangChain core message classes are required. Install `langchain-core`."
-        ) from exc
+    except Exception:
+        HumanMessage = None
+        SystemMessage = None
 
-    model = _build_chat_model(llm_config)
+    if HumanMessage is not None and SystemMessage is not None:
+        try:
+            model = _build_chat_model(llm_config)
+            messages = []
+            if system_prompt:
+                messages.append(SystemMessage(content=system_prompt))
+            messages.append(HumanMessage(content=user_prompt))
+            response = model.invoke(messages)
+            return _coerce_content_to_text(getattr(response, "content", response))
+        except Exception:
+            pass
+
     messages = []
     if system_prompt:
-        messages.append(SystemMessage(content=system_prompt))
-    messages.append(HumanMessage(content=user_prompt))
-    response = model.invoke(messages)
-    return _coerce_content_to_text(getattr(response, "content", response))
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": user_prompt})
+    return _invoke_chat_completions(llm_config=llm_config, messages=messages)
 
 
 def _invoke_vision_model(
@@ -103,30 +175,41 @@ def _invoke_vision_model(
     system_prompt: str,
     user_prompt: str,
 ) -> str:
-    try:
-        from langchain_core.messages import HumanMessage, SystemMessage
-    except ImportError as exc:
-        raise RuntimeError(
-            "LangChain core message classes are required. Install `langchain-core`."
-        ) from exc
-
     match = _IMAGE_TAG_RE.search(user_prompt or "")
     image_url = match.group(1).strip() if match else ""
     cleaned_prompt = _IMAGE_TAG_RE.sub("", user_prompt or "").strip()
-
-    model = _build_chat_model(llm_config)
+    data_url = ""
+    if image_url:
+        try:
+            data_url = _image_url_to_data_url(image_url)
+        except Exception:
+            data_url = ""
+            cleaned_prompt = f"{cleaned_prompt}\nImage URL: {image_url}".strip()
     content = []
     if cleaned_prompt:
         content.append({"type": "text", "text": cleaned_prompt})
-    if image_url:
-        content.append({"type": "image_url", "image_url": {"url": image_url}})
-
-    messages = []
-    if system_prompt:
-        messages.append(SystemMessage(content=system_prompt))
-    messages.append(HumanMessage(content=content or cleaned_prompt))
-    response = model.invoke(messages)
-    return _coerce_content_to_text(getattr(response, "content", response))
+    if data_url:
+        content.append(
+            {
+                "type": "image_url",
+                "image_url": {"url": data_url},
+            }
+        )
+    try:
+        from langchain_core.messages import HumanMessage, SystemMessage
+        model = _build_chat_model(llm_config)
+        messages = []
+        if system_prompt:
+            messages.append(SystemMessage(content=system_prompt))
+        messages.append(HumanMessage(content=content or cleaned_prompt))
+        response = model.invoke(messages)
+        return _coerce_content_to_text(getattr(response, "content", response))
+    except Exception:
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": content or cleaned_prompt})
+        return _invoke_chat_completions(llm_config=llm_config, messages=messages)
 
 
 class AssistantAgent:

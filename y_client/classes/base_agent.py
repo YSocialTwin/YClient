@@ -141,6 +141,23 @@ class Agent(object):
             self.name = name
             self.email = email
             self.attention_window = int(config["agents"]["attention_window"])
+            self.probability_of_daily_follow = float(
+                config["agents"].get("probability_of_daily_follow", 0)
+            )
+            self.probability_of_secondary_follow = float(
+                config["agents"].get("probability_of_secondary_follow", 0)
+            )
+            self.daily_activity_level = kwargs.get("daily_activity_level", 1)
+            self.profession = kwargs.get("profession")
+            self.activity_profile = kwargs.get("activity_profile")
+            self.archetype = kwargs.get("archetype")
+            self.opinions = kwargs.get("opinions")
+            self.opinion_dynamics = (
+                config.get("simulation", {}).get("opinion_dynamics", {})
+                if isinstance(config, dict)
+                else {}
+            )
+            self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
             self.llm_v_config = {
                 "url": config["servers"]["llm_v"],
                 "api_key": config["servers"]["llm_v_api_key"],

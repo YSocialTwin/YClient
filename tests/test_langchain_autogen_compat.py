@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import sys
+import types
 from y_client.llm.autogen_compat import AssistantAgent, MultimodalConversableAgent
 import y_client.llm.autogen_compat as compat_module
 
@@ -57,3 +59,63 @@ def test_multimodal_agent_wraps_text_response(monkeypatch):
     user_proxy.initiate_chat(vision_agent, message="Describe <img https://example.test/a.png>", silent=True)
 
     assert vision_agent.chat_messages[user_proxy] == [{"content": [{"text": "vision result"}]}]
+
+
+def test_build_chat_model_uses_chatollama_for_ollama_base(monkeypatch):
+    fake_module = types.ModuleType("langchain_ollama")
+
+    class FakeChatOllama:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    fake_module.ChatOllama = FakeChatOllama
+    monkeypatch.setitem(sys.modules, "langchain_ollama", fake_module)
+    monkeypatch.delitem(sys.modules, "langchain_openai", raising=False)
+
+    model = compat_module._build_chat_model(
+        {
+            "config_list": [
+                {
+                    "model": "llama3.2",
+                    "base_url": "http://127.0.0.1:11434/v1",
+                    "api_key": "EMPTY",
+                }
+            ],
+            "temperature": 0.2,
+            "max_tokens": 64,
+        }
+    )
+
+    assert isinstance(model, FakeChatOllama)
+    assert model.kwargs["model"] == "llama3.2"
+    assert model.kwargs["base_url"] == "http://127.0.0.1:11434"
+    assert model.kwargs["temperature"] == 0.2
+    assert model.kwargs["num_predict"] == 64
+
+
+def test_looks_like_ollama_honors_explicit_backend_hint():
+    cfg = compat_module._NormalizedLLMConfig(
+        model="gpt-4o-mini",
+        base_url="https://example.com/v1",
+        api_key="token",
+        timeout=None,
+        temperature=None,
+        max_tokens=None,
+        backend_hint="ollama",
+    )
+    assert compat_module._looks_like_ollama(cfg) is True
+
+
+def test_looks_like_ollama_honors_env_url_match(monkeypatch):
+    monkeypatch.setenv("LLM_BACKEND", "ollama")
+    monkeypatch.setenv("LLM_URL", "https://llm.example.org/custom/v1")
+    cfg = compat_module._NormalizedLLMConfig(
+        model="llama3.2",
+        base_url="https://llm.example.org/custom/v1",
+        api_key="EMPTY",
+        timeout=None,
+        temperature=None,
+        max_tokens=None,
+        backend_hint=None,
+    )
+    assert compat_module._looks_like_ollama(cfg) is True

@@ -292,10 +292,8 @@ class YClientWeb(object):
         for ag in data["agents"]:
 
             if ag["is_page"] == 0:
-                self.content_recsys = getattr(recsys, ag["rec_sys"])()
-                self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
-
-                if self.llm_active:
+                content_recsys = getattr(recsys, ag["rec_sys"])()
+                follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
                 agent = AgentClass(
                     name=ag["name"],
@@ -345,84 +343,32 @@ class YClientWeb(object):
                 content_recsys = getattr(recsys, "ReverseChronoPopularity")()
                 follow_recsys = getattr(frecsys, "Jaccard")(leaning_bias=1.5)
 
-                page = PageClass(
-                    name=ag["name"],
-                    pwd="",
-                    email=ag["email"],
-                    age=0,
-                    ag_type=ag["type"],
-                    leaning=None,
-                    interests=[],
-                    config=self.config,
-                    big_five=big_five,
-                    language=None,
-                    education_level=None,
-                    owner=ag["owner"],
-                    round_actions=ag["round_actions"],
-                    gender=None,
-                    nationality=None,
-                    toxicity=None,
-                    api_key="",
-                    feed_url=ag["feed_url"],
-                    activity_profile=ag.get("activity_profile") or "Always On",
-                    recsys=content_recsys,
-                    frecsys=follow_recsys,
-                    is_page=1,
-                    web=True
-                )
-
-                    if self.llm_active:
-                        page = PageAgent(
-                            name=ag["name"],
-                            pwd="",
-                            email=ag["email"],
-                            age=0,
-                            ag_type=ag["type"],
-                            leaning=None,
-                            interests=[],
-                            config=self.config,
-                            big_five=big_five,
-                            language=None,
-                            education_level=None,
-                            owner=ag["owner"],
-                            round_actions=ag["round_actions"],
-                            gender=None,
-                            nationality=None,
-                            toxicity=None,
-                            api_key="",
-                            feed_url=ag["feed_url"],
-                            recsys=content_recsys,
-                            frecsys=follow_recsys,
-                            is_page=1,
-                            web=True,
-                            activity_profile=ag["activity_profile"]
-                        )
-                    else:
-                        page = FakePageAgent(
-                            name=ag["name"],
-                            pwd="",
-                            email=ag["email"],
-                            age=0,
-                            ag_type=ag["type"],
-                            leaning=None,
-                            interests=[],
-                            config=self.config,
-                            big_five=big_five,
-                            language=None,
-                            education_level=None,
-                            owner=ag["owner"],
-                            round_actions=ag["round_actions"],
-                            gender=None,
-                            nationality=None,
-                            toxicity=None,
-                            api_key="",
-                            feed_url=ag["feed_url"],
-                            recsys=content_recsys,
-                            frecsys=follow_recsys,
-                            is_page=1,
-                            web=True,
-                            activity_profile=ag["activity_profile"]
-                        )
+                try:
+                    page = PageClass(
+                        name=ag["name"],
+                        pwd="",
+                        email=ag["email"],
+                        age=0,
+                        ag_type=ag["type"],
+                        leaning=None,
+                        interests=[],
+                        config=self.config,
+                        big_five=big_five,
+                        language=None,
+                        education_level=None,
+                        owner=ag["owner"],
+                        round_actions=ag["round_actions"],
+                        gender=None,
+                        nationality=None,
+                        toxicity=None,
+                        api_key="",
+                        feed_url=ag["feed_url"],
+                        activity_profile=ag.get("activity_profile") or "Always On",
+                        recsys=content_recsys,
+                        frecsys=follow_recsys,
+                        is_page=1,
+                        web=True
+                    )
 
                     page.set_prompts(self.prompts)
                     self.agents.add_agent(page)
@@ -434,8 +380,7 @@ class YClientWeb(object):
                             "category": ag["type"],
                         }
                     )
-
-                except:
+                except Exception:
                     print(f"Error loading page agent: {ag['name']}")
                     continue
 

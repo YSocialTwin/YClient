@@ -2043,7 +2043,7 @@ class Agent(object):
             if len(sentiment) == 0:
                 self.topics_sentiment = ""
 
-        user_agent = AssistantAgent(
+        u1 = AssistantAgent(
             name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
@@ -2241,7 +2241,7 @@ class Agent(object):
         else:
             interests, _ = self.__get_interests(tid)
 
-        user_agent = AssistantAgent(
+        u1 = AssistantAgent(
             name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
@@ -3012,7 +3012,7 @@ class Agent(object):
 
         self.topics_opinions = ""
 
-        user_agent = AssistantAgent(
+        u1 = AssistantAgent(
             name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
@@ -3021,7 +3021,12 @@ class Agent(object):
             max_consecutive_auto_reply=1,
         )
 
-        self.topics_sentiment = ""
+        u2 = AssistantAgent(
+            name=f"Handler",
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["handler_instructions"]),
+            max_consecutive_auto_reply=1,
+        )
 
         u2.initiate_chat(
             u1,
@@ -3035,9 +3040,11 @@ class Agent(object):
             max_round=1,
         )
 
-        emotion_eval = []
-        if self.annotate_emotions:
-            emotion_eval = self.__emotion_annotation(post_text)
+        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        emotion_eval = self.__clean_emotion(emotion_eval)
+
+        post_text = u2.chat_messages[u1][-2]["content"]
+        post_text = self.__clean_text(post_text)
 
         # avoid posting empty messages
         if len(post_text) < 3:

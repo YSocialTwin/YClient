@@ -4,8 +4,10 @@ import base64
 from dataclasses import dataclass
 import json
 import mimetypes
+import os
 import re
 from typing import Any
+from urllib.parse import urlparse
 import requests
 
 
@@ -20,6 +22,7 @@ class _NormalizedLLMConfig:
     timeout: float | None
     temperature: float | None
     max_tokens: int | None
+    backend_hint: str | None
 
 
 def _coerce_content_to_text(content: Any) -> str:
@@ -56,16 +59,72 @@ def _normalize_llm_config(llm_config: dict | None) -> _NormalizedLLMConfig:
         timeout=primary.get("timeout"),
         temperature=llm_config.get("temperature"),
         max_tokens=llm_config.get("max_tokens"),
+        backend_hint=(
+            primary.get("backend")
+            or primary.get("provider")
+            or primary.get("api_format")
+        ),
+    )
+
+
+def _looks_like_ollama(cfg: _NormalizedLLMConfig) -> bool:
+    backend_hint = str(cfg.backend_hint or "").strip().lower()
+    if backend_hint == "ollama":
+        return True
+    if backend_hint in {"openai", "open_ai", "vllm"}:
+        return False
+
+    base_url = str(cfg.base_url or "").strip().lower()
+    if not base_url:
+        return False
+    parsed = urlparse(base_url)
+    hostname = (parsed.hostname or "").lower()
+    netloc = (parsed.netloc or "").lower()
+    env_backend = str(os.getenv("LLM_BACKEND") or "").strip().lower()
+    env_url = str(os.getenv("LLM_URL") or "").strip().rstrip("/")
+    cfg_url = str(cfg.base_url or "").strip().rstrip("/")
+    if env_backend == "ollama" and env_url and cfg_url and env_url == cfg_url:
+        return True
+    return (
+        "ollama" in base_url
+        or "ollama" in hostname
+        or "ollama" in netloc
+        or parsed.port == 11434
+        or ":11434" in base_url
+        or (
+            (cfg.api_key or "").upper() in {"", "NULL", "EMPTY"}
+            and bool(cfg.model)
+            and ":" in str(cfg.model)
+        )
     )
 
 
 def _build_chat_model(llm_config: dict | None):
+    cfg = _normalize_llm_config(llm_config)
+    if _looks_like_ollama(cfg):
+        try:
+            from langchain_ollama import ChatOllama
+        except ImportError as exc:
+            raise RuntimeError(
+                "LangChain Ollama support is required for Ollama endpoints. Install `langchain-ollama`."
+            ) from exc
+
+        kwargs = {}
+        if cfg.model:
+            kwargs["model"] = cfg.model
+        if cfg.base_url:
+            kwargs["base_url"] = cfg.base_url.rsplit("/v1", 1)[0]
+        if cfg.temperature is not None:
+            kwargs["temperature"] = cfg.temperature
+        if cfg.max_tokens is not None:
+            kwargs["num_predict"] = cfg.max_tokens
+        return ChatOllama(**kwargs)
+
     try:
         from langchain_openai import ChatOpenAI
     except Exception:
         return None
 
-    cfg = _normalize_llm_config(llm_config)
     kwargs = {}
     if cfg.model:
         kwargs["model"] = cfg.model

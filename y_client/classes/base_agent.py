@@ -234,6 +234,9 @@ class Agent(object):
         else:
             self.topics_sentiment = ""
             self.topics_opinions = ""
+            self.annotate_emotions = bool(
+                (config or {}).get("simulation", {}).get("emotion_annotation", False)
+            )
 
             self.probability_of_daily_follow = float(config["agents"][
                 "probability_of_daily_follow"
@@ -284,8 +287,6 @@ class Agent(object):
             self.opinions = opinions
             if self.opinions is not None:
                 self.opinions_enabled = True
-            else:
-                self.opinions_enabled = False
 
             self.archetype = archetype
 
@@ -321,8 +322,6 @@ class Agent(object):
 
                 if self.opinions is not None:
                     self.opinions_enabled = True
-                else:
-                    self.opinions_enabled = False
                 self.opinion_dynamics = config["simulation"]['opinion_dynamics']
 
                 self.archetype = archetype
@@ -448,6 +447,9 @@ class Agent(object):
     ):
         self.topics_sentiment = ""
         self.topics_opinions = ""
+        self.annotate_emotions = bool(
+            (config or {}).get("simulation", {}).get("emotion_annotation", False)
+        )
 
         self.probability_of_secondary_follow = float(config["agents"][
             "probability_of_secondary_follow"
@@ -2016,13 +2018,19 @@ class Agent(object):
         self.topics_sentiment = "Your sentiment on the discussion topics are: "
 
         if self.opinions_enabled:
-            opinions = self.__get_opinions()
+            opinions = self.__get_opinions() or {}
+            topic_opinions = {}
             for interest in interests:
-                opinions[interest] = get_opinion_group(opinions[interest], self.opinion_dynamics['opinion_groups'])
+                value = opinions.get(interest, self._cold_start_opinion_value())
+                if value is None:
+                    continue
+                topic_opinions[interest] = op_dynamics.get_opinion_group(
+                    float(value), self.opinion_dynamics["opinion_groups"]
+                )
 
-            for s in opinions:
-                self.topics_opinions += f"{s}: {opinions[s]}\n "
-            if len(opinions) == 0:
+            for s in topic_opinions:
+                self.topics_opinions += f"{s}: {topic_opinions[s]}\n "
+            if len(topic_opinions) == 0:
                 self.topics_opinions = ""
 
         # get the opinion on the topics (if present)
@@ -3188,6 +3196,15 @@ class Agent(object):
         """
 
         interests = self.__get_interests(-1)
+        opinions = getattr(self, "opinions", None)
+        if getattr(self, "opinions_enabled", False) and getattr(self, "user_id", None) is not None:
+            try:
+                fetched_opinions = self.__get_opinions()
+                if fetched_opinions:
+                    opinions = fetched_opinions
+                    self.opinions = fetched_opinions
+            except Exception:
+                pass
 
         return {
             "name": self.name,
@@ -3217,7 +3234,7 @@ class Agent(object):
             "profession": getattr(self, "profession", None),
             "activity_profile": getattr(self, "activity_profile", None),
             "archetype": getattr(self, "archetype", None),
-            "opinions": getattr(self, "opinions", None),
+            "opinions": opinions,
         }
 
     def __clean_emotion(self, text):

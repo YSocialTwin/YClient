@@ -31,6 +31,10 @@ engine = None
 base = None
 
 from y_client.content_store import initialize_content_store
+from y_client.classes.base_agent import (
+    _emotion_annotation_from_config,
+    _opinion_dynamics_from_config,
+)
 
 
 class YClientWeb(object):
@@ -116,7 +120,7 @@ class YClientWeb(object):
         self.days = int(self.config["simulation"]["days"])
         self.slots = int(self.config["simulation"]["slots"])
         self.percentage_new_agents_iteration = float(
-            self.config["simulation"]["percentage_new_agents_iteration"]
+            self.config["simulation"].get("percentage_new_agents_iteration", 0)
         )
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
         self.percentage_removed_agents_iteration = float(
@@ -134,8 +138,7 @@ class YClientWeb(object):
         self.agent_archetypes = self.config["simulation"]["agent_archetypes"]
 
         # opinions' parameters
-        self.opinion_dynamics = self.config["simulation"]["opinion_dynamics"] \
-            if "opinion_dynamics" in self.config["simulation"] else {}
+        self.opinion_dynamics = _opinion_dynamics_from_config(self.config)
 
         # users' parameters
         self.fratio = float(self.config["agents"]["reading_from_follower_ratio"])
@@ -147,7 +150,7 @@ class YClientWeb(object):
         self.visibility_rd = int(self.config["posts"]["visibility_rounds"])
 
         # emotion annotation
-        self.emotions_annotation = self.config["simulation"]["emotion_annotation"]
+        self.emotions_annotation = _emotion_annotation_from_config(self.config)
 
         global session, engine, base
         session, engine, base = initialize_content_store(

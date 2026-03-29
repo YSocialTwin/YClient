@@ -116,10 +116,14 @@ class YClientBase(object):
 
         self.days = self.config["simulation"]["days"]
         self.slots = self.config["simulation"]["slots"]
-        self.n_agents = self.config["simulation"]["starting_agents"]
-        self.percentage_new_agents_iteration = self.config["simulation"][
-            "percentage_new_agents_iteration"
-        ]
+        self.n_agents = self.config["simulation"].get(
+            "starting_agents",
+            self.config["simulation"].get("initial_agents", 0) or 0,
+        )
+        self.percentage_new_agents_iteration = self.config["simulation"].get(
+            "percentage_new_agents_iteration",
+            0,
+        )
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
         self.percentage_removed_agents_iteration = float(
             self.config["simulation"]["percentage_removed_agents_iteration"]

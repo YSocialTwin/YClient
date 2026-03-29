@@ -86,6 +86,53 @@ def _llm_agents_enabled_from_config(config):
     )
 
 
+def _opinion_dynamics_from_config(config):
+    if not isinstance(config, dict):
+        return {}
+    simulation_cfg = config.get("simulation", {})
+    if isinstance(simulation_cfg, dict):
+        opinion_cfg = simulation_cfg.get("opinion_dynamics")
+        if isinstance(opinion_cfg, dict):
+            return opinion_cfg
+    opinion_cfg = config.get("opinion_dynamics")
+    return opinion_cfg if isinstance(opinion_cfg, dict) else {}
+
+
+def _emotion_annotation_from_config(config):
+    if not isinstance(config, dict):
+        return False
+    simulation_cfg = config.get("simulation", {})
+    if isinstance(simulation_cfg, dict) and "emotion_annotation" in simulation_cfg:
+        return bool(simulation_cfg.get("emotion_annotation"))
+    return bool(config.get("emotion_annotation", False))
+
+
+def _memory_settings_from_config(config):
+    if not isinstance(config, dict):
+        return {}
+    agents_cfg = config.get("agents", {})
+    if not isinstance(agents_cfg, dict):
+        agents_cfg = {}
+    memory_cfg = config.get("memory", {})
+    if not isinstance(memory_cfg, dict):
+        memory_cfg = {}
+
+    merged = dict(memory_cfg)
+    merged.update(agents_cfg)
+
+    if "memory_enabled" not in merged:
+        if "enabled" in memory_cfg:
+            merged["memory_enabled"] = bool(memory_cfg.get("enabled"))
+        elif "memory_enabled" in config:
+            merged["memory_enabled"] = bool(config.get("memory_enabled"))
+
+    for key, value in config.items():
+        if key.startswith("memory_") and key not in merged:
+            merged[key] = value
+
+    return merged
+
+
 class Agent(object):
     """
     Represents an individual user agent in the Y social network simulation.
@@ -234,9 +281,7 @@ class Agent(object):
         else:
             self.topics_sentiment = ""
             self.topics_opinions = ""
-            self.annotate_emotions = bool(
-                (config or {}).get("simulation", {}).get("emotion_annotation", False)
-            )
+            self.annotate_emotions = _emotion_annotation_from_config(config)
 
             self.probability_of_daily_follow = float(config["agents"][
                 "probability_of_daily_follow"
@@ -264,11 +309,7 @@ class Agent(object):
             self.activity_profile = kwargs.get("activity_profile")
             self.archetype = kwargs.get("archetype")
             self.opinions = kwargs.get("opinions")
-            self.opinion_dynamics = (
-                config.get("simulation", {}).get("opinion_dynamics", {})
-                if isinstance(config, dict)
-                else {}
-            )
+            self.opinion_dynamics = _opinion_dynamics_from_config(config)
             self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
             self.llm_v_config = {
                 "url": config["servers"]["llm_v"],
@@ -290,7 +331,7 @@ class Agent(object):
 
             self.archetype = archetype
 
-            self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+            self.opinion_dynamics = _opinion_dynamics_from_config(config)
 
             print(f"Loading Preexisting simulation: {load}")
 
@@ -322,7 +363,7 @@ class Agent(object):
 
                 if self.opinions is not None:
                     self.opinions_enabled = True
-                self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+                self.opinion_dynamics = _opinion_dynamics_from_config(config)
 
                 self.archetype = archetype
 
@@ -350,7 +391,7 @@ class Agent(object):
                         self.opinions = self.__get_opinions()
                     else:
                         self.opinions = None
-                    self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+                    self.opinion_dynamics = _opinion_dynamics_from_config(config)
                     self.archetype = archetype
 
                 else:
@@ -447,9 +488,7 @@ class Agent(object):
     ):
         self.topics_sentiment = ""
         self.topics_opinions = ""
-        self.annotate_emotions = bool(
-            (config or {}).get("simulation", {}).get("emotion_annotation", False)
-        )
+        self.annotate_emotions = _emotion_annotation_from_config(config)
 
         self.probability_of_secondary_follow = float(config["agents"][
             "probability_of_secondary_follow"
@@ -482,11 +521,7 @@ class Agent(object):
         self.activity_profile = kwargs.get("activity_profile")
         self.archetype = kwargs.get("archetype")
         self.opinions = kwargs.get("opinions")
-        self.opinion_dynamics = (
-            config.get("simulation", {}).get("opinion_dynamics", {})
-            if isinstance(config, dict)
-            else {}
-        )
+        self.opinion_dynamics = _opinion_dynamics_from_config(config)
         self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
 
         if "prompts" in kwargs:
@@ -876,7 +911,7 @@ class Agent(object):
             pass
 
     def _init_memory_config(self, config):
-        agents_cfg = (config or {}).get("agents", {}) if isinstance(config, dict) else {}
+        agents_cfg = _memory_settings_from_config(config)
         simulation_cfg = (config or {}).get("simulation", {}) if isinstance(config, dict) else {}
         self.memory_enabled = bool(agents_cfg.get("memory_enabled", False))
         self.memory_backend = str(agents_cfg.get("memory_backend") or "hybrid_semantic").strip().lower()
@@ -908,6 +943,58 @@ class Agent(object):
         self.memory_high_affect_llm_fallback = bool(
             agents_cfg.get("memory_high_affect_llm_fallback", False)
         )
+        self.memory_pair_limit = int(agents_cfg.get("memory_pair_limit", 8))
+        self.memory_prompt_max_chars = int(agents_cfg.get("memory_prompt_max_chars", 1600))
+        self.memory_social_decay_lambda = float(agents_cfg.get("memory_social_decay_lambda", 0.05))
+        self.memory_social_corruption_rate = float(
+            agents_cfg.get("memory_social_corruption_rate", 0.02)
+        )
+        self.memory_social_resummarize_every_events = int(
+            agents_cfg.get("memory_social_resummarize_every_events", 4)
+        )
+        self.memory_thread_decay_lambda = float(agents_cfg.get("memory_thread_decay_lambda", 0.03))
+        self.memory_thread_corruption_rate = float(
+            agents_cfg.get("memory_thread_corruption_rate", 0.01)
+        )
+        self.memory_thread_resummarize_every_events = int(
+            agents_cfg.get("memory_thread_resummarize_every_events", 4)
+        )
+        self.memory_evidence_tail_max = int(agents_cfg.get("memory_evidence_tail_max", 8))
+        self.memory_digest_update_cadence_rounds = int(
+            agents_cfg.get("memory_digest_update_cadence_rounds", 3)
+        )
+        self.memory_digest_events_limit = int(agents_cfg.get("memory_digest_events_limit", 24))
+        self.memory_cold_start_window = int(agents_cfg.get("memory_cold_start_window", 5))
+        self.memory_semantic_enabled = bool(agents_cfg.get("memory_semantic_enabled", True))
+        self.memory_search_k = int(agents_cfg.get("memory_search_k", 8))
+        self.memory_search_max_chars = int(agents_cfg.get("memory_search_max_chars", 900))
+        self.memory_search_time_window_rounds = int(
+            agents_cfg.get("memory_search_time_window_rounds", 40)
+        )
+        self.memory_tier_a_max_chars = int(agents_cfg.get("memory_tier_a_max_chars", 280))
+        self.memory_tier_b_max_chars = int(agents_cfg.get("memory_tier_b_max_chars", 720))
+        self.memory_tier_c_max_chars = int(agents_cfg.get("memory_tier_c_max_chars", 520))
+        self.memory_total_max_chars = int(agents_cfg.get("memory_total_max_chars", 1400))
+        self.memory_tier_c_uncertainty_threshold = float(
+            agents_cfg.get("memory_tier_c_uncertainty_threshold", 0.45)
+        )
+        self.memory_reflection_cadence_rounds = int(
+            agents_cfg.get("memory_reflection_cadence_rounds", 3)
+        )
+        self.memory_reflection_min_events = int(
+            agents_cfg.get("memory_reflection_min_events", 12)
+        )
+        self.memory_reflection_trigger_importance_sum = float(
+            agents_cfg.get("memory_reflection_trigger_importance_sum", 3.5)
+        )
+        self.memory_reflection_max_items_per_run = int(
+            agents_cfg.get("memory_reflection_max_items_per_run", 60)
+        )
+        self.memory_embedding_model = str(agents_cfg.get("memory_embedding_model") or "").strip()
+        self.memory_embedding_async = bool(agents_cfg.get("memory_embedding_async", False))
+        self.memory_importance_mode = str(
+            agents_cfg.get("memory_importance_mode") or "heuristic_then_batch_llm"
+        ).strip()
         self.memory_run_id = str(
             agents_cfg.get("memory_run_id")
             or simulation_cfg.get("name")

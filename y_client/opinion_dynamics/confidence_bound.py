@@ -1,38 +1,40 @@
-def bounded_confidence(
-    x,
-    y,
-    epsilon=0.25,
-    mu=0.5,
-    theta=0.0,
-    cold_start="neutral",
-    text=None,
-    group_classes=None,
-    topic=None,
-    base_url=None,
-    llm_config=None,
-    **kwargs,
-):
+
+def bounded_confidence(x: float, y: float, epsilon: float = 0.25,
+                       mu: float = 0.5, theta: float = 0.0,
+                       cold_start: str = "neutral", text: str = None, group_classes: dict = None,topic: str = None,
+                       base_url: str = None, llm_config: dict = None, **kwargs) -> float | str:
+    """
+    Calculate the confidence bound for a given score x and total count y.
+
+    Parameters:
+    - x (float): opinion score of the user
+    - y (float): opinion score of the second user
+    - epsilon (float): The confidence level parameter.
+    - mu (float): The prior mean for Bayesian adjustment.
+    - theta (float): The prior strength for Bayesian adjustment.
+    - cold_start (str): The label to return when y is 0.
+    - discrete (bool): Whether to return discrete class labels.
+
+    Returns:
+    - float | str: The confidence bound score or class label.
+    """
+
     if x is None:
         if cold_start == "neutral":
             x = 0.5
-        elif cold_start in ("author", "inherited"):
+        if cold_start == "inherited":
             x = y
 
-    if x is None:
-        return y
+    else:
+        if abs(y-x) > epsilon:
+            if theta != 0:
+                if x > y:
+                    x = min(x+theta, 1)
+                else:
+                    x = max(x-theta, 0)
 
-    x = float(x)
-    y = float(y)
-    epsilon = float(epsilon)
-    mu = float(mu)
-    theta = float(theta)
+        else:
+            x += mu * (y - x)
 
-    if abs(y - x) > epsilon:
-        if theta != 0.0:
-            if x > y:
-                x = min(x + theta, 1.0)
-            else:
-                x = max(x - theta, 0.0)
-        return x
+    return x
 
-    return x + mu * (y - x)

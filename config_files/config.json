@@ -8,7 +8,7 @@
     "llm_v_api_key": "NULL",
     "llm_v_max_tokens": 300,
     "llm_v_temperature": 0.5,
-    "api": "http://127.0.0.1:5040/"
+    "api": "http://127.0.0.1:5010/"
   },
   "simulation": {
     "name": "simulation",
@@ -71,7 +71,7 @@
       "min": 1,
       "max": 3
     },
-    "llm_agents": ["llama3"],
+    "llm_agents": ["llama3.2"],
     "llm_v_agent": ["minicpm-v"],
     "n_interests": {
         "min": 4,

@@ -1,14 +1,29 @@
-import random
-import tqdm
-import sys
-import os
+"""
+Client Base Module
+
+This module provides the base client class for running Y social network simulations.
+YClientBase handles the core simulation logic including agent management, time progression,
+action scheduling, and configuration management.
+
+Classes:
+    - YClientBase: Base client for managing and running social network simulations
+"""
+
 import json
+import os
+import random
+import sys
+
 import networkx as nx
+import tqdm
+from requests import post
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 
 from y_client import Agent, Agents, SimulationSlot
+from y_client.logger import set_logger
+from y_client.news_feeds import Articles, Feeds, Images, Websites, session
 from y_client.recsys import *
 from y_client.utils import generate_user
 from y_client.news_feeds import Feeds
@@ -16,6 +31,31 @@ from y_client.content_store import initialize_content_store, reset_content_db
 
 
 class YClientBase(object):
+    """
+    Base client class for managing and running Y social network simulations.
+    
+    This class orchestrates the simulation by managing:
+    - Agent creation, loading, and lifecycle
+    - Time progression through days and hourly slots
+    - Action scheduling and execution
+    - Recommendation systems for content and follows
+    - News feed management
+    - Social network graph structure
+    
+    Attributes:
+        prompts (dict): LLM prompts for agent behaviors
+        config (dict): Simulation configuration parameters
+        agents (Agents): Collection of all active agents
+        feed (Feeds): News feed manager
+        sim_clock (SimulationSlot): Simulation time tracker
+        content_recsys (ContentRecSys): Content recommendation system
+        follow_recsys (FollowRecSys): Follow recommendation system
+        days (int): Total days to simulate
+        slots (int): Time slots (hours) per day
+        n_agents (int): Initial number of agents
+        g (nx.Graph): Social network graph structure
+    """
+    
     def __init__(
         self,
         config_filename,
@@ -24,19 +64,48 @@ class YClientBase(object):
         graph_file=None,
         agents_output="agents.json",
         owner="admin",
+        log_file="agent_execution.log",
     ):
         """
-        Initialize the YClient object
-
-        :param config_filename: the configuration file for the simulation in JSON format
-        :param prompts_filename: the LLM prompts file for the simulation in JSON format
-        :param agents_filename: the file containing the agents in JSON format
-        :param graph_file: the file containing the graph of the agents in CSV format, where the number of nodes is equal to the number of agents
-        :param agents_output: the file to save the generated agents in JSON format
-        :param owner: the owner of the simulation
+        Initialize the YClient simulation environment.
+        
+        This constructor sets up the simulation by loading configuration files,
+        initializing the simulation clock, preparing agent management structures,
+        and optionally loading a social network graph.
+        
+        Args:
+            config_filename (str): Path to JSON configuration file containing simulation
+                                  parameters (days, slots, agents, actions, etc.)
+            prompts_filename (str, optional): Path to JSON file with LLM prompts for agent
+                                             behaviors. Required for agent creation. Defaults to None.
+            agents_filename (str, optional): Path to JSON file with pre-existing agents to load.
+                                            If None, agents will be generated. Defaults to None.
+            graph_file (str, optional): Path to CSV edge list file defining the social network
+                                       structure. If None, no initial network is created.
+                                       Defaults to None.
+            agents_output (str, optional): Path to save generated agents to JSON file.
+                                          Defaults to "agents.json".
+            owner (str, optional): Username of the simulation owner/administrator.
+                                  Defaults to "admin".
+            log_file (str, optional): Path to the log file for agent execution time tracking.
+                                     Defaults to "agent_execution.log" in the current directory.
+        
+        Raises:
+            Exception: If prompts_filename is None (prompts are required)
+        
+        Side effects:
+            - Loads configuration and prompts from files
+            - Initializes simulation clock and syncs with server
+            - Creates agent and feed management structures
+            - Loads social network graph if provided
+            - Normalizes action likelihood probabilities to sum to 1.0
+            - Configures the global logger for agent execution time tracking
         """
         if prompts_filename is None:
             raise Exception("Prompts file not found")
+
+        # Configure the logger with the specified log file
+        set_logger(log_file)
 
         self.prompts = json.load(open(prompts_filename, "r"))
         self.config = json.load(open(config_filename, "r"))
@@ -93,14 +162,29 @@ class YClientBase(object):
     @staticmethod
     def reset_news_db():
         """
-        Reset the news database
+        Clear all entries from the news database.
+        
+        This static method deletes all articles, websites, and images from
+        the local news database. Useful for starting fresh or cleaning up
+        between simulation runs.
+        
+        Side effects:
+            Deletes all records from Articles, Websites, and Images tables
+            and commits the transaction.
         """
         reset_content_db()
 
     def reset_experiment(self):
         """
-        Reset the experiment
-        Delete all agents and reset the server database
+        Reset the simulation experiment on the server.
+        
+        This method calls the server's reset endpoint to clear all simulation
+        data including posts, comments, likes, follows, and agent state.
+        Use this to start a new simulation run with a clean slate.
+        
+        Side effects:
+            Sends POST request to server's /reset endpoint which deletes
+            all simulation data on the server side.
         """
         api_url = f"{self.config['servers']['api']}reset"
 
@@ -110,9 +194,18 @@ class YClientBase(object):
 
     def load_rrs_endpoints(self, filename):
         """
-        Load rss feeds from a file
-
-        :param filename: the file containing the rss feeds
+        Load RSS feed endpoints from a JSON configuration file.
+        
+        This method reads a JSON file containing RSS feed information and
+        registers each feed in the system. Feeds are used to populate news
+        content for page agents to share.
+        
+        Args:
+            filename (str): Path to JSON file with feed configurations.
+                           Each entry should contain: name, feed_url, category, leaning
+        
+        Side effects:
+            Adds feeds to the feed manager using self.feed.add_feed()
         """
 
         data = json.load(open(filename))
@@ -126,7 +219,15 @@ class YClientBase(object):
 
     def set_interests(self):
         """
-        Set the interests of the agents
+        Configure available interests on the server.
+        
+        This method sends the list of possible interests from the configuration
+        to the server. These interests are used by agents for content filtering
+        and personalization.
+        
+        Side effects:
+            Sends POST request to server's /set_interests endpoint with the
+            interests list from config["agents"]["interests"]
         """
         api_url = f"{self.config['servers']['api']}set_interests"
 
@@ -138,19 +239,35 @@ class YClientBase(object):
 
     def set_recsys(self, c_recsys, f_recsys):
         """
-        Set the recommendation systems
-
-        :param c_recsys: the content recommendation system
-        :param f_recsys: the follower recommendation system
+        Configure recommendation systems for agents.
+        
+        This method assigns content and follow recommendation system instances
+        to the client. These systems are used by agents to discover relevant
+        content and suggest users to follow.
+        
+        Args:
+            c_recsys (ContentRecSys): Content recommendation system instance
+            f_recsys (FollowRecSys): Follow recommendation system instance
         """
         self.content_recsys = c_recsys
         self.follow_recsys = f_recsys
 
     def add_agent(self, agent=None):
         """
-        Add an agent to the simulation
-
-        :param agent: the agent to add
+        Add an agent to the simulation.
+        
+        This method either adds a provided agent or generates a new random agent
+        using the configured parameters. The agent is assigned recommendation
+        systems and added to the agents collection.
+        
+        Args:
+            agent (Agent, optional): Pre-configured agent to add. If None, generates
+                                    a new random agent. Defaults to None.
+        
+        Side effects:
+            - Generates agent if None provided
+            - Assigns recommendation systems to the agent
+            - Adds agent to self.agents collection
         """
         if agent is None:
             try:
@@ -327,10 +444,7 @@ class YClientBase(object):
                 for _ in range(
                     max(
                         1,
-                        int(
-                            len(daily_active)
-                            * self.percentage_new_agents_iteration
-                        ),
+                        int(len(daily_active) * self.percentage_new_agents_iteration),
                     )
                 ):
                     self.add_agent()

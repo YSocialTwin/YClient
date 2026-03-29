@@ -1,3 +1,19 @@
+"""
+Base Agent Module
+
+This module provides the core Agent class for the Y social network simulation.
+Agents represent individual users who can perform various social actions like
+posting, commenting, replying, liking, following, and consuming news content.
+
+The Agent class integrates with LLM backends to generate realistic human-like
+behavior, uses recommendation systems for content and follow suggestions,
+and maintains personality traits based on the Big Five model.
+
+Classes:
+    - Agent: Individual user agent with social network capabilities
+    - Agents: Collection/manager for multiple Agent instances
+"""
+
 from __future__ import annotations
 
 from y_client.recsys.ContentRecSys import ContentRecSys
@@ -71,6 +87,42 @@ def _llm_agents_enabled_from_config(config):
 
 
 class Agent(object):
+    """
+    Represents an individual user agent in the Y social network simulation.
+    
+    The Agent class models a social network user with demographic attributes,
+    personality traits, interests, and the ability to perform various social
+    actions. Agents use LLM backends to generate realistic content and make
+    decisions based on their personality, interests, and political leanings.
+    
+    Key Features:
+        - Posts original content and news articles
+        - Comments on and replies to posts
+        - Likes and reshares content
+        - Follows and unfollows other users
+        - Uses content and follow recommendation systems
+        - Maintains Big Five personality traits
+        - Supports multiple LLM backends for content generation
+        - Can process and describe images
+    
+    Attributes:
+        name (str): Username of the agent
+        email (str): Email address
+        age (int): Age of the user
+        gender (str): Gender
+        nationality (str): Nationality
+        language (str): Primary language
+        interests (list): List of topics/interests
+        leaning (str): Political leaning
+        education_level (str): Education level
+        toxicity (str): Toxicity level ("no", "low", "medium", "high")
+        Big Five personality traits: oe, co, ex, ag, ne (openness, conscientiousness, 
+                                    extraversion, agreeableness, neuroticism)
+        type (str): LLM model type to use (e.g., "llama3", "gpt-4")
+        round_actions (int): Number of actions per time slot
+        user_id (int): Unique identifier assigned by the server
+    """
+    
     def __init__(
         self,
         name: str,
@@ -95,46 +147,103 @@ class Agent(object):
         toxicity: str = "no",
         api_key: str = "NULL",
         is_page: int = 0,
+        daily_activity_level: int = 1,
+        profession: str = None,
+        opinions: dict = None,
+        archetype: str = None,
         *args,
         **kwargs,
     ):
         """
-        Initialize the Agent object.
-
-        :param name: the name of the agent
-        :param email: the email of the agent
-        :param pwd: the password of the agent
-        :param age: the age of the agent
-        :param interests: the interests of the agent
-        :param leaning: the leaning of the agent
-        :param ag_type: the type of the agent
-        :param load: whether to load the agent from file or not
-        :param recsys: the content recommendation system
-        :param frecsys: the follow recommendation system
-        :param config: the configuration dictionary
-        :param big_five: the big five personality traits
-        :param language: the language of the agent
-        :param owner: the owner of the agent
-        :param education_level: the education level of the agent
-        :param joined_on: the joined on date of the agent
-        :param round_actions: the number of daily actions
-        :param gender: the agent gender
-        :param nationality: the agent nationality
-        :param toxicity: the toxicity level of the agent, default is "no"
-        :param api_key: the LLM server api key, default is NULL (self-hosted)
+        Initialize an Agent with demographic, personality, and configuration attributes.
+        
+        This constructor can operate in two modes:
+        1. Web mode (if 'web' in kwargs): Delegates to __web_init for server-based setup
+        2. Standard mode: Initializes agent locally or loads from existing state
+        
+        Args:
+            name (str): Username for the agent (no spaces)
+            email (str): Email address for the agent
+            pwd (str, optional): Password for authentication. Defaults to None.
+            age (int, optional): Age of the user. Defaults to None.
+            interests (list, optional): List of topics/interests. Defaults to None.
+            leaning (str, optional): Political leaning. Defaults to None.
+            ag_type (str, optional): LLM model type (e.g., "llama3", "gpt-4"). Defaults to "llama3".
+            load (bool, optional): Whether to load agent from existing state. Defaults to False.
+            recsys (ContentRecSys, optional): Content recommendation system instance. Defaults to None.
+            frecsys (FollowRecSys, optional): Follow recommendation system instance. Defaults to None.
+            config (dict, optional): Configuration dictionary with server URLs, agent parameters,
+                                    and simulation settings. Defaults to None.
+            big_five (dict, optional): Big Five personality traits with keys:
+                                      'oe' (openness), 'co' (conscientiousness),
+                                      'ex' (extraversion), 'ag' (agreeableness),
+                                      'ne' (neuroticism). Defaults to None.
+            language (str, optional): Primary language for content generation. Defaults to None.
+            owner (str, optional): Username of the agent owner/creator. Defaults to None.
+            education_level (str, optional): Education level. Defaults to None.
+            joined_on (int, optional): Timestamp when agent joined the network. Defaults to None.
+            round_actions (int, optional): Number of actions per time slot. Defaults to 3.
+            gender (str, optional): Gender. Defaults to None.
+            nationality (str, optional): Nationality. Defaults to None.
+            toxicity (str, optional): Toxicity level ("no", "low", "medium", "high").
+                                     Defaults to "no".
+            api_key (str, optional): API key for LLM services. Defaults to "NULL" (self-hosted).
+            is_page (int, optional): Flag indicating if this is a page agent (1) or user (0).
+                                    Defaults to 0.
+            daily_activity_level (int, optional): Activity level multiplier. Defaults to 1.
+            profession (str, optional): Professional occupation. Defaults to None.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments. 'web' key triggers web initialization mode.
+        
+        Raises:
+            Various exceptions may be raised during server communication or if required
+            configuration parameters are missing.
         """
 
         if "web" in kwargs:
-
-            self.__web_init(name=name, email=email,pwd=pwd, interests=interests, leaning=leaning,
-                            ag_type=ag_type, load=load, recsys=recsys, age=age,
-                            frecsys=frecsys, config=config, big_five=big_five, language=language, owner=owner, education_level=education_level,
-                            joined_on=joined_on, round_actions=round_actions, gender=gender, nationality=nationality, toxicity=toxicity,
-                            api_key=api_key, is_page=is_page, *args, **kwargs)
+            self.__web_init(
+                name=name,
+                email=email,
+                pwd=pwd,
+                interests=interests,
+                leaning=leaning,
+                ag_type=ag_type,
+                load=load,
+                recsys=recsys,
+                age=age,
+                frecsys=frecsys,
+                config=config,
+                big_five=big_five,
+                language=language,
+                owner=owner,
+                education_level=education_level,
+                joined_on=joined_on,
+                round_actions=round_actions,
+                gender=gender,
+                nationality=nationality,
+                toxicity=toxicity,
+                api_key=api_key,
+                is_page=is_page,
+                daily_activity_level=daily_activity_level,
+                profession=profession,
+                opinions=opinions,
+                archetype=archetype,
+                *args,
+                **kwargs,
+            )
         else:
+            self.topics_sentiment = ""
+            self.topics_opinions = ""
+
+            self.probability_of_daily_follow = float(config["agents"][
+                "probability_of_daily_follow"
+            ])
+            self.probability_of_secondary_follow = float(config["agents"][
+                "probability_of_secondary_follow"
+            ])
             self.emotions = config["posts"]["emotions"]
             self.actions_likelihood = config["simulation"]["actions_likelihood"]
-            self.base_url = config["servers"]["api"]
+            self.base_url = config["servers"]["api"].rstrip("/")
             self.llm_base = config["servers"]["llm"]
             self.content_rec_sys_name = None
             self.follow_rec_sys_name = None
@@ -160,13 +269,29 @@ class Agent(object):
             self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
             self.llm_v_config = {
                 "url": config["servers"]["llm_v"],
-                "api_key": config["servers"]["llm_v_api_key"],
+                "api_key": config["servers"]["llm_v_api_key"]
+                if (
+                    config["servers"]["llm_v_api_key"] is not None
+                    and config["servers"]["llm_v_api_key"] != ""
+                )
+                else "NULL",
                 "model": config["agents"]["llm_v_agent"],
                 "temperature": config["servers"]["llm_v_temperature"],
-                "max_tokens": config["servers"]["llm_v_max_tokens"]
+                "max_tokens": config["servers"]["llm_v_max_tokens"],
             }
             self.llm_agents_enabled = _llm_agents_enabled_from_config(config)
             self.is_page = is_page
+            self.opinions = opinions
+            if self.opinions is not None:
+                self.opinions_enabled = True
+            else:
+                self.opinions_enabled = False
+
+            self.archetype = archetype
+
+            self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+
+            print(f"Loading Preexisting simulation: {load}")
 
             if not load:
                 self.language = language
@@ -190,8 +315,20 @@ class Agent(object):
                 self.gender = gender
                 self.nationality = nationality
                 self.toxicity = toxicity
+                self.daily_activity_level = daily_activity_level
+                self.profession = profession
+                self.opinions = opinions
+
+                if self.opinions is not None:
+                    self.opinions_enabled = True
+                else:
+                    self.opinions_enabled = False
+                self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+
+                self.archetype = archetype
 
                 uid = self.__register()
+
                 if uid is None:
                     pass
                 else:
@@ -204,9 +341,19 @@ class Agent(object):
                 self.age = us["age"]
 
                 if us["is_page"] == 0:
-                    self.interests = random.randint(config["agents"]["n_interests"]["min"],
-                                                    config["agents"]["n_interests"]["max"])
+                    self.interests = random.randint(
+                        config["agents"]["n_interests"]["min"],
+                        config["agents"]["n_interests"]["max"],
+                    )
                     self.interests = self.__get_interests(-1)[0]
+
+                    if self.opinions_enabled:
+                        self.opinions = self.__get_opinions()
+                    else:
+                        self.opinions = None
+                    self.opinion_dynamics = config["simulation"]['opinion_dynamics']
+                    self.archetype = archetype
+
                 else:
                     self.interests = []
 
@@ -228,22 +375,25 @@ class Agent(object):
                 self.toxicity = us["toxicity"]
                 self.nationality = us["nationality"]
                 self.is_page = us["is_page"]
+                self.archetype = us['archetype'] if "archetype" in us else None
 
             config_list = {
                 "model": f"{self.type}",
                 "base_url": self.llm_base,
                 "timeout": 10000,
                 "api_type": "open_ai",
-                "api_key": api_key if (api_key is not None and api_key != "") else "NULL",
+                "api_key": api_key
+                if (api_key is not None and api_key != "")
+                else "NULL",
                 "price": [0, 0],
             }
 
             self.llm_config = {
                 "config_list": [config_list],
                 "seed": np.random.randint(0, 100000),
-                "max_tokens": config['servers']['llm_max_tokens'],
+                "max_tokens": config["servers"]["llm_max_tokens"],
                 # max response length, -1 no limits. Imposing limits may lead to truncated responses
-                "temperature": config['servers']['llm_temperature'],
+                "temperature": config["servers"]["llm_temperature"],
             }
             self._init_memory_config(config)
             # Prompt templates still interpolate this field on the Standard branch.
@@ -264,7 +414,9 @@ class Agent(object):
 
             self.prompts = None
 
-    def __web_init(self, name: str,
+    def __web_init(
+        self,
+        name: str,
         email: str,
         pwd: str = None,
         age: int = None,
@@ -286,12 +438,26 @@ class Agent(object):
         toxicity: str = "no",
         api_key: str = "NULL",
         is_page: int = 0,
+        daily_activity_level: int = 1,
+        profession: str = None,
+        activity_profile: str = None,
+        opinions: dict = None,
+        archetype: str = None,
         *args,
-        **kwargs,):
+        **kwargs,
+    ):
+        self.topics_sentiment = ""
+        self.topics_opinions = ""
 
+        self.probability_of_secondary_follow = float(config["agents"][
+            "probability_of_secondary_follow"
+        ])
+        self.probability_of_daily_follow = float(config["agents"][
+                                                     "probability_of_daily_follow"
+                                                 ])
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
-        self.base_url = config["servers"]["api"]
+        self.base_url = config["servers"]["api"].rstrip("/")
         self.llm_base = config["servers"]["llm"]
         self.content_rec_sys_name = None
         self.follow_rec_sys_name = None
@@ -329,15 +495,20 @@ class Agent(object):
 
         self.llm_v_config = {
             "url": config["servers"]["llm_v"],
-            "api_key": config["servers"]["llm_v_api_key"],
+            "api_key": config["servers"]["llm_v_api_key"]
+            if (
+                config["servers"]["llm_v_api_key"] is not None
+                and config["servers"]["llm_v_api_key"] != ""
+            )
+            else "NULL",
             "temperature": config["servers"]["llm_v_temperature"],
-            "max_tokens": int(config["servers"]["llm_v_max_tokens"])
+            "max_tokens": int(config["servers"]["llm_v_max_tokens"]),
         }
         self.llm_agents_enabled = _llm_agents_enabled_from_config(config)
         try:
             self.llm_v_config["model"] = config["servers"]["llm_v_agent"]
         except:
-            self.llm_v_config["model"] = 'minicpm-v'
+            self.llm_v_config["model"] = "minicpm-v"
 
         self.is_page = is_page
 
@@ -372,6 +543,8 @@ class Agent(object):
             self.round_actions = round_actions
             self.gender = gender
             self.nationality = nationality
+            self.opinions = opinions
+            self.archetype = archetype
 
             uid = self.__register()
             if uid is None:
@@ -380,15 +553,22 @@ class Agent(object):
                 self.user_id = uid
 
         else:
-            us = json.loads(self.__get_user())
+            u = self.__get_user()
+            us = json.loads(u)
+
+            if "status" in us and us["status"] == 404:
+                return
+
             self.user_id = us["id"]
             self.type = us["user_type"]
             self.age = us["age"]
 
             if us["is_page"] == 0:
                 try:
-                    self.interests = random.randint(config["agents"]["n_interests"]["min"],
-                                                    config["agents"]["n_interests"]["max"])
+                    self.interests = random.randint(
+                        config["agents"]["n_interests"]["min"],
+                        config["agents"]["n_interests"]["max"],
+                    )
                     self.interests = self.__get_interests(-1)[0]
                 except:
                     self.interests = interests
@@ -413,7 +593,14 @@ class Agent(object):
             self.gender = us["gender"]
             self.toxicity = us["toxicity"]
             self.nationality = us["nationality"]
-            self.is_page = us["is_page"]
+            self.is_page = int(us["is_page"])
+            if self.is_page == 0:
+                self.archetype = us['archetype']
+
+            if self.opinions_enabled:
+                self.opinions = self.__get_opinions()
+            else:
+                self.opinions = None
 
         config_list = {
             "model": f"{self.type}",
@@ -427,9 +614,9 @@ class Agent(object):
         self.llm_config = {
             "config_list": [config_list],
             "seed": np.random.randint(0, 100000),
-            "max_tokens": int(config['servers']['llm_max_tokens']),
+            "max_tokens": int(config["servers"]["llm_max_tokens"]),
             # max response length, -1 no limits. Imposing limits may lead to truncated responses
-            "temperature": float(config['servers']['llm_temperature']),
+            "temperature": float(config["servers"]["llm_temperature"]),
         }
         self._init_memory_config(config)
 
@@ -671,10 +858,18 @@ class Agent(object):
             # if the agent has custom prompts substitute the default ones
             aprompt = content_store.get_agent_custom_prompt(self.name)
             if aprompt:
-                self.prompts["agent_roleplay"] = f"{aprompt.prompt} - Act as requested by the Handler."
-                self.prompts["agent_roleplay_simple"] = f"{aprompt.prompt} - Act as requested by the Handler."
-                self.prompts["agent_roleplay_base"] = f"{aprompt.prompt} - Act as requested by the Handler."
-                self.prompts["agent_roleplay_comments_share"] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay_simple"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay_base"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
+                self.prompts[
+                    "agent_roleplay_comments_share"
+                ] = f"{aprompt.prompt} - Act as requested by the Handler."
         except:
             pass
 
@@ -1212,7 +1407,7 @@ class Agent(object):
             self.content_rec_sys.add_user_id(self.user_id)
             self.content_rec_sys_name = content_recsys.name
 
-            api_url = f"{self.base_url}update_user"
+            api_url = f"{self.base_url}/update_user"
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             params = {
@@ -1228,7 +1423,7 @@ class Agent(object):
             self.follow_rec_sys.add_user_id(self.user_id)
             self.follow_rec_sys_name = follow_recsys.name
 
-            api_url = f"{self.base_url}update_user"
+            api_url = f"{self.base_url}/update_user"
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             params = {
@@ -1275,10 +1470,7 @@ class Agent(object):
 
         :return: the user
         """
-        res = json.loads(self._check_credentials())
-        if res["status"] == 404:
-            raise Exception("User not found")
-        api_url = f"{self.base_url}get_user"
+        api_url = f"{self.base_url}/get_user"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         params = {"username": self.name, "email": self.email}
@@ -1294,15 +1486,19 @@ class Agent(object):
 
         :return: the response from the service
         """
-        api_url = f"{self.base_url}user_exists"
+        api_url = f"{self.base_url}/user_exists"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         params = {"name": self.name, "email": self.email}
 
         st = json.dumps(params)
         response = post(f"{api_url}", headers=headers, data=st)
+        data = response.json()
 
-        return response.__dict__["_content"].decode("utf-8")
+        if response.status_code != 200 or data.get("status") != 200:
+            return json.dumps({"status": response.status_code, "error": "User not found"})
+        else:
+            return json.dumps({"status": 200})
 
     def __register(self):
         """
@@ -1333,6 +1529,9 @@ class Agent(object):
                 "toxicity": self.toxicity,
                 "joined_on": self.joined_on,
                 "is_page": self.is_page,
+                "daily_activity_level": self.daily_activity_level,
+                "profession": self.profession,
+                "activity_profile": self.activity_profile,
             }
         )
 
@@ -1341,18 +1540,43 @@ class Agent(object):
         api_url = f"{self.base_url}/register"
         post(f"{api_url}", headers=headers, data=st)
 
-        try:
-            res = json.loads(self.__get_user())
-            uid = int(res["id"])
-        except:
-            return None
+        us = self.__get_user()
+        res = json.loads(us)
+        uid = int(res["id"])
 
         api_url = f"{self.base_url}/set_user_interests"
         data = {"user_id": uid, "interests": self.interests, "round": self.joined_on}
 
         post(f"{api_url}", headers=headers, data=json.dumps(data))
 
+        if self.opinions_enabled:
+            api_url = f"{self.base_url}/set_user_opinions"
+            data = {"user_id": uid, "opinions": self.opinions, "round": self.joined_on}
+            post(f"{api_url}", headers=headers, data=json.dumps(data))
+
         return uid
+
+    def __get_opinions(self):
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        api_url = f"{self.base_url}/get_user_opinions"
+
+        data = {
+            "user_id": self.user_id,
+        }
+        response = post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data))
+        data = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        opinions = {}
+        try:
+            for k, v in data.items():
+                opinions[k] = v[0]
+        except:
+            return {}
+
+        return opinions
 
     def __get_interests(self, tid):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -1370,13 +1594,23 @@ class Agent(object):
         data = {
             "user_id": self.user_id,
             "round_id": tid,
-            "n_interests": self.interests if isinstance(self.interests, int) else len(self.interests),
+            "n_interests": self.interests
+            if isinstance(self.interests, int)
+            else len(self.interests),
             "time_window": self.attention_window,
         }
         response = get(f"{api_url}", headers=headers, data=json.dumps(data))
+
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
         try:
-            selected = np.random.choice(range(len(data)), np.random.randint(1, 3))
+            # select a random interest without replacement
+            if len(data) >= 3:
+                selected = np.random.choice(
+                    range(len(data)), np.random.randint(1, 3), replace=False
+                )
+            else:
+                selected = np.random.choice(range(len(data)), len(data), replace=False)
+
             interests = [data[i]["topic"] for i in selected]
             interests_id = [data[i]["id"] for i in selected]
         except:
@@ -1498,6 +1732,10 @@ class Agent(object):
 
         post_text = self.__clean_text(post_text)
 
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
+
         # avoid posting empty messages
         if len(post_text) < 3:
             return
@@ -1516,9 +1754,6 @@ class Agent(object):
                 "topics": interests_id,
             }
         )
-
-        u1.reset()
-        u2.reset()
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -1640,6 +1875,9 @@ class Agent(object):
 
         res = json.loads(response.__dict__["_content"].decode("utf-8"))
 
+        if isinstance(res, dict) and "error" in res:
+            return res
+
         if max_tweets is not None and len(res) > max_tweets:
             return res[-max_tweets:]
 
@@ -1708,7 +1946,11 @@ class Agent(object):
         """
 
         conversation = self.__get_thread(post_id, max_tweets=max_length_threads)
-        conv = "".join(conversation)
+
+        conv = ""
+
+        if "error" not in conversation:
+            conv = "".join(conversation)
 
         if not self._has_usable_llm_config():
             post_text = self._rule_based_comment_text()
@@ -1759,10 +2001,50 @@ class Agent(object):
             return
 
         # obtain the most recent (and frequent) interests of the agent
-        interests, _ = self.__get_interests(tid)
+        # interests, _ = self.__get_interests(tid)
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
+        # get the post_id topics
+        api_url = f"{self.base_url}/get_post_topics_name"
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
+        interests = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        self.topics_opinions = "Your opinions on the discussion topics are: "
+        self.topics_sentiment = "Your sentiment on the discussion topics are: "
+
+        if self.opinions_enabled:
+            opinions = self.__get_opinions()
+            for interest in interests:
+                opinions[interest] = get_opinion_group(opinions[interest], self.opinion_dynamics['opinion_groups'])
+
+            for s in opinions:
+                self.topics_opinions += f"{s}: {opinions[s]}\n "
+            if len(opinions) == 0:
+                self.topics_opinions = ""
+
+        # get the opinion on the topics (if present)
+
+        if len(interests) > 0:
+            # get recent sentiment on the selected interests
+            api_url = f"{self.base_url}/get_sentiment"
+            data = {"user_id": self.user_id, "interests": interests}
+            response = post(
+                f"{api_url}",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data=json.dumps(data),
+            )
+            sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+            for s in sentiment:
+                self.topics_sentiment += f"{s['topic']}: {s['sentiment']} "
+            if len(sentiment) == 0:
+                self.topics_sentiment = ""
+
+        user_agent = AssistantAgent(
+            name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
                 self.prompts["agent_roleplay_comments_share"], interest=interests
@@ -1797,6 +2079,10 @@ class Agent(object):
         # cleaning the post text of some unwanted characters
         post_text = self.__clean_text(post_text)
 
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
+
         # avoid posting empty messages
         if len(post_text) < 3:
             return
@@ -1822,7 +2108,10 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         api_url = f"{self.base_url}/comment"
         post(f"{api_url}", headers=headers, data=st)
-        res = self.__evaluate_follow(post_text, post_id, "follow", tid)
+
+        res = None
+        if self.probability_of_secondary_follow > 0:
+            res = self.__evaluate_follow(post_text, post_id, "follow", tid)
 
         # update topic of interest with the ones from the post
         # get the root post id
@@ -1853,8 +2142,12 @@ class Agent(object):
         self.__update_user_interests(data, tid)
 
         # if not followed, test unfollow
-        if res is None:
+        if self.probability_of_secondary_follow > 0 and res is None:
             self.__evaluate_follow(post_text, post_id, "unfollow", tid)
+        if self.opinions_enabled:
+            self.new_opinions(post_id, tid, post_text)
+
+        # update opinion
         if self.opinions_enabled:
             self.new_opinions(post_id, tid, post_text)
 
@@ -1914,10 +2207,42 @@ class Agent(object):
             return
 
         # obtain the most recent (and frequent) interests of the agent
-        interests, _ = self.__get_interests(tid)
+        # interests, _ = self.__get_interests(tid)
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
+        # get the post_id topics
+        api_url = f"{self.base_url}/get_post_topics_name"
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
+        interests = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # get the opinion on the topics (if present)
+        self.topics_opinions = ""
+        if len(interests) > 0:
+            # get recent sentiment on the selected interests
+            api_url = f"{self.base_url}/get_sentiment"
+            data = {"user_id": self.user_id, "interests": interests}
+            response = post(
+                f"{api_url}",
+                headers={"Content-Type": "application/x-www-form-urlencoded"},
+                data=json.dumps(data),
+            )
+            sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+            self.topics_opinions = (
+                "Your opinion topics of the post you are responding to are: "
+            )
+            for s in sentiment:
+                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+            if len(sentiment) == 0:
+                self.topics_opinions = ""
+        else:
+            interests, _ = self.__get_interests(tid)
+
+        user_agent = AssistantAgent(
+            name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
                 self.prompts["agent_roleplay_comments_share"], interest=interests
@@ -1961,6 +2286,10 @@ class Agent(object):
             .replace("@,", "")
         )
         post_text = post_text.replace(f"@{self.name}", "")
+
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -2067,7 +2396,8 @@ class Agent(object):
             )
             flag = "unfollow"
             # always evaluate unfollow in case of dislike
-            self.__evaluate_follow(post_text, post_id, flag, tid)
+            if self.probability_of_secondary_follow > 0:
+                self.__evaluate_follow(post_text, post_id, flag, tid)
         else:
             return
 
@@ -2080,22 +2410,29 @@ class Agent(object):
             self.new_opinions(post_id, tid, post_text)
 
         # evaluate follow only upon explicit request
-        if check_follow and flag == "follow":
-            self.__evaluate_follow(post_text, post_id, flag, tid)
+        if self.probability_of_secondary_follow > 0:
+            if check_follow and flag == "follow":
+                self.__evaluate_follow(post_text, post_id, flag, tid)
 
         # update user interests after reaction
         self.__update_user_interests(post_id, tid)
 
     def __evaluate_follow(self, post_text, post_id, action, tid):
         """
-        Evaluate a follow action.
+        Evaluate secondary follow action (tied to a given probability_of_secondary_follow)
 
-        :param post_text: the post text
+        :param post_text: the post_text
         :param post_id: the post id
         :param action: the action, either follow or unfollow
         :param tid: the round id
         :return: the response from the service
         """
+
+        if self.probability_of_secondary_follow > 0:
+            if np.random.rand() > self.probability_of_secondary_follow:
+                return None
+        else:
+            return None
 
         u1 = AssistantAgent(
             name=f"{self.name}",
@@ -2126,8 +2463,12 @@ class Agent(object):
         u2.reset()
 
         if "YES" in text.split():
-            self.follow(post_id=post_id, action=action, tid=tid)
-            return action
+            if action == "follow":
+                self.follow(post_id=post_id, action=action, tid=tid)
+                return action
+            else:
+                self.follow(post_id=post_id, action=action, tid=tid)
+                return action
         else:
             return None
 
@@ -2148,19 +2489,21 @@ class Agent(object):
         if post_id is not None:
             target = self.get_user_from_post(post_id)
 
-        st = json.dumps(
-            {
-                "user_id": self.user_id,
-                "target": int(target),
-                "action": action,
-                "tid": tid,
-            }
-        )
+        if isinstance(target, int):
 
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+            st = json.dumps(
+                {
+                    "user_id": self.user_id,
+                    "target": int(target),
+                    "action": action,
+                    "tid": tid,
+                }
+            )
 
-        api_url = f"{self.base_url}/follow"
-        post(f"{api_url}", headers=headers, data=st)
+            headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+            api_url = f"{self.base_url}/follow"
+            post(f"{api_url}", headers=headers, data=st)
 
     def followers(self):
         """
@@ -2194,6 +2537,7 @@ class Agent(object):
 
         return response.__dict__["_content"].decode("utf-8")
 
+    @log_execution_time
     def cast(self, post_id: int, tid: int):
         """
         Cast a voting intention (political simulation)
@@ -2339,15 +2683,6 @@ class Agent(object):
             except:
                 pass
 
-        # elif "REPLY" in text.split():
-        #    selected_post = json.loads(self.read_mentions())
-        #    if "status" not in selected_post:
-        #        self.comment(
-        #            int(selected_post[0]),
-        #            max_length_threads=max_length_thread_reading,
-        #            tid=tid,
-        #        )
-
         elif "SEARCH" in text.split():
             candidates = json.loads(self.search())
             if "status" not in candidates and len(candidates) > 0:
@@ -2360,22 +2695,17 @@ class Agent(object):
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
         elif "FOLLOW" in text.split():
-            candidates = self.search_follow()
-            if len(candidates) > 0:
-                tot = sum([float(v) for v in candidates.values()])
-                probs = [v / tot for v in candidates.values()]
-                selected = np.random.choice(
-                    [int(c) for c in candidates],
-                    p=probs,
-                    size=1,
-                )[0]
-                self.follow(tid=tid, target=selected, action="follow")
-
-        # demanded to page agents
-        # elif "NEWS" in text.split():
-        #    news, website = self.select_news()
-        #    if not isinstance(news, str):
-        #        self.news(tid=tid, article=news, website=website)
+            if self.probability_of_daily_follow > 0:
+                candidates = self.search_follow()
+                if len(candidates) > 0:
+                    tot = sum([float(v) for v in candidates.values()])
+                    probs = [v / tot for v in candidates.values()]
+                    selected = np.random.choice(
+                        [int(c) for c in candidates],
+                        p=probs,
+                        size=1,
+                    )[0]
+                    self.follow(tid=tid, target=selected, action="follow")
 
         elif "SHARE" in text.split():
             candidates = json.loads(self.read(article=True))
@@ -2444,16 +2774,17 @@ class Agent(object):
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
         elif action == "FOLLOW":
-            candidates = self.search_follow()
-            if len(candidates) > 0:
-                tot = sum([float(v) for v in candidates.values()])
-                probs = [v / tot for v in candidates.values()]
-                selected = np.random.choice(
-                    [int(c) for c in candidates],
-                    p=probs,
-                    size=1,
-                )[0]
-                self.follow(tid=tid, target=selected, action="follow")
+            if self.probability_of_daily_follow > 0:
+                candidates = self.search_follow()
+                if len(candidates) > 0:
+                    tot = sum([float(v) for v in candidates.values()])
+                    probs = [v / tot for v in candidates.values()]
+                    selected = np.random.choice(
+                        [int(c) for c in candidates],
+                        p=probs,
+                        size=1,
+                    )[0]
+                    self.follow(tid=tid, target=selected, action="follow")
 
         elif action == "SHARE":
             candidates = json.loads(self.read(article=True))
@@ -2487,11 +2818,12 @@ class Agent(object):
         """
         selected_post = json.loads(self.read_mentions())
         if "status" not in selected_post:
-            self.comment(
-                int(selected_post[0]),
-                max_length_threads=max_length_thread_reading,
-                tid=tid,
-            )
+            if len(selected_post) > 0:
+                self.comment(
+                    int(selected_post['post_id']),
+                    max_length_threads=max_length_thread_reading,
+                    tid=tid,
+                )
         return
 
     @log_execution_time
@@ -2499,7 +2831,7 @@ class Agent(object):
         """
         Read n_posts from the service.
 
-        :param article: whether to read an article or not
+        :param article: Whether to read an article or not
         :return: the response from the service
         """
         return self.content_rec_sys.read(self.base_url, self.user_id, article)
@@ -2508,7 +2840,7 @@ class Agent(object):
         """
         Read n_posts from the service.
 
-        :return: the response from the service
+        :return: The response from the service
         """
         return self.content_rec_sys.read_mentions(self.base_url)
 
@@ -2521,6 +2853,7 @@ class Agent(object):
         """
         return self.content_rec_sys.search(self.base_url)
 
+    @log_execution_time
     def search_follow(self):
         """
         Read n_posts from the service.
@@ -2571,7 +2904,6 @@ class Agent(object):
                 else:
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
-                    print("IMAGE", self.llm_v_config)
                     description = an.annotate(image.url)
                     content_store.save_image_description(image.id, description)
 
@@ -2586,11 +2918,6 @@ class Agent(object):
                 if news == "":
                     return None, None
 
-                res = self.news(tid=tid, article=news, website=website)
-                article_id = int(
-                    json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
-                )
-
                 # get image given article id and set the remote id
                 image = content_store.get_image_by_article_id(article_id)
 
@@ -2604,7 +2931,16 @@ class Agent(object):
                     description = an.annotate(image.url)
                     content_store.save_image_description(image.id, description)
 
-                    return image, article_id
+                    if description is not None:
+                        image.description = description
+                        session.commit()
+                    else:
+                        # delete image
+                        session.delete(image)
+                        session.commit()
+                        return None, None
+
+                    return image, None
 
             # images available, check if they have a description
             else:
@@ -2651,7 +2987,7 @@ class Agent(object):
                     image.remote_article_id = remote_article_id
 
                 if image.description is not None:
-                    return image, image.remote_article_id
+                    return image, None
 
                 else:
                     # annotate the image with a description
@@ -2659,8 +2995,9 @@ class Agent(object):
                     description = an.annotate(image.url)
                     content_store.save_image_description(image.id, description)
 
-                    return image, image.remote_article_id
+                    return image, None
 
+    @log_execution_time
     def comment_image(self, image: object, tid: int, article_id: int = None):
         """
         Comment on an image
@@ -2673,8 +3010,10 @@ class Agent(object):
         # obtain the most recent (and frequent) interests of the agent
         interests, _ = self.__get_interests(tid)
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
+        self.topics_opinions = ""
+
+        user_agent = AssistantAgent(
+            name=self.name,
             llm_config=self.llm_config,
             system_message=self.__effify(
                 self.prompts["agent_roleplay_comments_share"], interest=interests
@@ -2682,12 +3021,7 @@ class Agent(object):
             max_consecutive_auto_reply=1,
         )
 
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
-            max_consecutive_auto_reply=1,
-        )
+        self.topics_sentiment = ""
 
         u2.initiate_chat(
             u1,
@@ -2701,14 +3035,9 @@ class Agent(object):
             max_round=1,
         )
 
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-
-        emotion_eval = self.__clean_emotion(emotion_eval)
-
-        post_text = u2.chat_messages[u1][-2]["content"]
-
-        # cleaning the post text of some unwanted characters
-        # post_text = self.__clean_text(post_text)
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
 
         # avoid posting empty messages
         if len(post_text) < 3:
@@ -2736,6 +3065,107 @@ class Agent(object):
         api_url = f"{self.base_url}/comment_image"
         post(f"{api_url}", headers=headers, data=st)
         self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="share_image")
+
+    def new_opinions(self, post_id: int, tid: int, text: str):
+        """
+        Get new opinions for a given post.
+
+        :param post_id: The post id.
+        :param tid: The round id.
+        :param text: The text of the post.
+        :return: The new opinions.
+        """
+        # get post topics
+        api_url = f"{self.base_url}/get_post_topics"
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
+        interests = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # get author of the post
+        api_url = f"{self.base_url}/get_post_author"
+        response = get(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps({"post_id": post_id}),
+        )
+        author_data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        author_id = author_data.get("user_id", None)
+
+        # get opinions of the author on the topics
+        api_url = f"{self.base_url}/get_user_opinions"
+        data = {"user_id": author_id}
+        response = post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data),
+        )
+        opinions = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # filter opinions to keep only those related to the post topics
+        filtered_opinions = {
+            v[1]: v[0]
+            for t, v in opinions.items()
+            if int(v[1]) in interests
+        }
+
+        # get recent opinions of the agents on the topics
+        api_url = f"{self.base_url}/get_user_opinions"
+        data = {"user_id": self.user_id}
+        response = post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data),
+        )
+        agent_opinions = json.loads(response.__dict__["_content"].decode("utf-8"))
+
+        # filter agent opinions to keep only those related to the post topics
+        agent_filtered_opinions = {
+            v[1]: v[0]
+            for t, v in agent_opinions.items()
+            if int(v[1]) in interests
+        }
+
+        filtered_topics = {
+            v[1]: t
+            for t, v in agent_opinions.items()
+            if int(v[1]) in interests
+        }
+
+        method_name = self.opinion_dynamics['model_name']
+        update = getattr(op_dynamics, method_name)
+
+        for topic, opinion in filtered_opinions.items():
+            if topic in agent_filtered_opinions:
+                # update the opinion as the average of the two
+                tp_name = filtered_topics[topic]
+
+                agent_filtered_opinions[topic] = update(uid=self.user_id, x=agent_filtered_opinions[topic], y=opinion,
+                                                        text=text, topic=tp_name,
+                                                        **self.opinion_dynamics['parameters'],
+                                                        group_classes=self.opinion_dynamics['opinion_groups'],
+                                                        base_url=self.base_url, llm_config=self.llm_config)
+
+        # set the new opinions
+        api_url = f"{self.base_url}/set_user_opinions"
+
+        data = {
+                "user_id": self.user_id,
+                "opinions": agent_filtered_opinions,
+                "id_post": int(post_id),
+                "id_interacted_with": int(author_id),
+                "round": int(tid),
+            }
+
+        post(
+            f"{api_url}",
+            headers={"Content-Type": "application/x-www-form-urlencoded"},
+            data=json.dumps(data),
+        )
+
+        return True
 
     def __str__(self):
         """
@@ -2850,6 +3280,7 @@ class Agents(object):
 
         :param agent: The Profile object to remove.
         """
+        agent_ids = {int(aid): None for aid in agent_ids}
         for agent in self.agents:
             if agent.user_id in agent_ids:
                 self.agents.remove(agent)

@@ -1,7 +1,26 @@
+"""
+Web Client Module
+
+This module provides YClientWeb, a web-based client implementation for running
+Y social network simulations. Unlike the base client, this version manages
+its own database connection and is designed for web application deployment.
+
+The client handles database initialization, agent management, and simulation
+execution through a web interface.
+
+Global Variables:
+    - session: SQLAlchemy database session (initialized on client creation)
+    - engine: Database engine connection
+    - base: SQLAlchemy declarative base
+"""
+
 import json
-import sys
 import os
 import csv
+import shutil
+import sys
+from pathlib import Path
+
 from requests import get, post
 
 
@@ -15,6 +34,24 @@ from y_client.content_store import initialize_content_store
 
 
 class YClientWeb(object):
+    """
+    Web-based client for Y social network simulations.
+    
+    This client is designed for web application deployments and manages
+    its own database connections. It provides a simpler interface compared
+    to YClientBase, focusing on essential simulation features.
+    
+    Attributes:
+        config (dict): Simulation configuration
+        prompts (dict): LLM prompts for agent behaviors
+        base_path (str): Base path for data files
+        agents_owner (str): Owner of the simulation
+        days (int): Total simulation days
+        slots (int): Time slots per day
+        first_run (bool): Whether this is the first simulation run
+        (plus various simulation parameters from config)
+    """
+    
     def __init__(
         self,
         config_file,
@@ -24,24 +61,53 @@ class YClientWeb(object):
         owner="admin",
         first_run=False,
         network=None,
+        log_file="agent_execution.log",
+        llm=True
     ):
         """
-        Initialize the YClient object
+        Initialize the web-based YClient simulation environment.
+        
+        This constructor sets up the simulation with database connections,
+        loads configuration and prompts, and prepares for agent creation
+        and simulation execution.
+        
+        Args:
+            config_file (dict): Configuration dictionary (not filename) containing
+                               simulation parameters
+            data_base_path (str): Path to directory containing prompts.json and other
+                                 data files
+            agents_filename (str, optional): Path to JSON file with pre-existing agents.
+                                            Defaults to None.
+            agents_output (str, optional): Path to save generated agents. 
+                                          Defaults to "agents.json".
+            owner (str, optional): Username of simulation owner. Defaults to "admin".
+            first_run (bool, optional): Whether this is the first run (affects setup).
+                                       Defaults to False.
+            network (optional): Network configuration (currently unused). Defaults to None.
+            log_file (str, optional): Path to the log file for agent execution time tracking.
+                                     Defaults to "agent_execution.log" in the current directory.
 
-        :param config_filename: the configuration file for the simulation in JSON format
-        :param prompts_filename: the LLM prompts file for the simulation in JSON format
-        :param agents_filename: the file containing the agents in JSON format
-        :param graph_file: the file containing the graph of the agents in CSV format, where the number of nodes is equal to the number of agents
-        :param agents_output: the file to save the generated agents in JSON format
-        :param owner: the owner of the simulation
-        :param first_run: if it is the first run of the simulation
+            llm (bool, optional): Whether or not to use LLM for agent behaviors. Defaults to True.
+        
+        Side effects:
+            - Loads prompts from data_base_path/prompts.json
+            - Creates SQLite database from clean schema if it doesn't exist
+            - Initializes global session, engine, and base variables for database access
+            - Normalizes action likelihood probabilities to sum to 1.0
+            - Configures the global logger for agent execution time tracking
         """
+        from y_client.logger import set_logger
+        
+        # Configure the logger with the specified log file
+        set_logger(log_file)
+
+        self.llm_active = llm
 
         self.first_run = first_run
         self.base_path = data_base_path
         self.config = config_file
 
-        self.prompts = json.load(open(f"{data_base_path}prompts.json", "r"))
+        self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 
         self.agents_owner = owner
         self.agents_filename = agents_filename
@@ -49,9 +115,9 @@ class YClientWeb(object):
 
         self.days = int(self.config["simulation"]["days"])
         self.slots = int(self.config["simulation"]["slots"])
-        self.percentage_new_agents_iteration = float(self.config["simulation"][
-            "percentage_new_agents_iteration"
-        ])
+        self.percentage_new_agents_iteration = float(
+            self.config["simulation"]["percentage_new_agents_iteration"]
+        )
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
         self.percentage_removed_agents_iteration = float(
             self.config["simulation"]["percentage_removed_agents_iteration"]
@@ -65,14 +131,23 @@ class YClientWeb(object):
             k: v / tot for k, v in self.actions_likelihood.items()
         }
 
+        self.agent_archetypes = self.config["simulation"]["agent_archetypes"]
+
+        # opinions' parameters
+        self.opinion_dynamics = self.config["simulation"]["opinion_dynamics"] \
+            if "opinion_dynamics" in self.config["simulation"] else {}
+
         # users' parameters
         self.fratio = float(self.config["agents"]["reading_from_follower_ratio"])
-        self.max_length_thread_reading = int(self.config["agents"][
-            "max_length_thread_reading"
-        ])
+        self.max_length_thread_reading = int(
+            self.config["agents"]["max_length_thread_reading"]
+        )
 
         # posts' parameters
         self.visibility_rd = int(self.config["posts"]["visibility_rounds"])
+
+        # emotion annotation
+        self.emotions_annotation = self.config["simulation"]["emotion_annotation"]
 
         global session, engine, base
         session, engine, base = initialize_content_store(
@@ -83,8 +158,9 @@ class YClientWeb(object):
         globals()["engine"] = engine
         globals()["base"] = base
 
-        yclient_path = os.path.dirname(os.path.abspath(__file__)).split("y_web")[0]
-        sys.path.append(f'{yclient_path}{os.sep}external{os.sep}YClient/')
+        yclient_path = Path(__file__).parent.absolute()
+        yclient_path = str(yclient_path).split("y_web")[0]
+        sys.path.append(str(Path(yclient_path) / "external" / "YClient"))
 
         from y_client.classes import Agent, Agents, SimulationSlot
         from y_client.news_feeds import Feeds
@@ -198,21 +274,28 @@ class YClientWeb(object):
 
         :return:
         """
-        from y_client.classes import Agent, FakeAgent, FakePageAgent, PageAgent
         import y_client.recsys as recsys
         import y_client.recsys as frecsys
+        from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
 
         AgentClass = FakeAgent if self._rule_based_agents_enabled() else Agent
         PageClass = FakePageAgent if self._rule_based_agents_enabled() else PageAgent
 
         # population filename
-        self.agents_filename = f"{self.base_path}{self.config['simulation']['population']}.json"
-        data = json.load(open(self.agents_filename, "r"))
-        for ag in data['agents']:
-            if ag["is_page"] == 0:
+        self.agents_filename = os.path.join(
+            self.base_path, f"{self.config['simulation']['population'].replace(' ', '')}.json"
+        )
 
-                content_recsys = getattr(recsys, ag["rec_sys"])()
-                follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
+        print(f"Loading agents from {self.agents_filename}")
+
+        data = json.load(open(self.agents_filename, "r"))
+        for ag in data["agents"]:
+
+            if ag["is_page"] == 0:
+                self.content_recsys = getattr(recsys, ag["rec_sys"])()
+                self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
+
+                if self.llm_active:
 
                 agent = AgentClass(
                     name=ag["name"],
@@ -248,7 +331,6 @@ class YClientWeb(object):
                 )
 
                 agent.set_prompts(self.prompts)
-
                 self.agents.add_agent(agent)
 
             else:
@@ -289,14 +371,73 @@ class YClientWeb(object):
                     web=True
                 )
 
-                page.set_prompts(self.prompts)
-                self.agents.add_agent(page)
-                self.pages.append({
-                    "name": ag["name"],
-                    "feed": ag["feed_url"],
-                    "leaning": ag["leaning"],
-                    "category": ag["type"]
-                })
+                    if self.llm_active:
+                        page = PageAgent(
+                            name=ag["name"],
+                            pwd="",
+                            email=ag["email"],
+                            age=0,
+                            ag_type=ag["type"],
+                            leaning=None,
+                            interests=[],
+                            config=self.config,
+                            big_five=big_five,
+                            language=None,
+                            education_level=None,
+                            owner=ag["owner"],
+                            round_actions=ag["round_actions"],
+                            gender=None,
+                            nationality=None,
+                            toxicity=None,
+                            api_key="",
+                            feed_url=ag["feed_url"],
+                            recsys=content_recsys,
+                            frecsys=follow_recsys,
+                            is_page=1,
+                            web=True,
+                            activity_profile=ag["activity_profile"]
+                        )
+                    else:
+                        page = FakePageAgent(
+                            name=ag["name"],
+                            pwd="",
+                            email=ag["email"],
+                            age=0,
+                            ag_type=ag["type"],
+                            leaning=None,
+                            interests=[],
+                            config=self.config,
+                            big_five=big_five,
+                            language=None,
+                            education_level=None,
+                            owner=ag["owner"],
+                            round_actions=ag["round_actions"],
+                            gender=None,
+                            nationality=None,
+                            toxicity=None,
+                            api_key="",
+                            feed_url=ag["feed_url"],
+                            recsys=content_recsys,
+                            frecsys=follow_recsys,
+                            is_page=1,
+                            web=True,
+                            activity_profile=ag["activity_profile"]
+                        )
+
+                    page.set_prompts(self.prompts)
+                    self.agents.add_agent(page)
+                    self.pages.append(
+                        {
+                            "name": ag["name"],
+                            "feed": ag["feed_url"],
+                            "leaning": ag["leaning"],
+                            "category": ag["type"],
+                        }
+                    )
+
+                except:
+                    print(f"Error loading page agent: {ag['name']}")
+                    continue
 
     def set_interests(self):
         """
@@ -372,6 +513,7 @@ class YClientWeb(object):
                 1,
                 int(len(self.agents.agents) * self.percentage_removed_agents_iteration),
             )
+
             st = json.dumps({"n_users": n_users, "left_on": tid})
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -392,15 +534,16 @@ class YClientWeb(object):
         from y_client.utils import generate_user
 
         if agent is None:
-            try:
-                agent = generate_user(self.config, owner=self.agents_owner)
+            # try:
 
-                if agent is None:
-                    return
-                agent.set_prompts(self.prompts)
-                agent.set_rec_sys(self.content_recsys, self.follow_recsys)
-            except Exception:
-                pass
+            agent = generate_user(self.config, owner=self.agents_owner)
+
+            if agent is None:
+                return
+            agent.set_prompts(self.prompts)
+            agent.set_rec_sys(self.content_recsys, self.follow_recsys)
+        # except Exception:
+        #     pass
         if agent is not None:
             self.agents.add_agent(agent)
 

@@ -21,6 +21,21 @@ def llm_evaluation(
     llm_config=None,
     **kwargs,
 ):
+    """
+    LLM-based evaluation of opinion dynamics between two users.
+
+    Parameters:
+    - uid: user id
+    - x: opinion score of user
+    - y: opinion score of the second user
+    - text: text to evaluate
+    - topic: topic of the text
+    - evaluation_scope: scope of evaluation
+    - cold_start: cold start strategy
+    - group_classes: opinion group classes
+    - base_url: base URL for API
+    - llm_config: LLM configuration
+    """
     if x is None:
         if cold_start == "neutral":
             x = 0.5

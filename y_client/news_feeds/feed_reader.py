@@ -1,22 +1,61 @@
+"""
+Feed Reader Module
+
+This module provides classes for reading, parsing, and managing RSS news feeds
+in the Y social network simulation. It handles fetching articles from RSS feeds,
+storing them in a database, and providing access to news content for page agents.
+
+Classes:
+    - News: Represents a single news article
+    - NewsFeed: RSS feed reader and parser for a single news source
+    - Feeds: Collection manager for multiple news feeds
+    - FeedLinkExtractor: Utility to discover RSS feed URLs from website pages
+"""
+
+import json
+import re
+
 import feedparser
 import numpy as np
-import json
-import requests, re
+import requests
 from bs4 import BeautifulSoup
 from y_client import content_store
+
+
+try:
+    from .client_modals import Articles, Images, Websites, session
+except:
+    from y_client.clients.client_web import session
+    from .client_modals import Websites, Articles, Images
+
 import datetime
 
 
 class News(object):
+    """
+    Represents a single news article with metadata.
+    
+    This class encapsulates a news article's essential information including
+    title, summary, link, publication date, and optional image URL.
+    
+    Attributes:
+        title (str): Article title
+        summary (str): Article summary/description
+        link (str): URL to the full article
+        published (int): Publication date (YYYYMMDD format)
+        image_url (str, optional): URL of associated image
+    """
+    
     def __init__(self, title, summary, link, published, image_url=None):
         """
-        This class represents a news article.
-
-        :param title: the title of the article
-        :param summary: the summary of the article
-        :param link: the link to the article
-        :param published: the date the article was published
-        :param image_url: the url of the image in the article
+        Initialize a News article object.
+        
+        Args:
+            title (str): The title of the article
+            summary (str): The summary or description of the article
+            link (str): URL to the full article
+            published (int): Publication date in YYYYMMDD format
+            image_url (str, optional): URL of the article's image. Defaults to None.
         """
         self.title = title
         self.summary = summary
@@ -26,23 +65,28 @@ class News(object):
 
     def __str__(self):
         """
-        String representation of the news article.
-        :return: a string representation of the news article
+        Return a human-readable string representation of the article.
+        
+        Returns:
+            str: Formatted string with title, summary, link, and publication date
         """
         return f"Title: {self.title}\nSummary: {self.summary}\nLink: {self.link}\nPublished: {self.published}"
 
     def __repr__(self):
         """
-        Representation of the news article.
-        :return: the string representation of the news article
+        Return a representation of the article (same as __str__).
+        
+        Returns:
+            str: String representation of the article
         """
         return self.__str__()
 
     def to_dict(self):
         """
-        Convert the news article to a dictionary.
-
-        :return: the dictionary representation of the news article
+        Convert the article to a dictionary.
+        
+        Returns:
+            dict: Dictionary with keys: title, summary, link, published
         """
         return {
             "title": self.title,
@@ -53,18 +97,27 @@ class News(object):
 
     def to_json(self):
         """
-        Convert the news article to a json string.
-
-        :return: a json string representation of the news article
+        Convert the article to a JSON string.
+        
+        Returns:
+            str: JSON string representation of the article
         """
         return json.dumps(self.to_dict())
 
     def save(self, name, rss):
         """
-        Save the news article to the database.
-
-        :param name: the name of the website
-        :param rss: the rss feed of the website
+        Save the article to the database.
+        
+        This method stores the article in the Articles table and its associated
+        image (if present) in the Images table. It avoids duplicate entries by
+        checking if the article link already exists.
+        
+        Args:
+            name (str): Name of the website/feed
+            rss (str): RSS feed URL of the website
+        
+        Side effects:
+            Creates entries in Articles and Images tables if they don't exist
         """
         return content_store.save_article(
             website_name=name,
@@ -78,6 +131,24 @@ class News(object):
 
 
 class NewsFeed(object):
+    """
+    RSS feed reader and parser for a single news source.
+    
+    This class handles reading and parsing RSS feeds, storing articles in
+    the database, and providing access to news articles. It caches articles
+    from the current day to avoid redundant parsing.
+    
+    Attributes:
+        feed_url (str): RSS feed URL
+        name (str): Name of the news source
+        url_site (str): Main website URL
+        category (str): Content category (e.g., "politics", "tech")
+        language (str): Primary language
+        leaning (str): Political leaning
+        country (str): Country of origin
+        news (list): List of News objects fetched from the feed
+    """
+    
     def __init__(
         self,
         name,
@@ -89,15 +160,16 @@ class NewsFeed(object):
         country=None,
     ):
         """
-        This class represents a news feed.
-
-        :param name: the name of the website
-        :param feed_url: the rss feed url
-        :param url_site: the website url
-        :param category: the category of the website
-        :param language: the language of the website
-        :param leaning: the political leaning of the website
-        :param country: the country of the website
+        Initialize a NewsFeed object for a news source.
+        
+        Args:
+            name (str): Name of the news source/website
+            feed_url (str): RSS feed URL to parse
+            url_site (str, optional): Main website URL. Defaults to None.
+            category (str, optional): Content category. Defaults to None.
+            language (str, optional): Primary language. Defaults to None.
+            leaning (str, optional): Political leaning. Defaults to None.
+            country (str, optional): Country of origin. Defaults to None.
         """
         self.feed_url = feed_url
         self.name = name
@@ -110,7 +182,16 @@ class NewsFeed(object):
 
     def read_feed(self):
         """
-        Read the feed and store the news articles.
+        Fetch and parse articles from the RSS feed.
+        
+        This method reads the RSS feed, parses all entries, and stores them
+        in the database. If articles from today are already in the database,
+        it loads them from there instead of re-parsing the feed.
+        
+        Side effects:
+            - Populates self.news with News objects
+            - Creates entries in Articles and Images tables
+            - Updates website's last_fetched timestamp
         """
         today = datetime.datetime.now()
         today_morning = int(today.strftime("%Y%m%d"))
@@ -150,10 +231,13 @@ class NewsFeed(object):
 
     def __extract_image_url(self, art):
         """
-        Extract the image url from the article.
-
-        :param art:
-        :return: img url
+        Extract image URL from an RSS feed entry.
+        
+        Args:
+            art: RSS feed entry object (from feedparser)
+        
+        Returns:
+            str or None: Image URL if found, None otherwise
         """
         if "media_content" in art:
             image = art.media_content[0]["url"].split("?")[0]
@@ -162,9 +246,11 @@ class NewsFeed(object):
 
     def get_random_news(self):
         """
-        Get a random news article from the feed.
-
-        :return: a random news article
+        Select a random article from the feed.
+        
+        Returns:
+            News or str: Random News object from the feed, or "No news available"
+                        if the feed is empty
         """
         if len(self.news) == 0:
             return "No news available"
@@ -172,8 +258,10 @@ class NewsFeed(object):
 
     def get_news(self):
         """
-        Get all the news articles from the feed.
-        :return: a list of news articles
+        Get all articles from the feed.
+        
+        Returns:
+            list: List of News objects
         """
         return self.news
 

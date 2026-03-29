@@ -2144,8 +2144,6 @@ class Agent(object):
         # if not followed, test unfollow
         if self.probability_of_secondary_follow > 0 and res is None:
             self.__evaluate_follow(post_text, post_id, "unfollow", tid)
-        if self.opinions_enabled:
-            self.new_opinions(post_id, tid, post_text)
 
         # update opinion
         if self.opinions_enabled:

@@ -3324,6 +3324,33 @@ class Agent(object):
             "opinions": opinions,
         }
 
+    def __emotion_annotation(self, text_to_annotate: str):
+        """
+        Annotate the emotions in the text.
+
+        :param text_to_annotate: the text to annotate
+        :return: the annotated emotions as a list
+        """
+        emotion_agent = AssistantAgent(
+            name="EmotionAnnotator",
+            llm_config=self.llm_config,
+            system_message=self.prompts["handler_instructions"],
+            max_consecutive_auto_reply=1,
+        )
+
+        prompt = (
+            f"Annotate the following text with the emotions it elicits:\n\n"
+            f"{text_to_annotate}. Answer with a JSON formatted list of emotions only."
+        )
+        response = emotion_agent.generate_reply(
+            messages=[{"role": "user", "content": prompt}]
+        )
+
+        emotion_eval = response.lower()
+        emotion_eval = self.__clean_emotion(emotion_eval)
+
+        return emotion_eval
+
     def __clean_emotion(self, text):
         try:
             emotion_eval = [

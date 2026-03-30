@@ -102,7 +102,7 @@ def analyze_logs(log_file):
     
     sorted_logs = sorted(logs, key=lambda x: x['execution_time_seconds'], reverse=True)[:5]
     for log in sorted_logs:
-        print(f"{log['agent_name']:<20} {log['method_name']:<25} {log['execution_time_seconds']:<15.4f} {log['timestamp']}")
+        print(f"{log['agent_name']:<20} {log['method_name']:<25} {log['execution_time_seconds']:<15.4f} {log['time']}")
     
     print("-" * 80)
     

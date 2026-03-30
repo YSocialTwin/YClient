@@ -2998,8 +2998,12 @@ class Agent(object):
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
-                    content_store.save_image_description(image.id, description)
 
+                    if description is None:
+                        return None, None
+
+                    content_store.save_image_description(image.id, description)
+                    image.description = description
                     return image, None
 
         # the news module is active: images will be selected among RSS shared articles
@@ -3008,32 +3012,63 @@ class Agent(object):
             if image is None:
                 news, website = self.select_news()
 
-                if news == "":
+                if not news or isinstance(news, str):
                     return None, None
 
-                # get image given article id and set the remote id
-                image = content_store.get_image_by_article_id(article_id)
+                article = news.save(website.name, website.rss)
+                if article is None:
+                    return None, None
+
+                # get image given article id
+                image = content_store.get_image_by_article_id(article.id)
 
                 if image is None:
                     return None, None
-                else:
-                    content_store.save_image_remote_article(image.id, article_id)
 
-                    # annotate the image with a description
-                    an = Annotator(self.llm_v_config)
-                    description = an.annotate(image.url)
-                    content_store.save_image_description(image.id, description)
+                # save the article on the server to get the remote id
+                st = json.dumps(
+                    {
+                        "user_id": self.user_id,
+                        "tweet": "",
+                        "emotions": [],
+                        "hashtags": [],
+                        "mentions": [],
+                        "tid": tid,
+                        "title": article.title,
+                        "summary": article.summary,
+                        "link": article.link,
+                        "publisher": website.name,
+                        "rss": website.rss,
+                        "leaning": website.leaning,
+                        "country": website.country,
+                        "language": website.language,
+                        "category": website.category,
+                        "fetched_on": website.last_fetched,
+                    }
+                )
 
-                    if description is not None:
-                        image.description = description
-                        session.commit()
-                    else:
-                        # delete image
-                        session.delete(image)
-                        session.commit()
-                        return None, None
+                headers = {"Content-Type": "application/x-www-form-urlencoded"}
+                api_url = f"{self.base_url}/news"
+                res = post(f"{api_url}", headers=headers, data=st)
+                remote_article_id = int(
+                    json.loads(res.__dict__["_content"].decode("utf-8"))[
+                        "article_id"
+                    ]
+                )
+                content_store.save_image_remote_article(image.id, remote_article_id)
+                image.remote_article_id = remote_article_id
 
-                    return image, None
+                # annotate the image with a description
+                an = Annotator(self.llm_v_config)
+                description = an.annotate(image.url)
+
+                if description is None:
+                    content_store.delete_image(image.id)
+                    return None, None
+
+                content_store.save_image_description(image.id, description)
+                image.description = description
+                return image, None
 
             # images available, check if they have a description
             else:
@@ -3086,8 +3121,12 @@ class Agent(object):
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
-                    content_store.save_image_description(image.id, description)
 
+                    if description is None:
+                        return None, None
+
+                    content_store.save_image_description(image.id, description)
+                    image.description = description
                     return image, None
 
     @log_execution_time

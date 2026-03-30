@@ -83,7 +83,23 @@ class Annotator(object):
             Write in english. <img {image}>""",
         )
 
-        res = self.image_agent.chat_messages[self.user_proxy][-1]["content"][-1]["text"]
+        payload = self.image_agent.chat_messages[self.user_proxy][-1]["content"]
+        if isinstance(payload, str):
+            res = payload
+        elif isinstance(payload, list):
+            text_chunks = []
+            for item in payload:
+                if isinstance(item, dict):
+                    text = item.get("text")
+                    if isinstance(text, str) and text.strip():
+                        text_chunks.append(text.strip())
+                elif isinstance(item, str) and item.strip():
+                    text_chunks.append(item.strip())
+            res = "\n".join(text_chunks).strip()
+        elif isinstance(payload, dict):
+            res = str(payload.get("text") or "").strip()
+        else:
+            res = str(payload or "").strip()
         if "I'm sorry" in res:
             res = None
         return res

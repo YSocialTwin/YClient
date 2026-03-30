@@ -1748,8 +1748,15 @@ class Agent(object):
             topic_agent.reset()
             handler.reset()
 
-        topics = re.findall(r"[#T]: \w+ \w+", topic_eval)
-        return [topic.split(": ")[1] for topic in topics if "Topic" not in topic]
+        topics = []
+        for chunk in re.split(r"[;\n]+", str(topic_eval or "")):
+            match = re.search(r"#T:\s*(.+)$", chunk.strip())
+            if not match:
+                continue
+            topic = match.group(1).strip()
+            if topic and "topic" not in topic.lower():
+                topics.append(topic)
+        return topics
 
     @log_execution_time
     def post(self, tid):
@@ -2979,7 +2986,6 @@ class Agent(object):
 
         :return: the response from the service
         """
-        # randomly select an image from database
         image = content_store.get_random_image()
 
         # @Todo: add the case of no news sharing enabled
@@ -3011,29 +3017,23 @@ class Agent(object):
                 if news == "":
                     return None, None
 
-                # get image given article id and set the remote id
+                res = self.news(tid=tid, article=news, website=website)
+                article_id = int(
+                    json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
+                )
+
                 image = content_store.get_image_by_article_id(article_id)
 
                 if image is None:
                     return None, None
                 else:
-                    content_store.save_image_remote_article(image.id, article_id)
+                    image = content_store.save_image_remote_article(image.id, article_id)
 
-                    # annotate the image with a description
                     an = Annotator(self.llm_v_config)
                     description = an.annotate(image.url)
-                    content_store.save_image_description(image.id, description)
+                    image = content_store.save_image_description(image.id, description)
 
-                    if description is not None:
-                        image.description = description
-                        session.commit()
-                    else:
-                        # delete image
-                        session.delete(image)
-                        session.commit()
-                        return None, None
-
-                    return image, None
+                    return image, article_id
 
             # images available, check if they have a description
             else:
@@ -3076,19 +3076,19 @@ class Agent(object):
                             "article_id"
                         ]
                     )
-                    content_store.save_image_remote_article(image.id, remote_article_id)
-                    image.remote_article_id = remote_article_id
+                    image = content_store.save_image_remote_article(
+                        image.id, remote_article_id
+                    )
 
                 if image.description is not None:
-                    return image, None
+                    return image, image.remote_article_id
 
                 else:
-                    # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
-                    content_store.save_image_description(image.id, description)
+                    image = content_store.save_image_description(image.id, description)
 
-                    return image, None
+                    return image, image.remote_article_id
 
     @log_execution_time
     def comment_image(self, image: object, tid: int, article_id: int = None):

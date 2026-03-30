@@ -90,6 +90,8 @@ class ContentRecSys(object):
 
         if articles:
             self.params["articles"] = True
+        else:
+            self.params.pop("articles", None)
 
         self.params["uid"] = user_id
 

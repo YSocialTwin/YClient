@@ -65,7 +65,7 @@ class YClientWeb(object):
         owner="admin",
         first_run=False,
         network=None,
-        log_file="agent_execution.log",
+        log_file=None,
         llm=True
     ):
         """
@@ -89,7 +89,9 @@ class YClientWeb(object):
                                        Defaults to False.
             network (optional): Network configuration (currently unused). Defaults to None.
             log_file (str, optional): Path to the log file for agent execution time tracking.
-                                     Defaults to "agent_execution.log" in the current directory.
+                                     When None (default), automatically derived from the
+                                     simulation name as
+                                     ``experiments/{simulation_name}_client.log``.
 
             llm (bool, optional): Whether or not to use LLM for agent behaviors. Defaults to True.
         
@@ -101,15 +103,20 @@ class YClientWeb(object):
             - Configures the global logger for agent execution time tracking
         """
         from y_client.logger import set_logger
-        
-        # Configure the logger with the specified log file
-        set_logger(log_file)
 
         self.llm_active = llm
 
         self.first_run = first_run
         self.base_path = data_base_path
         self.config = config_file
+
+        # Derive log file path from simulation name when none is provided
+        if log_file is None:
+            simulation_name = self.config["simulation"]["name"]
+            log_file = os.path.join("experiments", f"{simulation_name}_client.log")
+
+        # Configure the logger with the resolved log file path
+        set_logger(log_file)
 
         self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 

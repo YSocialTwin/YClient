@@ -71,8 +71,9 @@ if __name__ == "__main__":
     parser.add_argument(
         "-l",
         "--log_file",
-        default="agent_execution.log",
-        help="Path to the log file for agent execution time tracking. Default is 'agent_execution.log'",
+        default=None,
+        help="Path to the log file for agent execution time tracking. "
+             "Defaults to 'experiments/{simulation_name}_client.log'",
     )
 
     args = parser.parse_args()

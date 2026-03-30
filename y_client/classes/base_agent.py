@@ -304,11 +304,11 @@ class Agent(object):
             self.probability_of_secondary_follow = float(
                 config["agents"].get("probability_of_secondary_follow", 0)
             )
-            self.daily_activity_level = kwargs.get("daily_activity_level", 1)
-            self.profession = kwargs.get("profession")
+            self.daily_activity_level = daily_activity_level
+            self.profession = profession
             self.activity_profile = kwargs.get("activity_profile")
-            self.archetype = kwargs.get("archetype")
-            self.opinions = kwargs.get("opinions")
+            self.archetype = archetype
+            self.opinions = opinions
             self.opinion_dynamics = _opinion_dynamics_from_config(config)
             self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
             self.llm_v_config = {
@@ -516,11 +516,11 @@ class Agent(object):
         self.probability_of_secondary_follow = float(
             config["agents"].get("probability_of_secondary_follow", 0)
         )
-        self.daily_activity_level = kwargs.get("daily_activity_level", 1)
-        self.profession = kwargs.get("profession")
-        self.activity_profile = kwargs.get("activity_profile")
-        self.archetype = kwargs.get("archetype")
-        self.opinions = kwargs.get("opinions")
+        self.daily_activity_level = daily_activity_level
+        self.profession = profession
+        self.activity_profile = activity_profile
+        self.archetype = archetype
+        self.opinions = opinions
         self.opinion_dynamics = _opinion_dynamics_from_config(config)
         self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
 

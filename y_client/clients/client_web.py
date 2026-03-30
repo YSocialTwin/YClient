@@ -183,22 +183,32 @@ class YClientWeb(object):
 
     @staticmethod
     def _extract_user_id_response(response, username):
+        status = getattr(response, "status_code", None)
         raw = ""
         try:
             raw = response.text or ""
         except Exception:
             raw = ""
+        if status is not None and status != 200:
+            print(
+                f"WARNING: /get_user_id returned status={status} for username "
+                f"'{username}' — skipping. body={raw[:200]!r}"
+            )
+            return None
         try:
             payload = json.loads(raw)
-        except Exception as exc:
-            raise RuntimeError(
-                f"Invalid /get_user_id response for username '{username}': "
-                f"status={getattr(response, 'status_code', 'n/a')} body={raw[:200]!r}"
-            ) from exc
-        if not isinstance(payload, dict):
-            raise RuntimeError(
-                f"Unexpected /get_user_id payload for username '{username}': {payload!r}"
+        except Exception:
+            print(
+                f"WARNING: /get_user_id returned non-JSON for username '{username}' "
+                f"— skipping. status={status} body={raw[:200]!r}"
             )
+            return None
+        if not isinstance(payload, dict):
+            print(
+                f"WARNING: Unexpected /get_user_id payload for username '{username}' "
+                f"— skipping. payload={payload!r}"
+            )
+            return None
         return payload.get("id")
 
     def _rule_based_agents_enabled(self):

@@ -3342,9 +3342,7 @@ class Agent(object):
             f"Annotate the following text with the emotions it elicits:\n\n"
             f"{text_to_annotate}. Answer with a JSON formatted list of emotions only."
         )
-        response = emotion_agent.generate_reply(
-            messages=[{"role": "user", "content": prompt}]
-        )
+        response = emotion_agent._generate_reply(prompt)
 
         emotion_eval = response.lower()
         emotion_eval = self.__clean_emotion(emotion_eval)

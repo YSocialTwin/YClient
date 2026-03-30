@@ -89,9 +89,9 @@ class YClientWeb(object):
                                        Defaults to False.
             network (optional): Network configuration (currently unused). Defaults to None.
             log_file (str, optional): Path to the log file for agent execution time tracking.
-                                     When None (default), automatically derived from the
-                                     simulation name as
-                                     ``experiments/{simulation_name}_client.log``.
+                                     When None (default), automatically derived as
+                                     ``{data_base_path}/{simulation_name}_client.log``
+                                     so it lands inside the experiment-specific folder.
 
             llm (bool, optional): Whether or not to use LLM for agent behaviors. Defaults to True.
         
@@ -113,7 +113,7 @@ class YClientWeb(object):
         # Derive log file path from simulation name when none is provided
         if log_file is None:
             simulation_name = self.config["simulation"]["name"]
-            log_file = os.path.join("experiments", f"{simulation_name}_client.log")
+            log_file = os.path.join(data_base_path, f"{simulation_name}_client.log")
 
         # Configure the logger with the resolved log file path
         set_logger(log_file)

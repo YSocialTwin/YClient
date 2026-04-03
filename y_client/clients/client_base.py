@@ -116,6 +116,7 @@ class YClientBase(object):
 
         self.days = self.config["simulation"]["days"]
         self.slots = self.config["simulation"]["slots"]
+        self.heartbeat_interval = float(self.config["simulation"].get("heartbeat_interval", 5.0))
         self.n_agents = self.config["simulation"].get(
             "starting_agents",
             self.config["simulation"].get("initial_agents", 0) or 0,
@@ -146,8 +147,16 @@ class YClientBase(object):
         # posts' parameters
         self.visibility_rd = self.config["posts"]["visibility_rounds"]
 
+        self.client_id = (
+            f"{self.config['simulation']['name']}:{self.agents_owner}:{os.getpid()}"
+        )
+
         # initialize simulation clock
-        self.sim_clock = SimulationSlot(self.config)
+        self.sim_clock = SimulationSlot(
+            self.config,
+            client_id=self.client_id,
+            heartbeat_interval=self.heartbeat_interval,
+        )
 
         self.agents = Agents()
         self.feed = Feeds()
@@ -377,89 +386,98 @@ class YClientBase(object):
         """
         Run the simulation
         """
+        try:
+            for day in tqdm.tqdm(range(self.days)):
+                print(f"\n\nDay {day} of simulation\n")
+                daily_active = {}
+                tid, _, _ = self.sim_clock.get_current_slot()
 
-        for day in tqdm.tqdm(range(self.days)):
-            print(f"\n\nDay {day} of simulation\n")
-            daily_active = {}
-            tid, _, _ = self.sim_clock.get_current_slot()
+                for _ in tqdm.tqdm(range(self.slots)):
+                    self.sim_clock.maybe_heartbeat()
+                    tid, _, h = self.sim_clock.get_current_slot()
 
-            for _ in tqdm.tqdm(range(self.slots)):
-                tid, _, h = self.sim_clock.get_current_slot()
-
-                # get expected active users for this time slot (at least 1)
-                expected_active_users = max(
-                    int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1
-                )
-
-                sagents = random.sample(self.agents.agents, expected_active_users)
-
-                # available actions
-                acts = [a for a, v in self.actions_likelihood.items() if v > 0]
-
-                # shuffle agents
-                random.shuffle(sagents)
-                for g in tqdm.tqdm(sagents):
-                    daily_active[g.name] = None
-
-                    for _ in range(g.round_actions):
-                        # sample two elements from a list with replacement
-                        candidates = random.choices(
-                            acts,
-                            k=2,
-                            weights=[self.actions_likelihood[a] for a in acts],
-                        )
-                        candidates.append("NONE")
-
-                        # reply to received mentions
-                        if g not in self.pages:
-                            g.reply(tid=tid)
-
-                        # select action to be performed
-                        g.select_action(
-                            tid=tid,
-                            actions=candidates,
-                            max_length_thread_reading=self.max_length_thread_reading,
-                        )
-                # increment slot
-                self.sim_clock.increment_slot()
-
-            # evaluate following (once per day, only for a random sample of daily active agents)
-            da = [
-                agent
-                for agent in self.agents.agents
-                if agent.name in daily_active
-                and agent not in self.pages
-                and random.random()
-                < float(self.config["agents"]["probability_of_daily_follow"])
-            ]
-
-            print("\n\nEvaluating new friendship ties")
-            for agent in tqdm.tqdm(da):
-                if agent not in self.pages:
-                    agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
-
-            total_users = len(self.agents.agents)
-
-            # daily churn
-            self.churn(tid)
-
-            # daily new agents
-            if self.percentage_new_agents_iteration > 0:
-                for _ in range(
-                    max(
-                        1,
-                        int(len(daily_active) * self.percentage_new_agents_iteration),
+                    # get expected active users for this time slot (at least 1)
+                    expected_active_users = max(
+                        int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1
                     )
+
+                    sagents = random.sample(self.agents.agents, expected_active_users)
+
+                    # available actions
+                    acts = [a for a, v in self.actions_likelihood.items() if v > 0]
+
+                    # shuffle agents
+                    random.shuffle(sagents)
+                    for g in tqdm.tqdm(sagents):
+                        self.sim_clock.maybe_heartbeat()
+                        daily_active[g.name] = None
+
+                        for _ in range(g.round_actions):
+                            self.sim_clock.maybe_heartbeat()
+                            # sample two elements from a list with replacement
+                            candidates = random.choices(
+                                acts,
+                                k=2,
+                                weights=[self.actions_likelihood[a] for a in acts],
+                            )
+                            candidates.append("NONE")
+
+                            # reply to received mentions
+                            if g not in self.pages:
+                                g.reply(tid=tid)
+
+                            # select action to be performed
+                            g.select_action(
+                                tid=tid,
+                                actions=candidates,
+                                max_length_thread_reading=self.max_length_thread_reading,
+                            )
+                    # increment slot
+                    self.sim_clock.increment_slot()
+
+                # evaluate following (once per day, only for a random sample of daily active agents)
+                da = [
+                    agent
+                    for agent in self.agents.agents
+                    if agent.name in daily_active
+                    and agent not in self.pages
+                    and random.random()
+                    < float(self.config["agents"]["probability_of_daily_follow"])
+                ]
+
+                print("\n\nEvaluating new friendship ties")
+                for agent in tqdm.tqdm(da):
+                    self.sim_clock.maybe_heartbeat()
+                    if agent not in self.pages:
+                        agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
+
+                total_users = len(self.agents.agents)
+
+                # daily churn
+                self.churn(tid)
+
+                # daily new agents
+                if self.percentage_new_agents_iteration > 0:
+                    for _ in range(
+                        max(
+                            1,
+                            int(len(daily_active) * self.percentage_new_agents_iteration),
+                        )
+                    ):
+                        self.add_agent()
+
+                # saving "living" agents at the end of the day
+                if (
+                    self.percentage_removed_agents_iteration != 0
+                    or self.percentage_removed_agents_iteration != 0
                 ):
-                    self.add_agent()
+                    self.save_agents()
 
-            # saving "living" agents at the end of the day
-            if (
-                self.percentage_removed_agents_iteration != 0
-                or self.percentage_removed_agents_iteration != 0
-            ):
-                self.save_agents()
-
-            print(
-                f"\n\nTotal Users: {total_users}\nActive users: {len(daily_active)}\nUsers at the end of the day: {len(self.agents.agents)}\n"
-            )
+                print(
+                    f"\n\nTotal Users: {total_users}\nActive users: {len(daily_active)}\nUsers at the end of the day: {len(self.agents.agents)}\n"
+                )
+        finally:
+            try:
+                self.sim_clock.complete_client()
+            except Exception:
+                pass

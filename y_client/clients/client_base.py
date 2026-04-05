@@ -289,8 +289,10 @@ class YClientBase(object):
                     return
                 agent.set_prompts(self.prompts)
                 agent.set_rec_sys(self.content_recsys, self.follow_recsys)
-            except Exception:
-                pass
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to generate/register agent for owner '{self.agents_owner}'"
+                ) from exc
         if agent is not None:
             self.agents.add_agent(agent)
 
@@ -394,9 +396,13 @@ class YClientBase(object):
             for _ in tqdm.tqdm(range(self.slots)):
                 tid, _, h = self.sim_clock.get_current_slot()
 
+                if not self.agents.agents:
+                    break
+
                 # get expected active users for this time slot (at least 1)
-                expected_active_users = max(
-                    int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1
+                expected_active_users = min(
+                    max(int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1),
+                    len(self.agents.agents),
                 )
 
                 sagents = random.sample(self.agents.agents, expected_active_users)

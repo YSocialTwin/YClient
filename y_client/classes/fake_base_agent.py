@@ -20,10 +20,9 @@ import re
 import sys
 
 import numpy as np
-from autogen import AssistantAgent
+from y_client.llm import AssistantAgent
 from faker import Faker
 from requests import get, post
-from sqlalchemy.sql.expression import func
 from y_client.classes.annotator import Annotator
 from y_client.classes.time import SimulationSlot
 try:
@@ -31,13 +30,7 @@ try:
 except Exception:
     def log_execution_time(func):
         return func
-from y_client.news_feeds.client_modals import (
-    Agent_Custom_Prompt,
-    Articles,
-    Images,
-    Websites,
-    session,
-)
+from y_client import content_store
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
@@ -157,8 +150,8 @@ class FakeAgent(Agent):
 
         api_url = f"{self.base_url}/post"
         post(f"{api_url}", headers=headers, data=st)
-        if self.opinions_enabled and interests_id:
-            self._record_self_post_opinions(topic_ids=interests_id, tid=int(tid))
+        if self.opinions_enabled and interests:
+            self._record_self_post_opinions(topic_names=interests, tid=int(tid))
 
         # update topic of interest with the ones used to generate the post
         api_url = f"{self.base_url}/set_user_interests"
@@ -714,19 +707,9 @@ class FakeAgent(Agent):
         """
 
         # Select websites with the same leaning of the agent
-        candidate_websites = (
-            session.query(Websites).filter(Websites.leaning == self.leaning).all()
-        )
-
-        # Select a random website
-        if len(candidate_websites) == 0:
-            candidate_websites = session.query(Websites).all()
-
-        if len(candidate_websites) == 0:
+        website = content_store.get_random_website_by_leaning(self.leaning)
+        if website is None:
             return "", ""
-
-        # Select a random website from a list
-        website = np.random.choice(candidate_websites)
 
         # Select a random article
         website_feed = NewsFeed(website.name, website.rss)
@@ -741,7 +724,7 @@ class FakeAgent(Agent):
         :return: the response from the service
         """
         # randomly select an image from database
-        image = session.query(Images).order_by(func.random()).first()
+        image = content_store.get_random_image()
 
         # @Todo: add the case of no news sharing enabled
         if (
@@ -761,12 +744,10 @@ class FakeAgent(Agent):
                     description = "image description"  # an.annotate(image.url)
 
                     if description is not None:
-                        image.description = description
-                        session.commit()
+                        content_store.save_image_description(image.id, description)
                     else:
                         # delete image
-                        session.delete(image)
-                        session.commit()
+                        content_store.delete_image(image.id)
                         return None, None
 
                     return image, None
@@ -780,49 +761,88 @@ class FakeAgent(Agent):
                 if news == "":
                     return None, None
 
-                # get image given article id and set the remote id
-                image = session.query(Images).order_by(func.random()).first()
+                res = self.news(tid=tid, article=news, website=website)
+                article_id = int(
+                    json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
+                )
+
+                image = content_store.get_image_by_article_id(article_id)
 
                 if image is None:
                     return None, None
                 else:
-                    image.remote_article_id = None
-                    session.commit()
+                    image = content_store.save_image_remote_article(image.id, article_id)
 
                     # annotate the image with a description
                     an = Annotator(self.llm_v_config)
                     description = an.annotate(image.url)
 
                     if description is not None:
-                        image.description = description
-                        session.commit()
+                        image = content_store.save_image_description(image.id, description)
                     else:
                         # delete image
-                        session.delete(image)
-                        session.commit()
+                        content_store.delete_image(image.id)
                         return None, None
 
-                    return image, None
+                    return image, article_id
 
             # images available, check if they have a description
             else:
+                if image.remote_article_id is None:
+                    _, article, website = content_store.get_image_with_article_and_website(
+                        image.id
+                    )
+                    if article is None or website is None:
+                        return None, None
+
+                    st = json.dumps(
+                        {
+                            "user_id": self.user_id,
+                            "tweet": "",
+                            "emotions": [],
+                            "hashtags": [],
+                            "mentions": [],
+                            "tid": tid,
+                            "title": article.title,
+                            "summary": article.summary,
+                            "link": article.link,
+                            "publisher": website.name,
+                            "rss": website.rss,
+                            "leaning": website.leaning,
+                            "country": website.country,
+                            "language": website.language,
+                            "category": website.category,
+                            "fetched_on": website.last_fetched,
+                        }
+                    )
+
+                    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+                    api_url = f"{self.base_url}/news"
+                    res = post(f"{api_url}", headers=headers, data=st)
+                    remote_article_id = int(
+                        json.loads(res.__dict__["_content"].decode("utf-8"))[
+                            "article_id"
+                        ]
+                    )
+                    image = content_store.save_image_remote_article(
+                        image.id, remote_article_id
+                    )
+
                 if image.description is not None:
-                    return image, None
+                    return image, image.remote_article_id
 
                 else:
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
                     if description is not None:
-                        image.description = description
-                        session.commit()
+                        image = content_store.save_image_description(image.id, description)
                     else:
                         # delete image
-                        session.delete(image)
-                        session.commit()
+                        content_store.delete_image(image.id)
                         return None, None
 
-                    return image, None
+                    return image, image.remote_article_id
 
     @log_execution_time
     def comment_image(self, image: object, tid: int, article_id: int = None):

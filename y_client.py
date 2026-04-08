@@ -1,4 +1,7 @@
-import os, sys, json, shutil
+import json
+import os
+import shutil
+import sys
 
 if __name__ == "__main__":
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -64,6 +67,14 @@ if __name__ == "__main__":
         help="Name of the graph file (CSV format, number of nodes equal to the starting agents) "
         "to be used for the simulation",
     )
+    
+    parser.add_argument(
+        "-l",
+        "--log_file",
+        default=None,
+        help="Path to the log file for agent execution time tracking. "
+             "Defaults to 'experiments/{simulation_name}_client.log'",
+    )
 
     args = parser.parse_args()
 
@@ -80,16 +91,16 @@ if __name__ == "__main__":
     simulation_name = config["simulation"]["name"]
 
     # agent file output
-    output = f"experiments/{simulation_name}_agents.json"
+    output = f"experiments{os.sep}{simulation_name}_agents.json"
 
     # set the current config file (needed to generate the database)
-    shutil.copyfile(config_file, f"experiments/current_config.json")
+    shutil.copyfile(config_file, f"experiments{os.sep}current_config.json")
 
-    import y_client.recsys
     import y_client.clients
+    import y_client.recsys
 
-    if not os.path.exists("./experiments"):
-        os.mkdir("./experiments")
+    if not os.path.exists("experiments"):
+        os.mkdir("experiments")
 
     # get recommender systems
     content_recsys = getattr(y_client.recsys, args.crecsys)()
@@ -103,6 +114,7 @@ if __name__ == "__main__":
         owner=agents_owner,
         agents_output=output,
         graph_file=graph_file,
+        log_file=args.log_file,
     )
 
     if args.reset:

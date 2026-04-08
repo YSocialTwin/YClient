@@ -65,6 +65,29 @@ def build_agent_memory_engine(agent):
         "memory_prompt_mode": "subtle_forum" if prompt_mode == "subtle_timeline" else prompt_mode,
         "memory_vote_signal_only": getattr(agent, "memory_vote_signal_only", True),
         "memory_reply_context_max_chars": getattr(agent, "memory_reply_context_max_chars", 220),
+        "memory_search_k": getattr(agent, "memory_search_k", 8),
+        "memory_search_max_chars": getattr(agent, "memory_search_max_chars", 900),
+        "memory_total_max_chars": getattr(agent, "memory_total_max_chars", 1400),
+        "memory_tier_a_max_chars": getattr(agent, "memory_tier_a_max_chars", 280),
+        "memory_tier_b_max_chars": getattr(agent, "memory_tier_b_max_chars", 720),
+        "memory_tier_c_max_chars": getattr(agent, "memory_tier_c_max_chars", 520),
+        "memory_tier_c_uncertainty_threshold": getattr(
+            agent, "memory_tier_c_uncertainty_threshold", 0.45
+        ),
+        "memory_digest_update_cadence_rounds": getattr(
+            agent, "memory_digest_update_cadence_rounds", 3
+        ),
+        "memory_digest_events_limit": getattr(agent, "memory_digest_events_limit", 24),
+        "memory_reflection_cadence_rounds": getattr(
+            agent, "memory_reflection_cadence_rounds", 3
+        ),
+        "memory_reflection_min_events": getattr(agent, "memory_reflection_min_events", 12),
+        "memory_reflection_trigger_importance_sum": getattr(
+            agent, "memory_reflection_trigger_importance_sum", 3.5
+        ),
+        "memory_reflection_max_items_per_run": getattr(
+            agent, "memory_reflection_max_items_per_run", 60
+        ),
         "memory_cross_thread_callback_min_score": getattr(
             agent, "memory_cross_thread_callback_min_score", 0.80
         ),
@@ -80,6 +103,13 @@ def build_agent_memory_engine(agent):
         "memory_nuance_min_score": getattr(agent, "memory_nuance_min_score", 0.35),
         "memory_nuance_callback_probability": getattr(agent, "memory_nuance_callback_probability", 0.55),
         "memory_nuance_cues_max_chars": getattr(agent, "memory_nuance_cues_max_chars", 320),
+        "memory_pair_limit": getattr(agent, "memory_pair_limit", 8),
+        "pair_history_limit": getattr(agent, "memory_pair_limit", 8),
+        "thread_history_limit": getattr(agent, "memory_evidence_tail_max", 12),
+        "memory_semantic_enabled": getattr(agent, "memory_semantic_enabled", True),
+        "memory_embedding_model": getattr(agent, "memory_embedding_model", ""),
+        "memory_embedding_async": getattr(agent, "memory_embedding_async", False),
+        "memory_importance_mode": getattr(agent, "memory_importance_mode", ""),
     }
     config = MemoryConfig.from_mapping(raw)
     runtime = YClientMemoryRuntime(agent)

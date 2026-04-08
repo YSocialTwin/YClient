@@ -1,6 +1,22 @@
-import random
+"""
+Utilities Module
+
+This module provides utility functions for generating synthetic users and pages
+for the Y social network simulation. It uses the Faker library to create realistic
+user profiles with various demographic and personality attributes.
+
+Functions:
+    - generate_user: Generate a synthetic user agent with random attributes
+    - generate_page: Generate a synthetic page agent for news feeds
+"""
+
 import json
+import os
+import random
+from pathlib import Path
+
 import faker
+
 try:
     from y_client import Agent, PageAgent
     from y_client.classes import FakeAgent, FakePageAgent
@@ -22,13 +38,41 @@ def _rule_based_agents_enabled(config):
 
 def generate_user(config, owner=None):
     """
-    Generate a fake user
-    :param config: configuration dictionary
-    :param owner: owner of the user
-    :return: Agent object
+    Generate a synthetic user agent with randomized attributes.
+    
+    This function creates a realistic user profile using the Faker library,
+    with attributes drawn from the provided configuration. The generated user
+    includes demographic information, personality traits, interests, and LLM settings.
+    
+    Args:
+        config (dict): Configuration dictionary containing agent generation parameters.
+                      Required keys include:
+                      - agents.nationalities: List of nationalities to sample from
+                      - agents.political_leanings: List of political leanings
+                      - agents.age: Dict with min and max age values
+                      - agents.interests: List of possible interests
+                      - agents.n_interests: Dict with min and max number of interests
+                      - agents.toxicity_levels: List of toxicity levels
+                      - agents.languages: List of languages
+                      - agents.llm_agents: List of LLM agent types
+                      - agents.big_five: Big Five personality trait options
+                      - agents.education_levels: List of education levels
+                      - agents.round_actions: Dict with min and max daily actions
+                      - servers.llm_api_key: API key for LLM services
+        owner (str, optional): Username of the owner/creator of this agent. Defaults to None.
+    
+    Returns:
+        Agent: A configured Agent object with randomized attributes, or None if creation fails.
+               The agent includes: name, email, password, age, gender, nationality, 
+               political leaning, interests, Big Five personality traits, education level,
+               language, toxicity level, and LLM configuration.
     """
 
-    locales = json.load(open("config_files/nationality_locale.json"))
+    BASE = Path(__file__).parent.absolute()
+    BASE = str(BASE).split("y_client")[0]
+    BASE = Path(BASE)
+
+    locales = json.load(open(BASE / "config_files" / "nationality_locale.json"))
     try:
         nationality = random.sample(config["agents"]["nationalities"], 1)[0]
     except:
@@ -120,11 +164,27 @@ def generate_user(config, owner=None):
 
 def generate_page(config, owner=None, name=None, feed_url=None):
     """
-    Generate a fake page
-    :param config: configuration dictionary
-    :param name: name of the page
-    :param feed_url: feed url of the page
-    :return: Agent object
+    Generate a synthetic page agent for publishing news content.
+    
+    This function creates a PageAgent that represents a news source or media outlet
+    in the social network simulation. Unlike regular users, pages are designed to
+    post news content from RSS feeds.
+    
+    Args:
+        config (dict): Configuration dictionary containing agent generation parameters.
+                      Required keys include:
+                      - agents.round_actions: Dict with min and max daily actions
+                      - agents.big_five: Big Five personality trait options
+                      - agents.llm_agents: List of LLM agent types
+                      - servers.llm_api_key: API key for LLM services
+        owner (str, optional): Username of the owner/creator of this page. Defaults to None.
+        name (str, optional): Name of the page/news source. Defaults to None.
+        feed_url (str, optional): RSS feed URL for the page to pull news from. Defaults to None.
+    
+    Returns:
+        PageAgent: A configured PageAgent object that can publish news content.
+                  The page has minimal demographic attributes (no age, gender, nationality, etc.)
+                  but includes LLM configuration and Big Five personality traits.
     """
 
     fake = faker.Faker()

@@ -1,12 +1,27 @@
+"""
+Web Client Module
+
+This module provides YClientWeb, a web-based client implementation for running
+Y social network simulations. Unlike the base client, this version manages
+its own database connection and is designed for web application deployment.
+
+The client handles database initialization, agent management, and simulation
+execution through a web interface.
+
+Global Variables:
+    - session: SQLAlchemy database session (initialized on client creation)
+    - engine: Database engine connection
+    - base: SQLAlchemy declarative base
+"""
+
 import json
-import sys
 import os
-import shutil
 import csv
-from sqlalchemy.ext.declarative import declarative_base
-import sqlalchemy as db
+import shutil
+import sys
+from pathlib import Path
+
 from requests import get, post
-from sqlalchemy import orm
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -15,8 +30,32 @@ session = None
 engine = None
 base = None
 
+from y_client.content_store import initialize_content_store
+from y_client.classes.base_agent import (
+    _emotion_annotation_from_config,
+    _opinion_dynamics_from_config,
+)
+
 
 class YClientWeb(object):
+    """
+    Web-based client for Y social network simulations.
+    
+    This client is designed for web application deployments and manages
+    its own database connections. It provides a simpler interface compared
+    to YClientBase, focusing on essential simulation features.
+    
+    Attributes:
+        config (dict): Simulation configuration
+        prompts (dict): LLM prompts for agent behaviors
+        base_path (str): Base path for data files
+        agents_owner (str): Owner of the simulation
+        days (int): Total simulation days
+        slots (int): Time slots per day
+        first_run (bool): Whether this is the first simulation run
+        (plus various simulation parameters from config)
+    """
+    
     def __init__(
         self,
         config_file,
@@ -26,24 +65,60 @@ class YClientWeb(object):
         owner="admin",
         first_run=False,
         network=None,
+        log_file=None,
+        llm=True
     ):
         """
-        Initialize the YClient object
+        Initialize the web-based YClient simulation environment.
+        
+        This constructor sets up the simulation with database connections,
+        loads configuration and prompts, and prepares for agent creation
+        and simulation execution.
+        
+        Args:
+            config_file (dict): Configuration dictionary (not filename) containing
+                               simulation parameters
+            data_base_path (str): Path to directory containing prompts.json and other
+                                 data files
+            agents_filename (str, optional): Path to JSON file with pre-existing agents.
+                                            Defaults to None.
+            agents_output (str, optional): Path to save generated agents. 
+                                          Defaults to "agents.json".
+            owner (str, optional): Username of simulation owner. Defaults to "admin".
+            first_run (bool, optional): Whether this is the first run (affects setup).
+                                       Defaults to False.
+            network (optional): Network configuration (currently unused). Defaults to None.
+            log_file (str, optional): Path to the log file for agent execution time tracking.
+                                     When None (default), automatically derived as
+                                     ``{data_base_path}/{simulation_name}_client.log``
+                                     so it lands inside the experiment-specific folder.
 
-        :param config_filename: the configuration file for the simulation in JSON format
-        :param prompts_filename: the LLM prompts file for the simulation in JSON format
-        :param agents_filename: the file containing the agents in JSON format
-        :param graph_file: the file containing the graph of the agents in CSV format, where the number of nodes is equal to the number of agents
-        :param agents_output: the file to save the generated agents in JSON format
-        :param owner: the owner of the simulation
-        :param first_run: if it is the first run of the simulation
+            llm (bool, optional): Whether or not to use LLM for agent behaviors. Defaults to True.
+        
+        Side effects:
+            - Loads prompts from data_base_path/prompts.json
+            - Creates SQLite database from clean schema if it doesn't exist
+            - Initializes global session, engine, and base variables for database access
+            - Normalizes action likelihood probabilities to sum to 1.0
+            - Configures the global logger for agent execution time tracking
         """
+        from y_client.logger import set_logger
+
+        self.llm_active = llm
 
         self.first_run = first_run
         self.base_path = data_base_path
         self.config = config_file
 
-        self.prompts = json.load(open(f"{data_base_path}prompts.json", "r"))
+        # Derive log file path from simulation name when none is provided
+        if log_file is None:
+            simulation_name = self.config["simulation"]["name"]
+            log_file = os.path.join(data_base_path, f"{simulation_name}_client.log")
+
+        # Configure the logger with the resolved log file path
+        set_logger(log_file)
+
+        self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 
         self.agents_owner = owner
         self.agents_filename = agents_filename
@@ -51,9 +126,9 @@ class YClientWeb(object):
 
         self.days = int(self.config["simulation"]["days"])
         self.slots = int(self.config["simulation"]["slots"])
-        self.percentage_new_agents_iteration = float(self.config["simulation"][
-            "percentage_new_agents_iteration"
-        ])
+        self.percentage_new_agents_iteration = float(
+            self.config["simulation"].get("percentage_new_agents_iteration", 0)
+        )
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
         self.percentage_removed_agents_iteration = float(
             self.config["simulation"]["percentage_removed_agents_iteration"]
@@ -67,38 +142,35 @@ class YClientWeb(object):
             k: v / tot for k, v in self.actions_likelihood.items()
         }
 
+        self.agent_archetypes = self.config["simulation"]["agent_archetypes"]
+
+        # opinions' parameters
+        self.opinion_dynamics = _opinion_dynamics_from_config(self.config)
+
         # users' parameters
         self.fratio = float(self.config["agents"]["reading_from_follower_ratio"])
-        self.max_length_thread_reading = int(self.config["agents"][
-            "max_length_thread_reading"
-        ])
+        self.max_length_thread_reading = int(
+            self.config["agents"]["max_length_thread_reading"]
+        )
 
         # posts' parameters
         self.visibility_rd = int(self.config["posts"]["visibility_rounds"])
 
-        ##############
-        BASE_DIR = os.path.dirname(os.path.abspath(__file__)).split("y_client")[0]
-        if not os.path.exists(f"{BASE_DIR}experiments/{self.config['simulation']['name']}.db"):
-            # copy the clean database to the experiments folder
-            shutil.copyfile(
-                f"{BASE_DIR}data_schema/database_clean_client.db",
-                f"{BASE_DIR}experiments/{self.config['simulation']['name']}.db",
-            )
+        # emotion annotation
+        self.emotions_annotation = _emotion_annotation_from_config(self.config)
 
         global session, engine, base
-        base = declarative_base()
-
-        engine = db.create_engine(f"sqlite:////{BASE_DIR}experiments/{self.config['simulation']['name']}.db")
-        base.metadata.bind = engine
-        session = orm.scoped_session(orm.sessionmaker())(bind=engine)
-
+        session, engine, base = initialize_content_store(
+            data_base_path=data_base_path,
+            experiment_name=self.config["simulation"]["name"],
+        )
         globals()["session"] = session
         globals()["engine"] = engine
         globals()["base"] = base
-        ##############
 
-        yclient_path = os.path.dirname(os.path.abspath(__file__)).split("y_web")[0]
-        sys.path.append(f'{yclient_path}{os.sep}external{os.sep}YClient/')
+        yclient_path = Path(__file__).parent.absolute()
+        yclient_path = str(yclient_path).split("y_web")[0]
+        sys.path.append(str(Path(yclient_path) / "external" / "YClient"))
 
         from y_client.classes import Agent, Agents, SimulationSlot
         from y_client.news_feeds import Feeds
@@ -118,22 +190,32 @@ class YClientWeb(object):
 
     @staticmethod
     def _extract_user_id_response(response, username):
+        status = getattr(response, "status_code", None)
         raw = ""
         try:
             raw = response.text or ""
         except Exception:
             raw = ""
+        if status is not None and status != 200:
+            print(
+                f"WARNING: /get_user_id returned status={status} for username "
+                f"'{username}' — skipping. body={raw[:200]!r}"
+            )
+            return None
         try:
             payload = json.loads(raw)
-        except Exception as exc:
-            raise RuntimeError(
-                f"Invalid /get_user_id response for username '{username}': "
-                f"status={getattr(response, 'status_code', 'n/a')} body={raw[:200]!r}"
-            ) from exc
-        if not isinstance(payload, dict):
-            raise RuntimeError(
-                f"Unexpected /get_user_id payload for username '{username}': {payload!r}"
+        except Exception:
+            print(
+                f"WARNING: /get_user_id returned non-JSON for username '{username}' "
+                f"— skipping. status={status} body={raw[:200]!r}"
             )
+            return None
+        if not isinstance(payload, dict):
+            print(
+                f"WARNING: Unexpected /get_user_id payload for username '{username}' "
+                f"— skipping. payload={payload!r}"
+            )
+            return None
         return payload.get("id")
 
     def _rule_based_agents_enabled(self):
@@ -212,19 +294,24 @@ class YClientWeb(object):
 
         :return:
         """
-        from y_client.classes import Agent, FakeAgent, FakePageAgent, PageAgent
         import y_client.recsys as recsys
         import y_client.recsys as frecsys
+        from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
 
         AgentClass = FakeAgent if self._rule_based_agents_enabled() else Agent
         PageClass = FakePageAgent if self._rule_based_agents_enabled() else PageAgent
 
         # population filename
-        self.agents_filename = f"{self.base_path}{self.config['simulation']['population']}.json"
-        data = json.load(open(self.agents_filename, "r"))
-        for ag in data['agents']:
-            if ag["is_page"] == 0:
+        self.agents_filename = os.path.join(
+            self.base_path, f"{self.config['simulation']['population'].replace(' ', '')}.json"
+        )
 
+        print(f"Loading agents from {self.agents_filename}")
+
+        data = json.load(open(self.agents_filename, "r"))
+        for ag in data["agents"]:
+
+            if ag["is_page"] == 0:
                 content_recsys = getattr(recsys, ag["rec_sys"])()
                 follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
@@ -259,11 +346,9 @@ class YClientWeb(object):
                     activity_profile=ag.get("activity_profile") or "Always On",
                     archetype=ag.get("archetype"),
                     opinions=ag.get("opinions"),
-                    experiment_db_path=os.path.join(self.base_path, "database_server.db"),
                 )
 
                 agent.set_prompts(self.prompts)
-
                 self.agents.add_agent(agent)
 
             else:
@@ -278,40 +363,46 @@ class YClientWeb(object):
                 content_recsys = getattr(recsys, "ReverseChronoPopularity")()
                 follow_recsys = getattr(frecsys, "Jaccard")(leaning_bias=1.5)
 
-                page = PageClass(
-                    name=ag["name"],
-                    pwd="",
-                    email=ag["email"],
-                    age=0,
-                    ag_type=ag["type"],
-                    leaning=None,
-                    interests=[],
-                    config=self.config,
-                    big_five=big_five,
-                    language=None,
-                    education_level=None,
-                    owner=ag["owner"],
-                    round_actions=ag["round_actions"],
-                    gender=None,
-                    nationality=None,
-                    toxicity=None,
-                    api_key="",
-                    feed_url=ag["feed_url"],
-                    activity_profile=ag.get("activity_profile") or "Always On",
-                    recsys=content_recsys,
-                    frecsys=follow_recsys,
-                    is_page=1,
-                    web=True
-                )
+                try:
+                    page = PageClass(
+                        name=ag["name"],
+                        pwd="",
+                        email=ag["email"],
+                        age=0,
+                        ag_type=ag["type"],
+                        leaning=None,
+                        interests=[],
+                        config=self.config,
+                        big_five=big_five,
+                        language=None,
+                        education_level=None,
+                        owner=ag["owner"],
+                        round_actions=ag["round_actions"],
+                        gender=None,
+                        nationality=None,
+                        toxicity=None,
+                        api_key="",
+                        feed_url=ag["feed_url"],
+                        activity_profile=ag.get("activity_profile") or "Always On",
+                        recsys=content_recsys,
+                        frecsys=follow_recsys,
+                        is_page=1,
+                        web=True
+                    )
 
-                page.set_prompts(self.prompts)
-                self.agents.add_agent(page)
-                self.pages.append({
-                    "name": ag["name"],
-                    "feed": ag["feed_url"],
-                    "leaning": ag["leaning"],
-                    "category": ag["type"]
-                })
+                    page.set_prompts(self.prompts)
+                    self.agents.add_agent(page)
+                    self.pages.append(
+                        {
+                            "name": ag["name"],
+                            "feed": ag["feed_url"],
+                            "leaning": ag["leaning"],
+                            "category": ag["type"],
+                        }
+                    )
+                except Exception:
+                    print(f"Error loading page agent: {ag['name']}")
+                    continue
 
     def set_interests(self):
         """
@@ -387,6 +478,7 @@ class YClientWeb(object):
                 1,
                 int(len(self.agents.agents) * self.percentage_removed_agents_iteration),
             )
+
             st = json.dumps({"n_users": n_users, "left_on": tid})
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -407,15 +499,16 @@ class YClientWeb(object):
         from y_client.utils import generate_user
 
         if agent is None:
-            try:
-                agent = generate_user(self.config, owner=self.agents_owner)
+            # try:
 
-                if agent is None:
-                    return
-                agent.set_prompts(self.prompts)
-                agent.set_rec_sys(self.content_recsys, self.follow_recsys)
-            except Exception:
-                pass
+            agent = generate_user(self.config, owner=self.agents_owner)
+
+            if agent is None:
+                return
+            agent.set_prompts(self.prompts)
+            agent.set_rec_sys(self.content_recsys, self.follow_recsys)
+        # except Exception:
+        #     pass
         if agent is not None:
             self.agents.add_agent(agent)
 

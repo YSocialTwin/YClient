@@ -92,7 +92,7 @@ def _llm_eval(llm_config, text):
         system_message="",
         max_consecutive_auto_reply=1,
     )
-    return user_agent.generate_reply(messages=[{"role": "user", "content": text}])
+    return user_agent._generate_reply(text)
 
 
 class Direction(Enum):

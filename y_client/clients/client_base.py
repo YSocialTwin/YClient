@@ -64,7 +64,7 @@ class YClientBase(object):
         graph_file=None,
         agents_output="agents.json",
         owner="admin",
-        log_file="agent_execution.log",
+        log_file=None,
     ):
         """
         Initialize the YClient simulation environment.
@@ -88,7 +88,9 @@ class YClientBase(object):
             owner (str, optional): Username of the simulation owner/administrator.
                                   Defaults to "admin".
             log_file (str, optional): Path to the log file for agent execution time tracking.
-                                     Defaults to "agent_execution.log" in the current directory.
+                                     When None (default), automatically derived from the
+                                     simulation name as
+                                     ``experiments/{simulation_name}_client.log``.
         
         Raises:
             Exception: If prompts_filename is None (prompts are required)
@@ -104,11 +106,17 @@ class YClientBase(object):
         if prompts_filename is None:
             raise Exception("Prompts file not found")
 
-        # Configure the logger with the specified log file
-        set_logger(log_file)
-
         self.prompts = json.load(open(prompts_filename, "r"))
         self.config = json.load(open(config_filename, "r"))
+
+        # Derive log file path from simulation name when none is provided
+        if log_file is None:
+            simulation_name = self.config["simulation"]["name"]
+            log_file = os.path.join("experiments", f"{simulation_name}_client.log")
+
+        # Configure the logger with the resolved log file path
+        set_logger(log_file)
+
         initialize_content_store(experiment_name=self.config["simulation"]["name"])
         self.agents_owner = owner
         self.agents_filename = agents_filename
@@ -290,8 +298,10 @@ class YClientBase(object):
                     return
                 agent.set_prompts(self.prompts)
                 agent.set_rec_sys(self.content_recsys, self.follow_recsys)
-            except Exception:
-                pass
+            except Exception as exc:
+                raise RuntimeError(
+                    f"Failed to generate/register agent for owner '{self.agents_owner}'"
+                ) from exc
         if agent is not None:
             self.agents.add_agent(agent)
 

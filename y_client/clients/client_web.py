@@ -65,7 +65,7 @@ class YClientWeb(object):
         owner="admin",
         first_run=False,
         network=None,
-        log_file="agent_execution.log",
+        log_file=None,
         llm=True
     ):
         """
@@ -89,7 +89,9 @@ class YClientWeb(object):
                                        Defaults to False.
             network (optional): Network configuration (currently unused). Defaults to None.
             log_file (str, optional): Path to the log file for agent execution time tracking.
-                                     Defaults to "agent_execution.log" in the current directory.
+                                     When None (default), automatically derived as
+                                     ``{data_base_path}/{simulation_name}_client.log``
+                                     so it lands inside the experiment-specific folder.
 
             llm (bool, optional): Whether or not to use LLM for agent behaviors. Defaults to True.
         
@@ -101,15 +103,20 @@ class YClientWeb(object):
             - Configures the global logger for agent execution time tracking
         """
         from y_client.logger import set_logger
-        
-        # Configure the logger with the specified log file
-        set_logger(log_file)
 
         self.llm_active = llm
 
         self.first_run = first_run
         self.base_path = data_base_path
         self.config = config_file
+
+        # Derive log file path from simulation name when none is provided
+        if log_file is None:
+            simulation_name = self.config["simulation"]["name"]
+            log_file = os.path.join(data_base_path, f"{simulation_name}_client.log")
+
+        # Configure the logger with the resolved log file path
+        set_logger(log_file)
 
         self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 
@@ -183,22 +190,32 @@ class YClientWeb(object):
 
     @staticmethod
     def _extract_user_id_response(response, username):
+        status = getattr(response, "status_code", None)
         raw = ""
         try:
             raw = response.text or ""
         except Exception:
             raw = ""
+        if status is not None and status != 200:
+            print(
+                f"WARNING: /get_user_id returned status={status} for username "
+                f"'{username}' — skipping. body={raw[:200]!r}"
+            )
+            return None
         try:
             payload = json.loads(raw)
-        except Exception as exc:
-            raise RuntimeError(
-                f"Invalid /get_user_id response for username '{username}': "
-                f"status={getattr(response, 'status_code', 'n/a')} body={raw[:200]!r}"
-            ) from exc
-        if not isinstance(payload, dict):
-            raise RuntimeError(
-                f"Unexpected /get_user_id payload for username '{username}': {payload!r}"
+        except Exception:
+            print(
+                f"WARNING: /get_user_id returned non-JSON for username '{username}' "
+                f"— skipping. status={status} body={raw[:200]!r}"
             )
+            return None
+        if not isinstance(payload, dict):
+            print(
+                f"WARNING: Unexpected /get_user_id payload for username '{username}' "
+                f"— skipping. payload={payload!r}"
+            )
+            return None
         return payload.get("id")
 
     def _rule_based_agents_enabled(self):

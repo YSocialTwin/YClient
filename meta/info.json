@@ -1,0 +1,10 @@
+{
+  "plugin_name": "YClient",
+  "category": "Simulation Runtime Stack",
+  "group": "Microblogging",
+  "description": "Client-side microblogging simulation runtime for YSocial experiments.",
+  "authors": [
+    "YSocialTwin"
+  ],
+  "repository_url": "https://github.com/YSocialTwin/YClient"
+}

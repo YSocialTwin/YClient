@@ -761,44 +761,88 @@ class FakeAgent(Agent):
                 if news == "":
                     return None, None
 
-                # get image given article id and set the remote id
-                image = content_store.get_random_image()
+                res = self.news(tid=tid, article=news, website=website)
+                article_id = int(
+                    json.loads(res.__dict__["_content"].decode("utf-8"))["article_id"]
+                )
+
+                image = content_store.get_image_by_article_id(article_id)
 
                 if image is None:
                     return None, None
                 else:
-                    content_store.save_image_remote_article(image.id, None)
+                    image = content_store.save_image_remote_article(image.id, article_id)
 
                     # annotate the image with a description
                     an = Annotator(self.llm_v_config)
                     description = an.annotate(image.url)
 
                     if description is not None:
-                        content_store.save_image_description(image.id, description)
+                        image = content_store.save_image_description(image.id, description)
                     else:
                         # delete image
                         content_store.delete_image(image.id)
                         return None, None
 
-                    return image, None
+                    return image, article_id
 
             # images available, check if they have a description
             else:
+                if image.remote_article_id is None:
+                    _, article, website = content_store.get_image_with_article_and_website(
+                        image.id
+                    )
+                    if article is None or website is None:
+                        return None, None
+
+                    st = json.dumps(
+                        {
+                            "user_id": self.user_id,
+                            "tweet": "",
+                            "emotions": [],
+                            "hashtags": [],
+                            "mentions": [],
+                            "tid": tid,
+                            "title": article.title,
+                            "summary": article.summary,
+                            "link": article.link,
+                            "publisher": website.name,
+                            "rss": website.rss,
+                            "leaning": website.leaning,
+                            "country": website.country,
+                            "language": website.language,
+                            "category": website.category,
+                            "fetched_on": website.last_fetched,
+                        }
+                    )
+
+                    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+                    api_url = f"{self.base_url}/news"
+                    res = post(f"{api_url}", headers=headers, data=st)
+                    remote_article_id = int(
+                        json.loads(res.__dict__["_content"].decode("utf-8"))[
+                            "article_id"
+                        ]
+                    )
+                    image = content_store.save_image_remote_article(
+                        image.id, remote_article_id
+                    )
+
                 if image.description is not None:
-                    return image, None
+                    return image, image.remote_article_id
 
                 else:
                     # annotate the image with a description
                     an = Annotator(config=self.llm_v_config)
                     description = an.annotate(image.url)
                     if description is not None:
-                        content_store.save_image_description(image.id, description)
+                        image = content_store.save_image_description(image.id, description)
                     else:
                         # delete image
                         content_store.delete_image(image.id)
                         return None, None
 
-                    return image, None
+                    return image, image.remote_article_id
 
     @log_execution_time
     def comment_image(self, image: object, tid: int, article_id: int = None):

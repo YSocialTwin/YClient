@@ -2130,7 +2130,7 @@ class Agent(object):
                 my_text=post_text,
                 conv_text=conv,
             )
-            self.__update_user_interests(data, tid)
+            self.__update_user_interests(resolved_thread_root_id, tid)
             if self.opinions_enabled:
                 self.new_opinions(post_id, tid, post_text)
             return
@@ -2283,7 +2283,7 @@ class Agent(object):
             my_text=post_text,
             conv_text=conv,
         )
-        self.__update_user_interests(data, tid)
+        self.__update_user_interests(resolved_thread_root_id, tid)
 
         # if not followed, test unfollow
         if self.probability_of_secondary_follow > 0 and res is None:
@@ -3060,7 +3060,7 @@ class Agent(object):
 
         :return: The response from the service
         """
-        return self.content_rec_sys.read_mentions(self.base_url)
+        return self.content_rec_sys.read_mentions(self.base_url, self.user_id)
 
     @log_execution_time
     def search(self):

@@ -256,7 +256,15 @@ class FakeAgent(Agent):
             f"{api_url}", headers=headers, data=json.dumps({"post_id": post_id})
         )
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
-        self.__update_user_interests(data, tid)
+        resolved_thread_root_id = int(post_id)
+        try:
+            if isinstance(data, dict):
+                resolved_thread_root_id = int(data.get("id") or data.get("post_id") or post_id)
+            elif data is not None:
+                resolved_thread_root_id = int(data)
+        except Exception:
+            resolved_thread_root_id = int(post_id)
+        self.__update_user_interests(resolved_thread_root_id, tid)
 
         # if not followed, test unfollow
         if self.probability_of_secondary_follow > 0 and res is None:
@@ -679,7 +687,7 @@ class FakeAgent(Agent):
 
         :return: The response from the service
         """
-        return self.content_rec_sys.read_mentions(self.base_url)
+        return self.content_rec_sys.read_mentions(self.base_url, self.user_id)
 
     @log_execution_time
     def search(self):

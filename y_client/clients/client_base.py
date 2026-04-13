@@ -338,6 +338,9 @@ class YClientBase(object):
                     email=data["email"],
                     config=self.config,
                     load=True,
+                    opinions=data.get("opinions"),
+                    stubborn_topics=data.get("stubborn_topics"),
+                    custom_features=data.get("custom_features"),
                 )
 
                 agent.set_prompts(self.prompts)
@@ -360,7 +363,13 @@ class YClientBase(object):
         for a in agents["agents"]:
             try:
                 ag = Agent(
-                    name=a["name"], email=a["email"], load=True, config=self.config
+                    name=a["name"],
+                    email=a["email"],
+                    load=True,
+                    config=self.config,
+                    opinions=a.get("opinions"),
+                    stubborn_topics=a.get("stubborn_topics"),
+                    custom_features=a.get("custom_features"),
                 )
                 ag.set_prompts(self.prompts)
                 ag.set_rec_sys(self.content_recsys, self.follow_recsys)

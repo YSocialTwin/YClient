@@ -63,7 +63,13 @@ class YClientWithPages(YClientBase):
             try:
                 if a["is_page"] == 0:
                     ag = Agent(
-                        name=a["name"], email=a["email"], load=True, config=self.config
+                        name=a["name"],
+                        email=a["email"],
+                        load=True,
+                        config=self.config,
+                        opinions=a.get("opinions"),
+                        stubborn_topics=a.get("stubborn_topics"),
+                        custom_features=a.get("custom_features"),
                     )
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)

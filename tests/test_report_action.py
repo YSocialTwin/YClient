@@ -63,3 +63,39 @@ def test_select_action_lite_read_never_reports(monkeypatch):
 
     assert reaction_calls == [(5, 4, True)]
     assert report_calls == []
+
+
+def test_set_prompts_includes_custom_features_in_roleplay_prompt(monkeypatch):
+    agent = Agent.__new__(Agent)
+    agent.name = "tester"
+    agent.custom_features = {"Class": "Mage", "Guild": "North"}
+
+    monkeypatch.setattr(
+        "y_client.classes.base_agent.content_store.get_agent_custom_prompt",
+        lambda name: None,
+    )
+
+    prompts = {"agent_roleplay_simple": "Persona base"}
+    agent.set_prompts(prompts)
+
+    rendered = agent._Agent__effify(agent.prompts["agent_roleplay_simple"])
+
+    assert "Additional personal details:" in rendered
+    assert "Class: Mage" in rendered
+    assert "Guild: North" in rendered
+
+
+def test_set_prompts_leaves_roleplay_prompt_unchanged_without_custom_features(monkeypatch):
+    agent = Agent.__new__(Agent)
+    agent.name = "tester"
+    agent.custom_features = {}
+
+    monkeypatch.setattr(
+        "y_client.classes.base_agent.content_store.get_agent_custom_prompt",
+        lambda name: None,
+    )
+
+    prompts = {"agent_roleplay_simple": "Persona base"}
+    agent.set_prompts(prompts)
+
+    assert agent.prompts["agent_roleplay_simple"] == "Persona base"

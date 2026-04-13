@@ -346,6 +346,8 @@ class YClientWeb(object):
                     activity_profile=ag.get("activity_profile") or "Always On",
                     archetype=ag.get("archetype"),
                     opinions=ag.get("opinions"),
+                    stubborn_topics=ag.get("stubborn_topics"),
+                    custom_features=ag.get("custom_features"),
                 )
 
                 agent.set_prompts(self.prompts)
@@ -449,7 +451,14 @@ class YClientWeb(object):
             try:
                 if a["is_page"] == 0:
                     ag = AgentClass(
-                        name=a["name"], email=a["email"], load=True, config=self.config, web=True
+                        name=a["name"],
+                        email=a["email"],
+                        load=True,
+                        config=self.config,
+                        web=True,
+                        opinions=a.get("opinions"),
+                        stubborn_topics=a.get("stubborn_topics"),
+                        custom_features=a.get("custom_features"),
                     )
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)

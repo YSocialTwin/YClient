@@ -198,6 +198,8 @@ class Agent(object):
         profession: str = None,
         opinions: dict = None,
         archetype: str = None,
+        stubborn_topics: dict | list | None = None,
+        custom_features: dict | None = None,
         *args,
         **kwargs,
     ):
@@ -275,6 +277,8 @@ class Agent(object):
                 profession=profession,
                 opinions=opinions,
                 archetype=archetype,
+                stubborn_topics=stubborn_topics,
+                custom_features=custom_features,
                 *args,
                 **kwargs,
             )
@@ -309,6 +313,8 @@ class Agent(object):
             self.activity_profile = kwargs.get("activity_profile")
             self.archetype = archetype
             self.opinions = opinions
+            self.stubborn_topics = self._normalize_stubborn_topics(stubborn_topics)
+            self.custom_features = dict(custom_features or {})
             self.opinion_dynamics = _opinion_dynamics_from_config(config)
             self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
             self.llm_v_config = {
@@ -483,6 +489,8 @@ class Agent(object):
         activity_profile: str = None,
         opinions: dict = None,
         archetype: str = None,
+        stubborn_topics: dict | list | None = None,
+        custom_features: dict | None = None,
         *args,
         **kwargs,
     ):
@@ -521,6 +529,8 @@ class Agent(object):
         self.activity_profile = activity_profile
         self.archetype = archetype
         self.opinions = opinions
+        self.stubborn_topics = self._normalize_stubborn_topics(stubborn_topics)
+        self.custom_features = dict(custom_features or {})
         self.opinion_dynamics = _opinion_dynamics_from_config(config)
         self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
 
@@ -681,6 +691,32 @@ class Agent(object):
         kwargs["self"] = self
         return eval(f'f"""{non_f_str}"""', kwargs)
 
+    def _custom_features_persona_clause(self):
+        custom_features = dict(getattr(self, "custom_features", {}) or {})
+        if not custom_features:
+            return ""
+        parts = []
+        for key in sorted(custom_features.keys(), key=lambda value: str(value).lower()):
+            label = str(key).strip()
+            if not label:
+                continue
+            raw_value = custom_features.get(key)
+            value = str(raw_value).strip() if raw_value is not None else ""
+            parts.append(f"{label}: {value}" if value else label)
+        if not parts:
+            return ""
+        return "Additional personal details: " + "; ".join(parts) + "."
+
+    def _augment_roleplay_prompt_with_custom_features(self, prompt):
+        marker = "{self._custom_features_persona_clause()}"
+        if (
+            not isinstance(prompt, str)
+            or marker in prompt
+            or not self._custom_features_persona_clause()
+        ):
+            return prompt
+        return f"{prompt.rstrip()}\n\n{marker}"
+
     def _has_usable_llm_config(self):
         """Return True when a concrete model is configured for chat generation."""
         try:
@@ -716,6 +752,21 @@ class Agent(object):
             for topic in topics
             if str(topic).strip()
         }
+
+    @staticmethod
+    def _normalize_stubborn_topics(raw_topics):
+        if isinstance(raw_topics, dict):
+            return {
+                str(topic).strip()
+                for topic, is_stubborn in raw_topics.items()
+                if str(topic).strip() and bool(is_stubborn)
+            }
+        if isinstance(raw_topics, (list, tuple, set)):
+            return {str(topic).strip() for topic in raw_topics if str(topic).strip()}
+        return set()
+
+    def _is_stubborn_topic(self, topic_name):
+        return str(topic_name or "").strip() in getattr(self, "stubborn_topics", set())
 
     @staticmethod
     def _decode_json_response(response, default=None):
@@ -755,6 +806,9 @@ class Agent(object):
     def _persist_user_opinions(self, opinions, *, tid, id_interacted_with=-1, id_post=-1):
         if not opinions:
             return False
+        stubborn_topics = sorted(
+            topic_name for topic_name in opinions.keys() if self._is_stubborn_topic(topic_name)
+        )
         response = self._post_json_api(
             "set_user_opinions",
             {
@@ -763,6 +817,7 @@ class Agent(object):
                 "round": int(tid),
                 "id_interacted_with": int(id_interacted_with if id_interacted_with is not None else -1),
                 "id_post": int(id_post if id_post is not None else -1),
+                "stubborn_topics": stubborn_topics,
             },
         )
         payload = self._decode_json_response(response, default={})
@@ -873,6 +928,8 @@ class Agent(object):
 
         updated = {}
         for topic_name in topic_names:
+            if self._is_stubborn_topic(topic_name):
+                continue
             author_opinion = author_opinions.get(topic_name)
             if author_opinion is None:
                 continue
@@ -945,6 +1002,17 @@ class Agent(object):
                 ] = f"{aprompt.prompt} - Act as requested by the Handler."
         except:
             pass
+
+        for prompt_key in (
+            "agent_roleplay",
+            "agent_roleplay_simple",
+            "agent_roleplay_base",
+            "agent_roleplay_comments_share",
+        ):
+            if prompt_key in self.prompts:
+                self.prompts[prompt_key] = self._augment_roleplay_prompt_with_custom_features(
+                    self.prompts[prompt_key]
+                )
 
     def _init_memory_config(self, config):
         agents_cfg = _memory_settings_from_config(config)
@@ -1676,7 +1744,17 @@ class Agent(object):
 
         if self.opinions_enabled:
             api_url = f"{self.base_url}/set_user_opinions"
-            data = {"user_id": uid, "opinions": self.opinions, "round": self.joined_on}
+            data = {
+                "user_id": uid,
+                "opinions": self.opinions,
+                "round": self.joined_on,
+                "stubborn_topics": sorted(getattr(self, "stubborn_topics", set())),
+            }
+            post(f"{api_url}", headers=headers, data=json.dumps(data))
+
+        if getattr(self, "custom_features", None):
+            api_url = f"{self.base_url}/set_user_custom_features"
+            data = {"user_id": uid, "custom_features": self.custom_features}
             post(f"{api_url}", headers=headers, data=json.dumps(data))
 
         return uid
@@ -3359,6 +3437,8 @@ class Agent(object):
             if topic in agent_filtered_opinions:
                 # update the opinion as the average of the two
                 tp_name = filtered_topics[topic]
+                if self._is_stubborn_topic(tp_name):
+                    continue
 
                 agent_filtered_opinions[topic] = update(uid=self.user_id, x=agent_filtered_opinions[topic], y=opinion,
                                                         text=text, topic=tp_name,
@@ -3375,6 +3455,11 @@ class Agent(object):
                 "id_post": int(post_id),
                 "id_interacted_with": int(author_id),
                 "round": int(tid),
+                "stubborn_topics": sorted(
+                    tp_name
+                    for topic_id, tp_name in filtered_topics.items()
+                    if topic_id in agent_filtered_opinions and self._is_stubborn_topic(tp_name)
+                ),
             }
 
         post(
@@ -3440,6 +3525,10 @@ class Agent(object):
             "activity_profile": getattr(self, "activity_profile", None),
             "archetype": getattr(self, "archetype", None),
             "opinions": opinions,
+            "stubborn_topics": {
+                topic_name: True for topic_name in sorted(getattr(self, "stubborn_topics", set()))
+            },
+            "custom_features": dict(getattr(self, "custom_features", {}) or {}),
         }
 
     def __emotion_annotation(self, text_to_annotate: str):

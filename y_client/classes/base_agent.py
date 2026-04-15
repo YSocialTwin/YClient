@@ -28,8 +28,6 @@ from y_client.logger import log_execution_time
 import random
 from requests import get, post
 import json
-import os
-import uuid
 import numpy as np
 import re
 import logging
@@ -1938,8 +1936,8 @@ class Agent(object):
             max_round=1,
         )
 
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
+        # emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        # emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -2019,8 +2017,8 @@ class Agent(object):
             max_round=1,
         )
 
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
+        # emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        # emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -2293,8 +2291,8 @@ class Agent(object):
             max_round=1,
         )
 
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
+        #emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        #emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -2489,8 +2487,8 @@ class Agent(object):
             max_round=1,
         )
 
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
+        # emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        # emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
 
@@ -3329,8 +3327,8 @@ class Agent(object):
             max_round=1,
         )
 
-        emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
-        emotion_eval = self.__clean_emotion(emotion_eval)
+        # emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        # emotion_eval = self.__clean_emotion(emotion_eval)
 
         post_text = u2.chat_messages[u1][-2]["content"]
         post_text = self.__clean_text(post_text)

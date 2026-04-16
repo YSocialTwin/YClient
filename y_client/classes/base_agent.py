@@ -2322,7 +2322,7 @@ class Agent(object):
         post_text = self.__clean_text(post_text)
 
         emotion_eval = []
-        if self.annotate_emotions:
+        if getattr(self, "annotate_emotions", False):
             emotion_eval = self.__emotion_annotation(post_text)
 
         # avoid posting empty messages
@@ -2330,7 +2330,7 @@ class Agent(object):
             return
 
         emotion_eval = []
-        if self.annotate_emotions:
+        if getattr(self, "annotate_emotions", False):
             emotion_eval = self.__emotion_annotation(post_text)
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
@@ -2418,7 +2418,7 @@ class Agent(object):
         post_text = post_text.replace(f"@{self.name}", "")
 
         emotion_eval = []
-        if self.annotate_emotions:
+        if getattr(self, "annotate_emotions", False):
             emotion_eval = self.__emotion_annotation(post_text)
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
@@ -3867,6 +3867,10 @@ class Agent(object):
         # avoid posting empty messages
         if len(post_text) < 3:
             return
+
+        emotion_eval = []
+        if getattr(self, "annotate_emotions", False):
+            emotion_eval = self.__emotion_annotation(post_text)
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
 

@@ -303,7 +303,20 @@ class YClientBase(object):
                     f"Failed to generate/register agent for owner '{self.agents_owner}'"
                 ) from exc
         if agent is not None:
+            agent.simulation_client = self
             self.agents.add_agent(agent)
+
+    def process_reciprocal_follow_event(
+        self, *, actor_agent, target_user_id: int, action: str, tid: int
+    ) -> bool:
+        for candidate in self.agents.agents:
+            if getattr(candidate, "user_id", None) == int(target_user_id):
+                return bool(
+                    candidate.handle_reciprocal_follow_event(
+                        actor_agent, str(action or "").strip().lower(), int(tid)
+                    )
+                )
+        return False
 
     def create_initial_population(self):
         """
@@ -326,7 +339,7 @@ class YClientBase(object):
                     try:
                         fr_a = id_to_agent[u]
                         to_a = id_to_agent[v]
-                        fr_a.follow(tid=tid, target=to_a.user_id)
+                        fr_a.follow(tid=tid, target=to_a.user_id, reciprocal_check=False)
                     except Exception:
                         pass
 
@@ -428,11 +441,24 @@ class YClientBase(object):
                     # shuffle agents
                     random.shuffle(sagents)
                     for g in tqdm.tqdm(sagents):
+                        if getattr(g, "left_on", None) is not None:
+                            continue
                         self.sim_clock.maybe_heartbeat()
                         daily_active[g.name] = None
 
+                        try:
+                            if g.evaluate_stress_reward_churn(tid):
+                                self.agents.remove_agent_by_ids([g.user_id])
+                                continue
+                        except Exception:
+                            pass
+
                         for _ in range(g.round_actions):
                             self.sim_clock.maybe_heartbeat()
+                            try:
+                                g.refresh_stress_reward_state(tid, force=True)
+                            except Exception:
+                                pass
                             # sample two elements from a list with replacement
                             candidates = random.choices(
                                 acts,
@@ -468,6 +494,16 @@ class YClientBase(object):
                 for agent in tqdm.tqdm(da):
                     self.sim_clock.maybe_heartbeat()
                     if agent not in self.pages:
+                        try:
+                            if agent.evaluate_stress_reward_churn(tid):
+                                self.agents.remove_agent_by_ids([agent.user_id])
+                                continue
+                        except Exception:
+                            pass
+                        try:
+                            agent.refresh_stress_reward_state(tid, force=True)
+                        except Exception:
+                            pass
                         agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
 
                 total_users = len(self.agents.agents)

@@ -151,7 +151,7 @@ class FakeAgent(Agent):
         api_url = f"{self.base_url}/post"
         post(f"{api_url}", headers=headers, data=st)
         if self.opinions_enabled and interests:
-            self._record_self_post_opinions(topic_names=interests, tid=int(tid))
+            self._record_self_post_opinions(topic_ids=interests_id, tid=int(tid))
 
         # update topic of interest with the ones used to generate the post
         api_url = f"{self.base_url}/set_user_interests"
@@ -453,7 +453,12 @@ class FakeAgent(Agent):
 
     @log_execution_time
     def follow(
-        self, tid: int, target: int = None, post_id: int = None, action="follow"
+        self,
+        tid: int,
+        target: int = None,
+        post_id: int = None,
+        action="follow",
+        reciprocal_check=True,
     ):
         """
         Follow a user
@@ -483,6 +488,21 @@ class FakeAgent(Agent):
 
             api_url = f"{self.base_url}/follow"
             post(f"{api_url}", headers=headers, data=st)
+            if reciprocal_check and getattr(self, "simulation_client", None) is not None:
+                try:
+                    self.simulation_client.process_reciprocal_follow_event(
+                        actor_agent=self,
+                        target_user_id=int(target),
+                        action=str(action or "").strip().lower(),
+                        tid=int(tid),
+                    )
+                except Exception:
+                    pass
+
+    def _should_reciprocate_follow_event(self, source_agent, action: str) -> bool:
+        if self.probability_of_follow_back <= 0:
+            return False
+        return bool(np.random.rand() <= self.probability_of_follow_back)
 
     def followers(self):
         """

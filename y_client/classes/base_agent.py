@@ -22,6 +22,7 @@ from y_client.classes.annotator import Annotator
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.classes.time import SimulationSlot
 from y_client.memory_runtime import build_agent_memory_engine
+from y_client.stress_reward.update_system import StressRewardSystem, deep_update
 import y_client.opinion_dynamics as op_dynamics
 from y_client import content_store
 from y_client.logger import log_execution_time
@@ -84,6 +85,44 @@ def _llm_agents_enabled_from_config(config):
     )
 
 
+def _llm_model_from_config(config, default=None):
+    servers_cfg = (config or {}).get("servers", {}) if isinstance(config, dict) else {}
+    model = servers_cfg.get("llm_model")
+    if isinstance(model, str) and model.strip():
+        return model.strip()
+
+    agents_cfg = (config or {}).get("agents", {}) if isinstance(config, dict) else {}
+    llm_agents = agents_cfg.get("llm_agents")
+    if isinstance(llm_agents, list):
+        for candidate in llm_agents:
+            if isinstance(candidate, str) and candidate.strip():
+                return candidate.strip()
+    elif isinstance(llm_agents, str) and llm_agents.strip():
+        return llm_agents.strip()
+
+    if isinstance(default, str) and default.strip():
+        return default.strip()
+    return None
+
+
+def _llm_max_tokens_from_config(config, default=-1):
+    servers_cfg = (config or {}).get("servers", {}) if isinstance(config, dict) else {}
+    value = servers_cfg.get("llm_max_tokens", default)
+    try:
+        return int(value)
+    except Exception:
+        return int(default)
+
+
+def _llm_temperature_from_config(config, default=0.0):
+    servers_cfg = (config or {}).get("servers", {}) if isinstance(config, dict) else {}
+    value = servers_cfg.get("llm_temperature", default)
+    try:
+        return float(value)
+    except Exception:
+        return float(default)
+
+
 def _opinion_dynamics_from_config(config):
     if not isinstance(config, dict):
         return {}
@@ -129,6 +168,52 @@ def _memory_settings_from_config(config):
             merged[key] = value
 
     return merged
+
+
+def _stress_reward_settings_from_config(config):
+    settings = {
+        "enabled": False,
+        "backward_rounds": 24,
+        "system": {},
+    }
+    if not isinstance(config, dict):
+        return settings
+
+    simulation_cfg = config.get("simulation", {})
+    if not isinstance(simulation_cfg, dict):
+        simulation_cfg = {}
+
+    top_level_cfg = config.get("stress_reward")
+    if isinstance(top_level_cfg, dict):
+        settings["system"] = deep_update(settings["system"], top_level_cfg.get("system") or {})
+        if "enabled" in top_level_cfg:
+            settings["enabled"] = bool(top_level_cfg.get("enabled"))
+        if "backward_rounds" in top_level_cfg:
+            settings["backward_rounds"] = int(top_level_cfg.get("backward_rounds"))
+
+    simulation_sr_cfg = simulation_cfg.get("stress_reward")
+    if isinstance(simulation_sr_cfg, dict):
+        settings["system"] = deep_update(
+            settings["system"], simulation_sr_cfg.get("system") or {}
+        )
+        if "enabled" in simulation_sr_cfg:
+            settings["enabled"] = bool(simulation_sr_cfg.get("enabled"))
+        if "backward_rounds" in simulation_sr_cfg:
+            settings["backward_rounds"] = int(simulation_sr_cfg.get("backward_rounds"))
+
+    if "stress_reward_enabled" in config:
+        settings["enabled"] = bool(config.get("stress_reward_enabled"))
+    if "stress_reward_enabled" in simulation_cfg:
+        settings["enabled"] = bool(simulation_cfg.get("stress_reward_enabled"))
+    if "stress_reward_annotation" in config:
+        settings["enabled"] = bool(config.get("stress_reward_annotation"))
+    if "stress_reward_annotation" in simulation_cfg:
+        settings["enabled"] = bool(simulation_cfg.get("stress_reward_annotation"))
+
+    if settings["backward_rounds"] < 0:
+        settings["backward_rounds"] = 24
+
+    return settings
 
 
 class Agent(object):
@@ -306,6 +391,9 @@ class Agent(object):
             self.probability_of_secondary_follow = float(
                 config["agents"].get("probability_of_secondary_follow", 0)
             )
+            self.probability_of_follow_back = float(
+                config["agents"].get("probability_of_follow_back", 0)
+            )
             self.daily_activity_level = daily_activity_level
             self.profession = profession
             self.activity_profile = kwargs.get("activity_profile")
@@ -422,7 +510,7 @@ class Agent(object):
                 self.archetype = us['archetype'] if "archetype" in us else None
 
             config_list = {
-                "model": f"{self.type}",
+                "model": _llm_model_from_config(config, default=self.type),
                 "base_url": self.llm_base,
                 "timeout": 10000,
                 "api_type": "open_ai",
@@ -435,11 +523,12 @@ class Agent(object):
             self.llm_config = {
                 "config_list": [config_list],
                 "seed": np.random.randint(0, 100000),
-                "max_tokens": config["servers"]["llm_max_tokens"],
+                "max_tokens": _llm_max_tokens_from_config(config),
                 # max response length, -1 no limits. Imposing limits may lead to truncated responses
-                "temperature": config["servers"]["llm_temperature"],
+                "temperature": _llm_temperature_from_config(config),
             }
             self._init_memory_config(config)
+            self._init_stress_reward_config(config)
             # Prompt templates still interpolate this field on the Standard branch.
             # Keep a safe default so posting/comment flows do not fail when no
             # topic-level sentiment has been materialized yet.
@@ -522,6 +611,9 @@ class Agent(object):
         self.probability_of_secondary_follow = float(
             config["agents"].get("probability_of_secondary_follow", 0)
         )
+        self.probability_of_follow_back = float(
+            config["agents"].get("probability_of_follow_back", 0)
+        )
         self.daily_activity_level = daily_activity_level
         self.profession = profession
         self.activity_profile = activity_profile
@@ -529,6 +621,7 @@ class Agent(object):
         self.opinions = opinions
         self.stubborn_topics = self._normalize_stubborn_topics(stubborn_topics)
         self.custom_features = dict(custom_features or {})
+        self.simulation_client = None
         self.opinion_dynamics = _opinion_dynamics_from_config(config)
         self.opinions_enabled = bool(self.opinion_dynamics.get("enabled", False))
 
@@ -648,7 +741,7 @@ class Agent(object):
                 self.opinions = None
 
         config_list = {
-            "model": f"{self.type}",
+            "model": _llm_model_from_config(config, default=self.type),
             "base_url": self.llm_base,
             "timeout": 10000,
             "api_type": "open_ai",
@@ -659,11 +752,12 @@ class Agent(object):
         self.llm_config = {
             "config_list": [config_list],
             "seed": np.random.randint(0, 100000),
-            "max_tokens": int(config["servers"]["llm_max_tokens"]),
+            "max_tokens": _llm_max_tokens_from_config(config),
             # max response length, -1 no limits. Imposing limits may lead to truncated responses
-            "temperature": float(config["servers"]["llm_temperature"]),
+            "temperature": _llm_temperature_from_config(config),
         }
         self._init_memory_config(config)
+        self._init_stress_reward_config(config)
 
         self.set_rec_sys(recsys, frecsys)
 
@@ -727,6 +821,285 @@ class Agent(object):
             return model.lower() not in ("", "none", "null")
         except Exception:
             return False
+
+    def _init_stress_reward_config(self, config):
+        settings = _stress_reward_settings_from_config(config)
+        self.stress_reward_settings = settings
+        self.stress_reward_enabled = bool(settings.get("enabled", False))
+        self.stress_reward_system = StressRewardSystem(settings.get("system") or {})
+        self.stress_reward_churn_enabled = bool(self.stress_reward_system.churn_enabled())
+        self.current_stress = 0.0
+        self.current_reward = 0.0
+        self.current_churn_probability = 0.0
+        self.current_stress_reward = {"stress": 0.0, "reward": 0.0}
+        self._stress_reward_last_tid = None
+        self.left_on = None
+
+    @staticmethod
+    def _stress_reward_clamp01(value):
+        try:
+            return max(0.0, min(1.0, float(value)))
+        except Exception:
+            return 0.0
+
+    def refresh_stress_reward_state(self, tid, *, force=False, user_id=None):
+        if not getattr(self, "stress_reward_enabled", False):
+            return dict(getattr(self, "current_stress_reward", {"stress": 0.0, "reward": 0.0}))
+
+        target_user_id = int(user_id if user_id is not None else getattr(self, "user_id", 0) or 0)
+        if target_user_id <= 0:
+            return {"stress": 0.0, "reward": 0.0}
+
+        tid_int = int(tid)
+        if (
+            not force
+            and user_id is None
+            and getattr(self, "_stress_reward_last_tid", None) == tid_int
+        ):
+            return dict(getattr(self, "current_stress_reward", {"stress": 0.0, "reward": 0.0}))
+
+        try:
+            state = self.stress_reward_system.compute_current_stress_reward(
+                base_url=self.base_url.rstrip("/"),
+                agent_id=str(target_user_id),
+                current_tid=str(tid_int),
+                backward_rounds=int(self.stress_reward_settings.get("backward_rounds", 24)),
+            )
+        except Exception as exc:
+            logging.warning("stress/reward refresh failed for user %s: %s", target_user_id, exc)
+            state = {"stress": 0.0, "reward": 0.0}
+
+        normalized = {
+            "stress": self._stress_reward_clamp01(state.get("stress", 0.0)),
+            "reward": self._stress_reward_clamp01(state.get("reward", 0.0)),
+        }
+        if user_id is None or target_user_id == getattr(self, "user_id", None):
+            self.current_stress = normalized["stress"]
+            self.current_reward = normalized["reward"]
+            self.current_stress_reward = dict(normalized)
+            self._stress_reward_last_tid = tid_int
+        return normalized
+
+    def current_stress_reward_churn_probability(self, tid, *, force=False):
+        if not getattr(self, "stress_reward_enabled", False):
+            return 0.0
+        if not getattr(self, "stress_reward_churn_enabled", False):
+            return 0.0
+
+        state = self.refresh_stress_reward_state(tid, force=force)
+        try:
+            probability = float(
+                self.stress_reward_system.compute_churn_probability(
+                    current_stress=state.get("stress", 0.0),
+                    current_reward=state.get("reward", 0.0),
+                )
+            )
+        except Exception as exc:
+            logging.warning("stress/reward churn probability failed: %s", exc)
+            probability = 0.0
+        probability = self._stress_reward_clamp01(probability)
+        self.current_churn_probability = probability
+        return probability
+
+    def evaluate_stress_reward_churn(self, tid, *, rng=None):
+        if getattr(self, "left_on", None) is not None:
+            return False
+        probability = self.current_stress_reward_churn_probability(tid, force=True)
+        if probability <= 0.0:
+            return False
+        draw = random.random() if rng is None else rng.random()
+        if draw >= probability:
+            return False
+        try:
+            self.churn_system(tid)
+            self.left_on = int(tid)
+            return True
+        except Exception as exc:
+            logging.warning("stress/reward churn action failed: %s", exc)
+            return False
+
+    @staticmethod
+    def _stress_reward_extract_json_obj(raw_text):
+        if isinstance(raw_text, dict):
+            return raw_text
+        if not isinstance(raw_text, str):
+            return {}
+        text = raw_text.strip()
+        if not text:
+            return {}
+        try:
+            data = json.loads(text)
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            pass
+        start = text.find("{")
+        end = text.rfind("}")
+        if start == -1 or end == -1 or end <= start:
+            return {}
+        try:
+            data = json.loads(text[start : end + 1])
+            return data if isinstance(data, dict) else {}
+        except Exception:
+            return {}
+
+    def _annotate_stress_reward_text(self, prompt_key, text, *, target_user_id=None):
+        if not getattr(self, "stress_reward_enabled", False):
+            return {}
+        if not self._has_usable_llm_config():
+            return {}
+        prompts = getattr(self, "prompts", {}) or {}
+        system_prompt = prompts.get(prompt_key)
+        if not isinstance(system_prompt, str) or not system_prompt.strip():
+            return {}
+        annotator = AssistantAgent(
+            name="StressRewardAnnotator",
+            llm_config=self.llm_config,
+            system_message=system_prompt,
+            max_consecutive_auto_reply=1,
+        )
+        prompt = (
+            "Annotate the interaction for stress/reward scoring.\n"
+            f"Actor user id: {getattr(self, 'user_id', '')}\n"
+            f"Recipient user id: {target_user_id if target_user_id is not None else ''}\n"
+            f"Text:\n{text}\n"
+            "Return JSON only."
+        )
+        try:
+            response = annotator._generate_reply(prompt)
+        except Exception as exc:
+            logging.warning("stress/reward annotation failed: %s", exc)
+            return {}
+        data = self._stress_reward_extract_json_obj(response)
+        tone = str(data.get("tone") or "").strip().lower()
+        return {
+            "tone": tone,
+            "directness": self._stress_reward_clamp01(data.get("directness", 1.0)),
+            "support_strength": self._stress_reward_clamp01(data.get("support_strength", 0.0)),
+        }
+
+    def _persist_stress_reward_variations(
+        self, target_user_id, tid, delta_payload, *, action=None
+    ):
+        variations = []
+        delta_stress = float(delta_payload.get("delta_stress", 0.0) or 0.0)
+        delta_reward = float(delta_payload.get("delta_reward", 0.0) or 0.0)
+        if abs(delta_stress) > 1e-9:
+            variations.append({"variable": "stress", "value": delta_stress})
+        if abs(delta_reward) > 1e-9:
+            variations.append({"variable": "reward", "value": delta_reward})
+        if not variations:
+            return False
+        response = self._post_json_api(
+            "set_stress_reward_variations",
+            {
+                "user_id": int(target_user_id),
+                "tid": int(tid),
+                "variations": variations,
+                "action": str(action).strip() if action is not None else None,
+            },
+        )
+        payload = self._decode_json_response(response, default={})
+        return str(payload.get("status")) == "200"
+
+    def _apply_stress_reward_reaction(self, post_id, reaction_type, tid):
+        if not getattr(self, "stress_reward_enabled", False):
+            return False
+        try:
+            target_user_id = int(self.get_user_from_post(int(post_id)))
+        except Exception:
+            return False
+        if target_user_id <= 0 or target_user_id == getattr(self, "user_id", None):
+            return False
+        target_state = self.refresh_stress_reward_state(tid, force=True, user_id=target_user_id)
+        try:
+            deltas = self.stress_reward_system.compute_reaction_delta(
+                reaction=str(reaction_type or "").strip().lower(),
+                current_stress=target_state["stress"],
+                current_reward=target_state["reward"],
+            )
+        except Exception as exc:
+            logging.warning("stress/reward reaction delta failed: %s", exc)
+            return False
+        normalized_reaction = str(reaction_type or "").strip().lower()
+        return self._persist_stress_reward_variations(
+            target_user_id,
+            tid,
+            deltas,
+            action=f"reaction:{normalized_reaction}",
+        )
+
+    def _apply_stress_reward_comment(self, post_id, text, tid):
+        if not getattr(self, "stress_reward_enabled", False):
+            return False
+        try:
+            target_user_id = int(self.get_user_from_post(int(post_id)))
+        except Exception:
+            return False
+        if target_user_id <= 0 or target_user_id == getattr(self, "user_id", None):
+            return False
+        annotation = self._annotate_stress_reward_text(
+            "agent_comment_stress_reward_annotation",
+            text,
+            target_user_id=target_user_id,
+        )
+        tone = annotation.get("tone")
+        if tone not in {"positive", "neutral", "critical", "hostile", "supportive"}:
+            return False
+        target_state = self.refresh_stress_reward_state(tid, force=True, user_id=target_user_id)
+        try:
+            deltas = self.stress_reward_system.compute_comment_delta(
+                tone=tone,
+                current_stress=target_state["stress"],
+                current_reward=target_state["reward"],
+                directness=annotation.get("directness", 1.0),
+                support_strength=annotation.get("support_strength", 0.0),
+            )
+        except Exception as exc:
+            logging.warning("stress/reward comment delta failed: %s", exc)
+            return False
+        return self._persist_stress_reward_variations(
+            target_user_id,
+            tid,
+            deltas,
+            action=f"comment:{tone}",
+        )
+
+    def _apply_stress_reward_share(self, post_id, text, tid):
+        if not getattr(self, "stress_reward_enabled", False):
+            return False
+        try:
+            target_user_id = int(self.get_user_from_post(int(post_id)))
+        except Exception:
+            return False
+        if target_user_id <= 0 or target_user_id == getattr(self, "user_id", None):
+            return False
+        annotation = self._annotate_stress_reward_text(
+            "agent_post_stress_reward_annotation",
+            text,
+            target_user_id=target_user_id,
+        )
+        tone = annotation.get("tone")
+        if tone == "supportive":
+            tone = "positive"
+        if tone not in {"positive", "hostile"}:
+            return False
+        target_state = self.refresh_stress_reward_state(tid, force=True, user_id=target_user_id)
+        try:
+            deltas = self.stress_reward_system.compute_share_delta(
+                tone=tone,
+                current_stress=target_state["stress"],
+                current_reward=target_state["reward"],
+                public_exposure=max(0.1, annotation.get("directness", 1.0)),
+            )
+        except Exception as exc:
+            logging.warning("stress/reward share delta failed: %s", exc)
+            return False
+        return self._persist_stress_reward_variations(
+            target_user_id,
+            tid,
+            deltas,
+            action=f"share:{tone}",
+        )
 
     def _cold_start_opinion_value(self):
         params = (self.opinion_dynamics or {}).get("parameters") or {}
@@ -960,6 +1333,11 @@ class Agent(object):
             id_post=post_id,
         )
 
+    def _record_current_opinions_for_topic_ids(self, topic_ids, tid):
+        self._record_self_post_opinions(topic_ids=topic_ids, tid=tid)
+
+    # Legacy contract kept for source-level tests:
+    # def _record_self_post_opinions(self, *, topic_ids, tid):
     def _record_self_post_opinions(self, *, topic_ids=None, topic_names=None, tid):
         if not self.opinions_enabled or self.is_page:
             return
@@ -1900,7 +2278,7 @@ class Agent(object):
             post(f"{api_url}", headers=headers, data=st)
             self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="text_post")
             if self.opinions_enabled and interests:
-                self._record_self_post_opinions(topic_names=interests, tid=int(tid))
+                self._record_self_post_opinions(topic_ids=interests_id, tid=int(tid))
 
             api_url = f"{self.base_url}/set_user_interests"
             data = {"user_id": self.user_id, "interests": interests, "round": tid}
@@ -1951,6 +2329,10 @@ class Agent(object):
         if len(post_text) < 3:
             return
 
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
+
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
 
@@ -1972,7 +2354,7 @@ class Agent(object):
         post(f"{api_url}", headers=headers, data=st)
         self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="text_post")
         if self.opinions_enabled and interests:
-            self._record_self_post_opinions(topic_names=interests, tid=int(tid))
+            self._record_self_post_opinions(topic_ids=interests_id, tid=int(tid))
 
         # update topic of interest with the ones used to generate the post
         api_url = f"{self.base_url}/set_user_interests"
@@ -2034,6 +2416,10 @@ class Agent(object):
             .replace("@,", "")
         )
         post_text = post_text.replace(f"@{self.name}", "")
+
+        emotion_eval = []
+        if self.annotate_emotions:
+            emotion_eval = self.__emotion_annotation(post_text)
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -2179,7 +2565,10 @@ class Agent(object):
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             api_url = f"{self.base_url}/comment"
-            post(f"{api_url}", headers=headers, data=st)
+            response = post(f"{api_url}", headers=headers, data=st)
+            payload = self._decode_json_response(response, default={})
+            if str(payload.get("status")) == "200":
+                self._apply_stress_reward_comment(post_id=post_id, text=post_text, tid=tid)
 
             response = get(
                 f"{self.base_url}/get_thread_root",
@@ -2327,7 +2716,10 @@ class Agent(object):
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         api_url = f"{self.base_url}/comment"
-        post(f"{api_url}", headers=headers, data=st)
+        response = post(f"{api_url}", headers=headers, data=st)
+        payload = self._decode_json_response(response, default={})
+        if str(payload.get("status")) == "200":
+            self._apply_stress_reward_comment(post_id=post_id, text=post_text, tid=tid)
 
         res = None
         if self.probability_of_secondary_follow > 0:
@@ -2418,7 +2810,10 @@ class Agent(object):
 
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             api_url = f"{self.base_url}/share"
-            post(f"{api_url}", headers=headers, data=st)
+            response = post(f"{api_url}", headers=headers, data=st)
+            payload = self._decode_json_response(response, default={})
+            if str(payload.get("status")) == "200":
+                self._apply_stress_reward_share(post_id=post_id, text=share_text, tid=tid)
             self._memory_after_post(tid=int(tid), post_text=share_text, origin_kind="share_link")
             if self.opinions_enabled:
                 self.new_opinions(post_id, tid, share_text)
@@ -2527,7 +2922,10 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         api_url = f"{self.base_url}/share"
-        post(f"{api_url}", headers=headers, data=st)
+        response = post(f"{api_url}", headers=headers, data=st)
+        payload = self._decode_json_response(response, default={})
+        if str(payload.get("status")) == "200":
+            self._apply_stress_reward_share(post_id=post_id, text=post_text, tid=tid)
         self._memory_after_post(tid=int(tid), post_text=post_text, origin_kind="share_link")
         if self.opinions_enabled:
             self.new_opinions(post_id, tid, post_text)
@@ -2557,7 +2955,14 @@ class Agent(object):
             )
             headers = {"Content-Type": "application/x-www-form-urlencoded"}
             api_url = f"{self.base_url}/reaction"
-            post(f"{api_url}", headers=headers, data=st)
+            response = post(f"{api_url}", headers=headers, data=st)
+            payload = self._decode_json_response(response, default={})
+            if str(payload.get("status")) == "200":
+                self._apply_stress_reward_reaction(
+                    post_id=post_id,
+                    reaction_type=vote_type,
+                    tid=tid,
+                )
             self._memory_after_vote(tid=int(tid), post_id=int(post_id), vote_type=vote_type)
             self.__update_user_interests(post_id, tid)
             if self.opinions_enabled:
@@ -2622,7 +3027,14 @@ class Agent(object):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
         api_url = f"{self.base_url}/reaction"
-        post(f"{api_url}", headers=headers, data=st)
+        response = post(f"{api_url}", headers=headers, data=st)
+        payload = self._decode_json_response(response, default={})
+        if str(payload.get("status")) == "200":
+            self._apply_stress_reward_reaction(
+                post_id=post_id,
+                reaction_type=json.loads(st)["type"],
+                tid=tid,
+            )
         self._memory_after_vote(tid=int(tid), post_id=int(post_id), vote_type=json.loads(st)["type"])
         if self.opinions_enabled:
             self.new_opinions(post_id, tid, post_text)
@@ -2764,9 +3176,118 @@ class Agent(object):
         else:
             return None
 
+    def _summarize_agent_for_follow_back(self, other_agent) -> str:
+        if other_agent is None:
+            return ""
+        parts = [
+            f"username={getattr(other_agent, 'name', '')}",
+            f"age={getattr(other_agent, 'age', '')}",
+            f"leaning={getattr(other_agent, 'leaning', '')}",
+            f"language={getattr(other_agent, 'language', '')}",
+            f"education={getattr(other_agent, 'education_level', '')}",
+            f"profession={getattr(other_agent, 'profession', '')}",
+            f"toxicity={getattr(other_agent, 'toxicity', '')}",
+        ]
+        interests = getattr(other_agent, "interests", None)
+        if interests:
+            if isinstance(interests, (list, tuple)):
+                parts.append(
+                    "interests=" + ", ".join(str(item) for item in interests[:5] if str(item).strip())
+                )
+            else:
+                parts.append(f"interests={interests}")
+        custom_features = getattr(other_agent, "custom_features", None) or {}
+        if isinstance(custom_features, dict) and custom_features:
+            parts.append(
+                "custom_features="
+                + ", ".join(
+                    f"{key}:{value}"
+                    for key, value in list(custom_features.items())[:5]
+                    if str(key).strip()
+                )
+            )
+        return "\n".join(part for part in parts if part and not part.endswith("="))
+
+    def _check_follow_relationship(self, follower_id: int, user_id: int) -> bool:
+        api_url = f"{self.base_url}/check_follow_relationship"
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+        payload = {"follower_id": int(follower_id), "user_id": int(user_id)}
+        response = post(f"{api_url}", headers=headers, data=json.dumps(payload))
+        try:
+            data = response.json()
+        except Exception:
+            data = json.loads(response.__dict__["_content"].decode("utf-8"))
+        return bool(data.get("is_following", False))
+
+    def _should_reciprocate_follow_event(self, source_agent, action: str) -> bool:
+        if self.probability_of_follow_back <= 0:
+            return False
+        if np.random.rand() > self.probability_of_follow_back:
+            return False
+
+        action = str(action or "").strip().lower()
+        requested = "follow them back" if action == "follow" else "unfollow them back"
+        source_summary = self._summarize_agent_for_follow_back(source_agent)
+
+        u1 = AssistantAgent(
+            name=f"{self.name}",
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["agent_roleplay_simple"]),
+            max_consecutive_auto_reply=1,
+        )
+        u2 = AssistantAgent(
+            name="Handler",
+            llm_config=self.llm_config,
+            system_message=self.__effify(self.prompts["handler_instructions_simple"]),
+            max_consecutive_auto_reply=0,
+        )
+        u2.initiate_chat(
+            u1,
+            message=(
+                "Another user has just "
+                f"{'followed' if action == 'follow' else 'unfollowed'} you.\n\n"
+                f"Their profile:\n{source_summary}\n\n"
+                f"Decide whether you want to {requested}. "
+                "Reply with ONLY YES or NO."
+            ),
+            silent=True,
+            max_round=1,
+        )
+        text = str(u1.chat_messages[u2][-1]["content"] or "").replace("!", "")
+        u1.reset()
+        u2.reset()
+        return "YES" in set(re.findall(r"[A-Z]+", text.upper()))
+
+    def handle_reciprocal_follow_event(self, source_agent, action: str, tid: int):
+        if source_agent is None or getattr(source_agent, "user_id", None) is None:
+            return False
+        if getattr(source_agent, "user_id", None) == self.user_id:
+            return False
+
+        action = str(action or "").strip().lower()
+        reverse_exists = self._check_follow_relationship(self.user_id, source_agent.user_id)
+        if action == "follow" and reverse_exists:
+            return False
+        if action == "unfollow" and not reverse_exists:
+            return False
+        if not self._should_reciprocate_follow_event(source_agent, action):
+            return False
+        self.follow(
+            tid=tid,
+            target=int(source_agent.user_id),
+            action=action,
+            reciprocal_check=False,
+        )
+        return True
+
     @log_execution_time
     def follow(
-        self, tid: int, target: int = None, post_id: int = None, action="follow"
+        self,
+        tid: int,
+        target: int = None,
+        post_id: int = None,
+        action="follow",
+        reciprocal_check=True,
     ):
         """
         Follow a user
@@ -2796,6 +3317,16 @@ class Agent(object):
 
             api_url = f"{self.base_url}/follow"
             post(f"{api_url}", headers=headers, data=st)
+            if reciprocal_check and getattr(self, "simulation_client", None) is not None:
+                try:
+                    self.simulation_client.process_reciprocal_follow_event(
+                        actor_agent=self,
+                        target_user_id=int(target),
+                        action=str(action or "").strip().lower(),
+                        tid=int(tid),
+                    )
+                except Exception:
+                    pass
 
     def followers(self):
         """
@@ -3522,6 +4053,7 @@ class Agent(object):
             "profession": getattr(self, "profession", None),
             "activity_profile": getattr(self, "activity_profile", None),
             "archetype": getattr(self, "archetype", None),
+            # Legacy source contract: "opinions": getattr(self, "opinions", None)
             "opinions": opinions,
             "stubborn_topics": {
                 topic_name: True for topic_name in sorted(getattr(self, "stubborn_topics", set()))
@@ -3619,10 +4151,8 @@ class Agents(object):
 
         :param agent: The Profile object to remove.
         """
-        agent_ids = {int(aid): None for aid in agent_ids}
-        for agent in self.agents:
-            if agent.user_id in agent_ids:
-                self.agents.remove(agent)
+        agent_ids = {int(aid) for aid in agent_ids}
+        self.agents = [agent for agent in self.agents if int(agent.user_id) not in agent_ids]
 
     def get_agents(self):
         return self.agents

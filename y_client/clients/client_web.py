@@ -348,6 +348,7 @@ class YClientWeb(object):
                     opinions=ag.get("opinions"),
                     stubborn_topics=ag.get("stubborn_topics"),
                     custom_features=ag.get("custom_features"),
+                    experiment_db_path=os.path.join(self.base_path, "database_server.db"),
                 )
 
                 agent.set_prompts(self.prompts)

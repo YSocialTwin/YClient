@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from math import log1p
-from requests import get
+from math import exp, log1p
 import json
 from typing import Any, Dict, Optional
 
+from requests import post
 
-def _memory_extract_json(self, response):
+
+def _memory_extract_json(response):
     try:
         if response is None:
             return {}
@@ -54,6 +55,15 @@ class StressRewardSystem:
             "reward_buffers_stress_alpha": 0.30,
             "stress_reduces_reward_beta": 0.20,
         },
+        "churn": {
+            "enabled": False,
+            "stress_weight": 1.5,
+            "reward_weight": 1.0,
+            "bias": -2.2,
+            "temperature": 0.35,
+            "min_probability": 0.0,
+            "max_probability": 0.95,
+        },
         "events": {
             "reaction": {
                 "like": {"stress": -0.005, "reward": 0.03},
@@ -79,6 +89,16 @@ class StressRewardSystem:
 
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = deep_update(self.DEFAULT_CONFIG, config or {})
+
+    @staticmethod
+    def _clamp01(value: Any) -> float:
+        try:
+            return max(0.0, min(1.0, float(value)))
+        except Exception:
+            return 0.0
+
+    def churn_enabled(self) -> bool:
+        return bool((self.config.get("churn") or {}).get("enabled", False))
 
     def build_traits(self, overrides: Optional[Dict[str, Any]] = None) -> AffectiveTraits:
         cfg = deep_update(self.config["traits"], overrides or {})
@@ -269,6 +289,40 @@ class StressRewardSystem:
             "delta_reward": dr,
         }
 
+    def compute_churn_probability(
+            self,
+            *,
+            current_stress: float,
+            current_reward: float,
+    ) -> float:
+        churn_cfg = self.config.get("churn") or {}
+        stress = self._clamp01(current_stress)
+        reward = self._clamp01(current_reward)
+        try:
+            temperature = max(float(churn_cfg.get("temperature", 0.35) or 0.35), 1e-6)
+        except Exception:
+            temperature = 0.35
+        try:
+            logit = (
+                float(churn_cfg.get("bias", -2.2) or -2.2)
+                + float(churn_cfg.get("stress_weight", 1.5) or 1.5) * stress
+                - float(churn_cfg.get("reward_weight", 1.0) or 1.0) * reward
+            ) / temperature
+        except Exception:
+            logit = (-2.2 + 1.5 * stress - 1.0 * reward) / temperature
+
+        if logit >= 0:
+            probability = 1.0 / (1.0 + exp(-logit))
+        else:
+            exp_logit = exp(logit)
+            probability = exp_logit / (1.0 + exp_logit)
+
+        min_probability = self._clamp01(churn_cfg.get("min_probability", 0.0))
+        max_probability = self._clamp01(churn_cfg.get("max_probability", 0.95))
+        if max_probability < min_probability:
+            min_probability, max_probability = max_probability, min_probability
+        return max(min_probability, min(max_probability, float(probability)))
+
     def compute_current_stress_reward(
             self,
             base_url: str,
@@ -307,20 +361,20 @@ class StressRewardSystem:
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         api_url = f"{base_url}/get_stress_reward"
-        response = get(
-            f"{api_url}", headers=headers, data=json.dumps({
-                "agent_id": agent_id,
-                "tid": current_tid,
-                "backward_rounds": backward_rounds,
-            })
+        response = post(
+            api_url,
+            headers=headers,
+            data=json.dumps(
+                {
+                    "user_id": agent_id,
+                    "tid": current_tid,
+                    "backward_rounds": backward_rounds,
+                }
+            ),
         )
         data = _memory_extract_json(response)
-        stress = float(data["stress"])
-        reward = float(data["reward"])
-
-        print("Stress: ", stress)
-        print("Reward: ", reward)
-        print("\n\n")
+        stress = float(data.get("stress", 0.0) or 0.0)
+        reward = float(data.get("reward", 0.0) or 0.0)
 
         return {
             "stress": stress,

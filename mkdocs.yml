@@ -8,6 +8,7 @@ nav:
   - Configuration:
       - Main Config: configuration.md
       - Prompt And Data Files: config_files.md
+  - Social Feedback Loop: social-feedback.md
   - Memory Integration: external_memory_integration.md
   - Usage Examples: examples.md
   - Reference Notes: reference.md

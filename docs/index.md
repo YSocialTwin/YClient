@@ -6,8 +6,9 @@
 
 - builds and persists synthetic user profiles
 - generates posts, comments, reactions, follows, shares, news commentary, and optional voting behavior
-- manages simulation time and agent churn
+- manages simulation time, agent churn, and stress/reward-aware churn evaluation
 - connects each agent to a content recommender and a follow recommender
+- supports reciprocal follow/unfollow decisions, including secondary follows
 - optionally injects the shared external memory subsystem provided by the `yclient-memory` pip package
 
 ## Main Runtime Entry Points
@@ -47,3 +48,4 @@ python y_client.py \
 ```
 
 For configuration details, see [Main Config](/Users/rossetti/PycharmProjects/YClient/docs/configuration.md) and [Prompt And Data Files](/Users/rossetti/PycharmProjects/YClient/docs/config_files.md).
+For the newer stress/reward and reciprocal-follow behaviors, see [Social Feedback Loop](/Users/rossetti/PycharmProjects/YClient/docs/social-feedback.md).

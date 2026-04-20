@@ -107,6 +107,40 @@ These are active only when the server exposes the `/memory/*` API.
 | `memory_nuance_callback_probability` | float | `0.0` to `1.0` | Probability of actually using an eligible nuance cue. |
 | `memory_nuance_cues_max_chars` | integer | `120`, `320` | Max memory text size for nuance cues. |
 
+### Reciprocal Follow
+
+The `agents` section now also accepts:
+
+| Key | Type | Typical values | Impact |
+| --- | --- | --- | --- |
+| `probability_of_follow_back` | float | `0.0` to `1.0` | Probability that a followed or unfollowed peer evaluates the reciprocal edge. Rule-based agents use only this value; LLM-backed agents also inspect the initiator profile. |
+
+## `stress_reward`
+
+The client can optionally include a top-level `stress_reward` block. This feature is disabled by default and is normally written by YWeb when the experiment enables stress/reward.
+
+Representative shape:
+
+```json
+{
+  "stress_reward": {
+    "enabled": false,
+    "backward_rounds": 24,
+    "system": {
+      "events": {},
+      "coupling": {},
+      "churn": {
+        "enabled": false
+      }
+    }
+  }
+}
+```
+
+`enabled` activates client-side stress/reward processing. `backward_rounds` controls how far back aggregate reconstruction looks when the client asks the server for the current state. `system.events` and `system.coupling` customize the update weights, while `system.churn` configures the stress/reward-driven churn probability model.
+
+See [Social Feedback Loop](/Users/rossetti/PycharmProjects/YClient/docs/social-feedback.md) for the execution semantics and the client/server split.
+
 ## `posts`
 
 | Key | Type | Typical values | Impact |

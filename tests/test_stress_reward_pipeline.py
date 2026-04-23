@@ -1,6 +1,7 @@
 import json
 
 from y_client.classes.base_agent import Agent, _stress_reward_settings_from_config
+from y_client.stress_reward.update_system import StressRewardSystem
 
 
 class _FakeStressRewardSystem:
@@ -9,6 +10,7 @@ class _FakeStressRewardSystem:
         self.comment_calls = []
         self.share_calls = []
         self.churn_calls = []
+        self.activity_calls = []
 
     def compute_current_stress_reward(self, **kwargs):
         self.current_calls.append(kwargs)
@@ -25,9 +27,16 @@ class _FakeStressRewardSystem:
     def churn_enabled(self):
         return True
 
+    def activity_impact_enabled(self):
+        return True
+
     def compute_churn_probability(self, **kwargs):
         self.churn_calls.append(kwargs)
         return 0.9
+
+    def compute_activity_effect(self, **kwargs):
+        self.activity_calls.append(kwargs)
+        return {"action_multiplier": 0.42, "skip_probability": 0.28}
 
 
 def test_stress_reward_settings_default_to_disabled():
@@ -71,6 +80,36 @@ def test_stress_reward_settings_include_churn_configuration():
     assert settings["system"]["churn"]["enabled"] is True
     assert settings["system"]["churn"]["bias"] == -1.1
     assert settings["system"]["churn"]["temperature"] == 0.2
+
+
+def test_stress_reward_system_defaults_match_hpc_adjusted_scores():
+    system = StressRewardSystem()
+
+    assert system.config["events"]["reaction"]["dislike"] == {
+        "stress": 0.05,
+        "reward": -0.03,
+    }
+    assert system.config["events"]["comment"]["critical"] == {
+        "stress": 0.06,
+        "reward": -0.02,
+    }
+    assert system.config["events"]["comment"]["hostile"] == {
+        "stress": 0.14,
+        "reward": -0.07,
+    }
+    assert system.config["events"]["report"]["mass_report"] == {
+        "stress": 0.12,
+        "reward": -0.05,
+    }
+
+
+def test_stress_reward_activity_effect_reduces_actions_for_stressed_agents():
+    system = StressRewardSystem()
+
+    effect = system.compute_activity_effect(current_stress=0.8, current_reward=0.1)
+
+    assert 0.15 <= effect["action_multiplier"] < 1.0
+    assert 0.0 < effect["skip_probability"] <= 0.65
 
 
 def test_refresh_stress_reward_state_updates_agent_cache():
@@ -200,6 +239,26 @@ def test_evaluate_stress_reward_churn_marks_agent_left_when_probability_hits():
     assert agent.stress_reward_system.churn_calls == [
         {"current_stress": 0.7, "current_reward": 0.1}
     ]
+
+
+def test_current_stress_reward_activity_effect_updates_agent_cache():
+    agent = Agent.__new__(Agent)
+    agent.user_id = 5
+    agent.stress_reward_enabled = True
+    agent.stress_reward_system = _FakeStressRewardSystem()
+    agent.refresh_stress_reward_state = (
+        lambda tid, force=False, user_id=None: {"stress": 0.7, "reward": 0.1}
+    )
+    agent._stress_reward_clamp01 = Agent._stress_reward_clamp01
+
+    effect = agent.current_stress_reward_activity_effect(13, force=True)
+
+    assert effect == {"action_multiplier": 0.42, "skip_probability": 0.28}
+    assert agent.stress_reward_system.activity_calls == [
+        {"current_stress": 0.7, "current_reward": 0.1}
+    ]
+    assert agent.current_stress_reward_activity_multiplier == 0.42
+    assert agent.current_stress_reward_skip_probability == 0.28
 
 
 def test_stress_prompt_block_uses_five_point_likert_scale():

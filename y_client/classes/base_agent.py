@@ -59,6 +59,14 @@ except ImportError:
 __all__ = ["Agent", "Agents"]
 
 
+def _fetch_current_round_id(config):
+    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    api_url = f"{config['servers']['api'].rstrip('/')}/current_time"
+    response = get(api_url, headers=headers)
+    data = json.loads(response.__dict__["_content"].decode("utf-8"))
+    return int(data["id"])
+
+
 def _json_loads_maybe(value):
     if value is None:
         return None
@@ -370,12 +378,6 @@ class Agent(object):
             self.topics_opinions = ""
             self.annotate_emotions = _emotion_annotation_from_config(config)
 
-            self.probability_of_daily_follow = float(config["agents"][
-                "probability_of_daily_follow"
-            ])
-            self.probability_of_secondary_follow = float(config["agents"][
-                "probability_of_secondary_follow"
-            ])
             self.emotions = config["posts"]["emotions"]
             self.actions_likelihood = config["simulation"]["actions_likelihood"]
             self.base_url = config["servers"]["api"].rstrip("/")
@@ -442,9 +444,7 @@ class Agent(object):
                 self.owner = owner
                 self.education_level = education_level
                 self.joined_on = joined_on
-                sc = SimulationSlot(config)
-                sc.get_current_slot()
-                self.joined_on = sc.id
+                self.joined_on = _fetch_current_round_id(config)
                 self.round_actions = round_actions
                 self.gender = gender
                 self.nationality = nationality
@@ -585,12 +585,6 @@ class Agent(object):
         self.topics_opinions = ""
         self.annotate_emotions = _emotion_annotation_from_config(config)
 
-        self.probability_of_secondary_follow = float(config["agents"][
-            "probability_of_secondary_follow"
-        ])
-        self.probability_of_daily_follow = float(config["agents"][
-                                                     "probability_of_daily_follow"
-                                                 ])
         self.emotions = config["posts"]["emotions"]
         self.actions_likelihood = config["simulation"]["actions_likelihood"]
         self.base_url = config["servers"]["api"].rstrip("/")
@@ -675,9 +669,7 @@ class Agent(object):
             self.owner = owner
             self.education_level = education_level
             self.joined_on = joined_on
-            sc = SimulationSlot(config)
-            sc.get_current_slot()
-            self.joined_on = sc.id
+            self.joined_on = _fetch_current_round_id(config)
             self.round_actions = round_actions
             self.gender = gender
             self.nationality = nationality
@@ -832,6 +824,12 @@ class Agent(object):
         self.current_reward = 0.0
         self.current_churn_probability = 0.0
         self.current_stress_reward = {"stress": 0.0, "reward": 0.0}
+        self._current_stress_reward_activity_effect = {
+            "action_multiplier": 1.0,
+            "skip_probability": 0.0,
+        }
+        self.current_stress_reward_activity_multiplier = 1.0
+        self.current_stress_reward_skip_probability = 0.0
         self._stress_reward_last_tid = None
         self.left_on = None
 
@@ -900,6 +898,46 @@ class Agent(object):
         probability = self._stress_reward_clamp01(probability)
         self.current_churn_probability = probability
         return probability
+
+    def current_stress_reward_activity_effect(self, tid, *, force=False):
+        if not getattr(self, "stress_reward_enabled", False):
+            effect = {"action_multiplier": 1.0, "skip_probability": 0.0}
+            self._current_stress_reward_activity_effect = dict(effect)
+            self.current_stress_reward_activity_multiplier = 1.0
+            self.current_stress_reward_skip_probability = 0.0
+            return effect
+
+        if not bool(getattr(self.stress_reward_system, "activity_impact_enabled", lambda: True)()):
+            effect = {"action_multiplier": 1.0, "skip_probability": 0.0}
+            self._current_stress_reward_activity_effect = dict(effect)
+            self.current_stress_reward_activity_multiplier = 1.0
+            self.current_stress_reward_skip_probability = 0.0
+            return effect
+
+        state = self.refresh_stress_reward_state(tid, force=force)
+        try:
+            effect = dict(
+                self.stress_reward_system.compute_activity_effect(
+                    current_stress=state.get("stress", 0.0),
+                    current_reward=state.get("reward", 0.0),
+                )
+            )
+        except Exception as exc:
+            logging.warning("stress/reward activity effect failed: %s", exc)
+            effect = {"action_multiplier": 1.0, "skip_probability": 0.0}
+
+        action_multiplier = self._stress_reward_clamp01(effect.get("action_multiplier", 1.0))
+        if action_multiplier <= 0.0:
+            action_multiplier = 0.01
+        skip_probability = self._stress_reward_clamp01(effect.get("skip_probability", 0.0))
+        normalized = {
+            "action_multiplier": action_multiplier,
+            "skip_probability": skip_probability,
+        }
+        self._current_stress_reward_activity_effect = dict(normalized)
+        self.current_stress_reward_activity_multiplier = action_multiplier
+        self.current_stress_reward_skip_probability = skip_probability
+        return normalized
 
     def evaluate_stress_reward_churn(self, tid, *, rng=None):
         if getattr(self, "left_on", None) is not None:

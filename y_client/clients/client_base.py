@@ -453,7 +453,40 @@ class YClientBase(object):
                         except Exception:
                             pass
 
-                        for _ in range(g.round_actions):
+                        try:
+                            activity_effect = g.current_stress_reward_activity_effect(
+                                tid, force=True
+                            )
+                        except Exception:
+                            activity_effect = {
+                                "action_multiplier": 1.0,
+                                "skip_probability": 0.0,
+                            }
+
+                        skip_probability = max(
+                            0.0,
+                            min(
+                                1.0,
+                                float(activity_effect.get("skip_probability", 0.0) or 0.0),
+                            ),
+                        )
+                        if skip_probability > 0.0 and random.random() < skip_probability:
+                            continue
+
+                        action_multiplier = max(
+                            0.01,
+                            min(
+                                1.0,
+                                float(
+                                    activity_effect.get("action_multiplier", 1.0) or 1.0
+                                ),
+                            ),
+                        )
+                        effective_round_actions = max(
+                            1, int(round(float(g.round_actions) * action_multiplier))
+                        )
+
+                        for _ in range(effective_round_actions):
                             self.sim_clock.maybe_heartbeat()
                             try:
                                 g.refresh_stress_reward_state(tid, force=True)
@@ -504,6 +537,35 @@ class YClientBase(object):
                             agent.refresh_stress_reward_state(tid, force=True)
                         except Exception:
                             pass
+                        try:
+                            activity_effect = agent.current_stress_reward_activity_effect(
+                                tid, force=False
+                            )
+                        except Exception:
+                            activity_effect = {
+                                "action_multiplier": 1.0,
+                                "skip_probability": 0.0,
+                            }
+                        skip_probability = max(
+                            0.0,
+                            min(
+                                1.0,
+                                float(activity_effect.get("skip_probability", 0.0) or 0.0),
+                            ),
+                        )
+                        action_multiplier = max(
+                            0.01,
+                            min(
+                                1.0,
+                                float(
+                                    activity_effect.get("action_multiplier", 1.0) or 1.0
+                                ),
+                            ),
+                        )
+                        if (
+                            skip_probability > 0.0 and random.random() < skip_probability
+                        ) or random.random() >= action_multiplier:
+                            continue
                         agent.select_action(tid=tid, actions=["FOLLOW", "NONE"])
 
                 total_users = len(self.agents.agents)

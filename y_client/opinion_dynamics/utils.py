@@ -9,7 +9,12 @@ def get_opinion_group(opinion: float, group_classes: dict) -> str:
     Returns:
     - str: The class label corresponding to the opinion score.
     """
-    for class_label, (lower_bound, upper_bound) in group_classes.items():
+    if not isinstance(group_classes, dict):
+        return "unknown"
+    for class_label, bounds in group_classes.items():
+        if not isinstance(bounds, (list, tuple)) or len(bounds) != 2:
+            continue
+        lower_bound, upper_bound = bounds
         if lower_bound <= opinion < upper_bound:
             return class_label
     return "unknown"

@@ -1,0 +1,18 @@
+site_name: YClient Documentation
+site_description: Reference documentation for the YSocial client-side microblogging simulator.
+theme:
+  name: material
+nav:
+  - Overview: index.md
+  - Architecture: architecture.md
+  - Configuration:
+      - Main Config: configuration.md
+      - Prompt And Data Files: config_files.md
+  - Social Feedback Loop: social-feedback.md
+  - Memory Integration: external_memory_integration.md
+  - Usage Examples: examples.md
+  - Reference Notes: reference.md
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true

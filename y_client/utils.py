@@ -19,9 +19,21 @@ import faker
 
 try:
     from y_client import Agent, PageAgent
+    from y_client.classes import FakeAgent, FakePageAgent
 except:
     from y_client.classes.base_agent import Agent
     from y_client.classes.page_agent import PageAgent
+    from y_client.classes.fake_base_agent import FakeAgent
+    from y_client.classes.fake_page_agent import FakePageAgent
+
+
+def _rule_based_agents_enabled(config):
+    llm_agents = config.get("agents", {}).get("llm_agents")
+    return (
+        isinstance(llm_agents, list)
+        and len(llm_agents) == 1
+        and llm_agents[0] is None
+    )
 
 
 def generate_user(config, owner=None):
@@ -94,7 +106,8 @@ def generate_user(config, owner=None):
 
     language = fake.random_element(elements=(config["agents"]["languages"]))
 
-    ag_type = fake.random_element(elements=(config["agents"]["llm_agents"]))
+    llm_agents = config["agents"].get("llm_agents") or [None]
+    ag_type = fake.random_element(elements=llm_agents)
     pwd = fake.password()
 
     big_five = {
@@ -119,7 +132,9 @@ def generate_user(config, owner=None):
 
     api_key = config["servers"]["llm_api_key"]
 
-    agent = Agent(
+    AgentClass = FakeAgent if _rule_based_agents_enabled(config) else Agent
+
+    agent = AgentClass(
         name=name.replace(" ", ""),
         pwd=pwd,
         email=email,
@@ -194,12 +209,14 @@ def generate_page(config, owner=None, name=None, feed_url=None):
 
     email = f"{name.replace(' ', '.')}@{fake.free_email_domain()}"
 
-    page = PageAgent(
+    PageClass = FakePageAgent if _rule_based_agents_enabled(config) else PageAgent
+
+    page = PageClass(
         name=name,
         pwd="",
         email=email,
         age=0,
-        ag_type=fake.random_element(elements=(config["agents"]["llm_agents"])),
+        ag_type=fake.random_element(elements=(config["agents"].get("llm_agents") or [None])),
         leaning=None,
         interests=[],
         config=config,

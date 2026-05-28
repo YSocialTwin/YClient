@@ -19,6 +19,8 @@ import feedparser
 import numpy as np
 import requests
 from bs4 import BeautifulSoup
+from y_client import content_store
+
 
 try:
     from .client_modals import Articles, Images, Websites, session
@@ -117,33 +119,15 @@ class News(object):
         Side effects:
             Creates entries in Articles and Images tables if they don't exist
         """
-        website_id = (
-            session.query(Websites)
-            .filter(Websites.name == name, Websites.rss == rss)
-            .first()
-            .id
+        return content_store.save_article(
+            website_name=name,
+            rss=rss,
+            title=self.title,
+            summary=self.summary,
+            published=self.published,
+            link=self.link,
+            image_url=self.image_url,
         )
-        # check if article exists
-        if session.query(Articles).filter(Articles.link == self.link).first() is None:
-            art = Articles(
-                title=self.title,
-                summary=self.summary,
-                website_id=website_id,
-                fetched_on=self.published,
-                link=self.link,
-            )
-            session.add(art)
-            session.commit()
-
-        # get the article id
-        article_id = (
-            session.query(Articles).filter(Articles.link == self.link).first().id
-        )
-
-        if self.image_url is not None:
-            img = Images(url=self.image_url, article_id=article_id)
-            session.add(img)
-            session.commit()
 
 
 class NewsFeed(object):
@@ -213,48 +197,30 @@ class NewsFeed(object):
         today_morning = int(today.strftime("%Y%m%d"))
 
         # get website id
-        website_id = (
-            session.query(Websites)
-            .filter(Websites.name == self.name, Websites.rss == self.feed_url)
-            .first()
-            .id
-        )
-        # get all articles from this website from today
-        articles = (
-            session.query(Articles)
-            .filter(
-                Articles.website_id == website_id, Articles.fetched_on == today_morning
+        website = content_store.get_website(name=self.name, rss=self.feed_url)
+        articles = [
+            article
+            for article in content_store.get_recent_articles_for_feed(
+                self.name,
+                self.feed_url,
+                limit=100,
             )
-            .all()
-        )
+            if article.fetched_on == today_morning
+        ]
 
-        if len(articles) == 0:
+        if website is not None and len(articles) == 0:
             feed = feedparser.parse(self.feed_url)
             for entry in feed.entries:
                 try:
                     art = News(entry.title, entry.summary, entry.link, today_morning)
-                    art.save(name=self.name, rss=self.feed_url)
-
-                    # get article id to save image
-                    article_id = (
-                        session.query(Articles)
-                        .filter(Articles.link == entry.link)
-                        .first()
-                        .id
-                    )
+                    article_row = art.save(name=self.name, rss=self.feed_url)
+                    article_id = getattr(article_row, "id", None)
 
                     # check if there is an image in the article
                     if "media_content" in entry:
                         img = entry.media_content[0]["url"].split("?")[0]
-                        if img is not None:
-                            # check if image is already in the database
-                            if (
-                                session.query(Images).filter(Images.url == img).first()
-                                is None
-                            ):
-                                img = Images(url=img, article_id=article_id)
-                                session.add(img)
-                                session.commit()
+                        if img is not None and article_id is not None:
+                            content_store.ensure_article_image(img, article_id)
 
                     self.news.append(art)
                 except:
@@ -341,12 +307,7 @@ class Feeds(object):
         :param url: the rss feed url
         :return: whether the feed is not in the database
         """
-        res = (
-            session.query(Websites)
-            .filter(Websites.name == name, Websites.rss == url)
-            .first()
-        )
-        return res is None
+        return not content_store.website_exists(name, url)
 
     def add_feed(
         self,
@@ -388,7 +349,7 @@ class Feeds(object):
                     )
 
                     # check if website exists
-                    web = Websites(
+                    content_store.ensure_website(
                         name=name,
                         rss=url_feed,
                         country=country,
@@ -397,26 +358,21 @@ class Feeds(object):
                         category=category,
                         last_fetched=today_morning,
                     )
-                    session.add(web)
-                    session.commit()
                 else:
-                    last_fetched = (
-                        session.query(Websites)
-                        .filter(Websites.name == name, Websites.rss == url_feed)
-                        .first()
-                        .last_fetched
-                    )
-                    if today_morning > last_fetched:
-                        session.query(Websites).filter(
-                            Websites.name == name, Websites.rss == url_feed
-                        ).update({"last_fetched": today_morning})
-                        session.commit()
+                    web = content_store.get_website(name=name, rss=url_feed)
+                    last_fetched = getattr(web, "last_fetched", None)
+                    if last_fetched is not None and today_morning > last_fetched:
+                        content_store.update_website_last_fetched(
+                            name,
+                            url_feed,
+                            today_morning,
+                        )
 
         elif url_site is not None:
             fex = FeedLinkExtractor(url_site)
             fex.extract_rss_url()
             for rss in fex.get_rss_urls():
-                if self.__not_in_db(name, url_feed):
+                if self.__not_in_db(name, rss):
                     if self.__validate_feed(rss):
                         self.feeds.append(
                             NewsFeed(
@@ -430,30 +386,25 @@ class Feeds(object):
                             )
                         )
 
-                        web = Websites(
+                        content_store.ensure_website(
                             name=name,
-                            rss=url_feed,
+                            rss=rss,
                             country=country,
                             language=language,
                             leaning=leaning,
                             category=category,
                             last_fetched=today_morning,
                         )
-                        session.add(web)
-                        session.commit()
 
                     else:
-                        last_fetched = (
-                            session.query(Websites)
-                            .filter(Websites.name == name, Websites.rss == url_feed)
-                            .first()
-                            .last_fetched
-                        )
-                        if today_morning > last_fetched:
-                            session.query(Websites).filter(
-                                Websites.name == name, Websites.rss == url_feed
-                            ).update({"last_fetched": today_morning})
-                            session.commit()
+                        web = content_store.get_website(name=name, rss=rss)
+                        last_fetched = getattr(web, "last_fetched", None)
+                        if last_fetched is not None and today_morning > last_fetched:
+                            content_store.update_website_last_fetched(
+                                name,
+                                rss,
+                                today_morning,
+                            )
         else:
             print("Please provide a feed url or a site url")
 

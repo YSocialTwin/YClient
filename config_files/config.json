@@ -95,7 +95,25 @@
       "ex": ["outgoing/energetic", "solitary/reserved"],
       "ag": ["friendly/compassionate", "critical/judgmental"],
       "ne": ["sensitive/nervous", "resilient/confident"]
-    }
+    },
+    "memory_enabled": false,
+    "memory_backend": "hybrid_semantic",
+    "memory_prompt_mode": "subtle_timeline",
+    "memory_vote_signal_only": true,
+    "memory_reply_context_max_chars": 220,
+    "memory_cross_thread_callback_min_score": 0.8,
+    "memory_high_affect_enabled": false,
+    "memory_high_affect_rule_threshold": 0.55,
+    "memory_high_affect_uncertain_low": 0.35,
+    "memory_high_affect_uncertain_high": 0.7,
+    "memory_high_affect_search_k": 12,
+    "memory_high_affect_max_items": 6,
+    "memory_high_affect_max_chars": 900,
+    "memory_high_affect_llm_fallback": false,
+    "memory_nuance_enabled": true,
+    "memory_nuance_min_score": 0.35,
+    "memory_nuance_callback_probability": 0.55,
+    "memory_nuance_cues_max_chars": 320
   },
   "posts": {
     "visibility_rounds": 36,

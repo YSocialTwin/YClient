@@ -16,20 +16,25 @@ Global Variables:
 
 import json
 import os
+import csv
 import shutil
 import sys
 from pathlib import Path
 
-import sqlalchemy as db
-from requests import post
-from sqlalchemy import orm
-from sqlalchemy.ext.declarative import declarative_base
+from requests import get, post
+
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(SCRIPT_DIR))
 session = None
 engine = None
 base = None
+
+from y_client.content_store import initialize_content_store
+from y_client.classes.base_agent import (
+    _emotion_annotation_from_config,
+    _opinion_dynamics_from_config,
+)
 
 
 class YClientWeb(object):
@@ -60,7 +65,7 @@ class YClientWeb(object):
         owner="admin",
         first_run=False,
         network=None,
-        log_file="agent_execution.log",
+        log_file=None,
         llm=True
     ):
         """
@@ -84,7 +89,9 @@ class YClientWeb(object):
                                        Defaults to False.
             network (optional): Network configuration (currently unused). Defaults to None.
             log_file (str, optional): Path to the log file for agent execution time tracking.
-                                     Defaults to "agent_execution.log" in the current directory.
+                                     When None (default), automatically derived as
+                                     ``{data_base_path}/{simulation_name}_client.log``
+                                     so it lands inside the experiment-specific folder.
 
             llm (bool, optional): Whether or not to use LLM for agent behaviors. Defaults to True.
         
@@ -96,15 +103,20 @@ class YClientWeb(object):
             - Configures the global logger for agent execution time tracking
         """
         from y_client.logger import set_logger
-        
-        # Configure the logger with the specified log file
-        set_logger(log_file)
 
         self.llm_active = llm
 
         self.first_run = first_run
         self.base_path = data_base_path
         self.config = config_file
+
+        # Derive log file path from simulation name when none is provided
+        if log_file is None:
+            simulation_name = self.config["simulation"]["name"]
+            log_file = os.path.join(data_base_path, f"{simulation_name}_client.log")
+
+        # Configure the logger with the resolved log file path
+        set_logger(log_file)
 
         self.prompts = json.load(open(os.path.join(data_base_path, "prompts.json"), "r"))
 
@@ -115,7 +127,7 @@ class YClientWeb(object):
         self.days = int(self.config["simulation"]["days"])
         self.slots = int(self.config["simulation"]["slots"])
         self.percentage_new_agents_iteration = float(
-            self.config["simulation"]["percentage_new_agents_iteration"]
+            self.config["simulation"].get("percentage_new_agents_iteration", 0)
         )
         self.hourly_activity = self.config["simulation"]["hourly_activity"]
         self.percentage_removed_agents_iteration = float(
@@ -133,8 +145,7 @@ class YClientWeb(object):
         self.agent_archetypes = self.config["simulation"]["agent_archetypes"]
 
         # opinions' parameters
-        self.opinion_dynamics = self.config["simulation"]["opinion_dynamics"] \
-            if "opinion_dynamics" in self.config["simulation"] else {}
+        self.opinion_dynamics = _opinion_dynamics_from_config(self.config)
 
         # users' parameters
         self.fratio = float(self.config["agents"]["reading_from_follower_ratio"])
@@ -146,38 +157,16 @@ class YClientWeb(object):
         self.visibility_rd = int(self.config["posts"]["visibility_rounds"])
 
         # emotion annotation
-        self.emotions_annotation = self.config["simulation"]["emotion_annotation"]
-
-        ##############
-        BASE_DIR = Path(__file__).parent.absolute()
-        # Navigate up to project root (split on "y_client" to get project root)
-        BASE_DIR = str(BASE_DIR).split("y_client")[0]
-        BASE_DIR = Path(BASE_DIR)
-        
-        db_file = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
-        if not db_file.exists():
-            # copy the clean database to the experiments folder
-            source_db = BASE_DIR / "data_schema" / "database_clean_client.db"
-            dest_db = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
-            shutil.copyfile(source_db, dest_db)
+        self.emotions_annotation = _emotion_annotation_from_config(self.config)
 
         global session, engine, base
-        base = declarative_base()
-
-        # SQLite URIs always use forward slashes, use pathlib for robust conversion
-        db_path = BASE_DIR / "experiments" / f"{self.config['simulation']['name']}.db"
-        db_uri = db_path.as_posix()
-        engine = db.create_engine(
-            f"sqlite:///{db_uri}",
-            connect_args={"check_same_thread": False},
+        session, engine, base = initialize_content_store(
+            data_base_path=data_base_path,
+            experiment_name=self.config["simulation"]["name"],
         )
-        base.metadata.bind = engine
-        session = orm.scoped_session(orm.sessionmaker())(bind=engine)
-
         globals()["session"] = session
         globals()["engine"] = engine
         globals()["base"] = base
-        ##############
 
         yclient_path = Path(__file__).parent.absolute()
         yclient_path = str(yclient_path).split("y_web")[0]
@@ -193,9 +182,111 @@ class YClientWeb(object):
         self.feed = Feeds()
         self.content_recsys = None
         self.follow_recsys = None
-        self.network = network
+        self.network_file = network if self.first_run and network else None
+
+        users_id_map = {}
 
         self.pages = []
+
+    @staticmethod
+    def _extract_user_id_response(response, username):
+        status = getattr(response, "status_code", None)
+        raw = ""
+        try:
+            raw = response.text or ""
+        except Exception:
+            raw = ""
+        if status is not None and status != 200:
+            print(
+                f"WARNING: /get_user_id returned status={status} for username "
+                f"'{username}' — skipping. body={raw[:200]!r}"
+            )
+            return None
+        try:
+            payload = json.loads(raw)
+        except Exception:
+            print(
+                f"WARNING: /get_user_id returned non-JSON for username '{username}' "
+                f"— skipping. status={status} body={raw[:200]!r}"
+            )
+            return None
+        if not isinstance(payload, dict):
+            print(
+                f"WARNING: Unexpected /get_user_id payload for username '{username}' "
+                f"— skipping. payload={payload!r}"
+            )
+            return None
+        return payload.get("id")
+
+    def _rule_based_agents_enabled(self):
+        llm_agents = self.config.get("agents", {}).get("llm_agents")
+        return (
+            isinstance(llm_agents, list)
+            and len(llm_agents) == 1
+            and llm_agents[0] is None
+        )
+
+    def add_network(self):
+        if not self.first_run or not self.network_file:
+            return
+        network_path = f"{self.base_path}{self.network_file}"
+        if not os.path.exists(network_path):
+            return
+
+        users_id_map = {}
+        headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        with open(network_path, "r", encoding="utf-8", newline="") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                if len(row) < 2:
+                    continue
+                source_name = str(row[0] or "").strip()
+                target_name = str(row[1] or "").strip()
+                if not source_name or not target_name:
+                    continue
+                # Standard generated networks are headerless CSV files. Still skip
+                # explicit headers when present for backward compatibility.
+                lowered = {source_name.lower(), target_name.lower()}
+                if lowered <= {"source", "target", "from", "to", "user", "user_id", "follower", "followed"}:
+                    continue
+
+                if source_name not in users_id_map:
+                    api_url = f"{self.config['servers']['api']}get_user_id"
+                    uid = get(
+                        f"{api_url}",
+                        headers=headers,
+                        params={"username": source_name},
+                    )
+                    users_id_map[source_name] = self._extract_user_id_response(
+                        uid, source_name
+                    )
+
+                if target_name not in users_id_map:
+                    api_url = f"{self.config['servers']['api']}get_user_id"
+                    uid = get(
+                        f"{api_url}",
+                        headers=headers,
+                        params={"username": target_name},
+                    )
+                    users_id_map[target_name] = self._extract_user_id_response(
+                        uid, target_name
+                    )
+
+                if (
+                    users_id_map.get(source_name) is None
+                    or users_id_map.get(target_name) is None
+                ):
+                    continue
+
+                api_url = f"{self.config['servers']['api']}follow"
+                data = {
+                    "user_id": users_id_map[source_name],
+                    "target": users_id_map[target_name],
+                    "action": "follow",
+                    "round": 0,
+                }
+                post(f"{api_url}", headers=headers, data=json.dumps(data))
 
     def read_agents(self):
         """
@@ -206,6 +297,9 @@ class YClientWeb(object):
         import y_client.recsys as recsys
         import y_client.recsys as frecsys
         from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
+
+        AgentClass = FakeAgent if self._rule_based_agents_enabled() else Agent
+        PageClass = FakePageAgent if self._rule_based_agents_enabled() else PageAgent
 
         # population filename
         self.agents_filename = os.path.join(
@@ -218,76 +312,44 @@ class YClientWeb(object):
         for ag in data["agents"]:
 
             if ag["is_page"] == 0:
-                self.content_recsys = getattr(recsys, ag["rec_sys"])()
-                self.follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
+                content_recsys = getattr(recsys, ag["rec_sys"])()
+                follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
 
-                if self.llm_active:
-
-                    agent = Agent(
-                        name=ag["name"],
-                        email=ag["email"],
-                        pwd=ag["password"],
-                        ag_type=ag["type"],
-                        leaning=ag["leaning"],
-                        interests=ag["interests"][0],
-                        oe=ag["oe"],
-                        co=ag["co"],
-                        ex=ag["ex"],
-                        ag=ag["ag"],
-                        ne=ag["ne"],
-                        education_level=ag["education_level"],
-                        round_actions=ag["round_actions"],
-                        nationality=ag["nationality"],
-                        toxicity=ag["toxicity"],
-                        gender=ag["gender"],
-                        age=ag["age"],
-                        recsys=self.content_recsys,
-                        frecsys=self.follow_recsys,
-                        language=ag["language"],
-                        owner=ag["owner"],
-                        config=self.config,
-                        load=not self.first_run,
-                        web=True,
-                        daily_activity_level=ag["daily_activity_level"],
-                        profession=ag["profession"],
-                        prompt=ag["prompts"] if "prompts" in ag else None,
-                        activity_profile=ag["activity_profile"],
-                        opinions=ag["opinions"] if "opinions" in ag else None,
-                        archetype=ag["archetype"],
-                        )
-                else:
-                    agent = FakeAgent(
-                        name=ag["name"],
-                        email=ag["email"],
-                        pwd=ag["password"],
-                        ag_type=ag["type"],
-                        leaning=ag["leaning"],
-                        interests=ag["interests"][0],
-                        oe=ag["oe"],
-                        co=ag["co"],
-                        ex=ag["ex"],
-                        ag=ag["ag"],
-                        ne=ag["ne"],
-                        education_level=ag["education_level"],
-                        round_actions=ag["round_actions"],
-                        nationality=ag["nationality"],
-                        toxicity=ag["toxicity"],
-                        gender=ag["gender"],
-                        age=ag["age"],
-                        recsys=self.content_recsys,
-                        frecsys=self.follow_recsys,
-                        language=ag["language"],
-                        owner=ag["owner"],
-                        config=self.config,
-                        load=not self.first_run,
-                        web=True,
-                        daily_activity_level=ag["daily_activity_level"],
-                        profession=ag["profession"],
-                        prompt=ag["prompts"] if "prompts" in ag else None,
-                        activity_profile=ag["activity_profile"],
-                        opinions=ag["opinions"] if "opinions" in ag else None,
-                        archetype=ag["archetype"]
-                    )
+                agent = AgentClass(
+                    name=ag["name"],
+                    email=ag["email"],
+                    pwd=ag["password"],
+                    ag_type=ag["type"],
+                    leaning=ag["leaning"],
+                    interests=ag["interests"][0],
+                    oe=ag["oe"],
+                    co=ag["co"],
+                    ex=ag["ex"],
+                    ag=ag["ag"],
+                    ne=ag["ne"],
+                    education_level=ag["education_level"],
+                    round_actions=ag["round_actions"],
+                    nationality=ag["nationality"],
+                    toxicity=ag["toxicity"],
+                    gender=ag["gender"],
+                    age=ag["age"],
+                    recsys=content_recsys,
+                    frecsys=follow_recsys,
+                    language=ag["language"],
+                    owner=ag["owner"],
+                    config=self.config,
+                    load=not self.first_run,
+                    web=True,
+                    prompt=ag.get("prompts"),
+                    daily_activity_level=ag.get("daily_activity_level") or 1,
+                    profession=ag.get("profession"),
+                    activity_profile=ag.get("activity_profile") or "Always On",
+                    archetype=ag.get("archetype"),
+                    opinions=ag.get("opinions"),
+                    stubborn_topics=ag.get("stubborn_topics"),
+                    custom_features=ag.get("custom_features"),
+                    experiment_db_path=os.path.join(self.base_path, "database_server.db"),
+                )
 
                 agent.set_prompts(self.prompts)
                 self.agents.add_agent(agent)
@@ -305,59 +367,31 @@ class YClientWeb(object):
                 follow_recsys = getattr(frecsys, "Jaccard")(leaning_bias=1.5)
 
                 try:
-
-                    if self.llm_active:
-                        page = PageAgent(
-                            name=ag["name"],
-                            pwd="",
-                            email=ag["email"],
-                            age=0,
-                            ag_type=ag["type"],
-                            leaning=None,
-                            interests=[],
-                            config=self.config,
-                            big_five=big_five,
-                            language=None,
-                            education_level=None,
-                            owner=ag["owner"],
-                            round_actions=ag["round_actions"],
-                            gender=None,
-                            nationality=None,
-                            toxicity=None,
-                            api_key="",
-                            feed_url=ag["feed_url"],
-                            recsys=content_recsys,
-                            frecsys=follow_recsys,
-                            is_page=1,
-                            web=True,
-                            activity_profile=ag["activity_profile"]
-                        )
-                    else:
-                        page = FakePageAgent(
-                            name=ag["name"],
-                            pwd="",
-                            email=ag["email"],
-                            age=0,
-                            ag_type=ag["type"],
-                            leaning=None,
-                            interests=[],
-                            config=self.config,
-                            big_five=big_five,
-                            language=None,
-                            education_level=None,
-                            owner=ag["owner"],
-                            round_actions=ag["round_actions"],
-                            gender=None,
-                            nationality=None,
-                            toxicity=None,
-                            api_key="",
-                            feed_url=ag["feed_url"],
-                            recsys=content_recsys,
-                            frecsys=follow_recsys,
-                            is_page=1,
-                            web=True,
-                            activity_profile=ag["activity_profile"]
-                        )
+                    page = PageClass(
+                        name=ag["name"],
+                        pwd="",
+                        email=ag["email"],
+                        age=0,
+                        ag_type=ag["type"],
+                        leaning=None,
+                        interests=[],
+                        config=self.config,
+                        big_five=big_five,
+                        language=None,
+                        education_level=None,
+                        owner=ag["owner"],
+                        round_actions=ag["round_actions"],
+                        gender=None,
+                        nationality=None,
+                        toxicity=None,
+                        api_key="",
+                        feed_url=ag["feed_url"],
+                        activity_profile=ag.get("activity_profile") or "Always On",
+                        recsys=content_recsys,
+                        frecsys=follow_recsys,
+                        is_page=1,
+                        web=True
+                    )
 
                     page.set_prompts(self.prompts)
                     self.agents.add_agent(page)
@@ -369,8 +403,7 @@ class YClientWeb(object):
                             "category": ag["type"],
                         }
                     )
-
-                except:
+                except Exception:
                     print(f"Error loading page agent: {ag['name']}")
                     continue
 
@@ -410,48 +443,31 @@ class YClientWeb(object):
         :param a_file: the JSON file containing the agents
         """
         agents = json.load(open(a_file, "r"))
-        from y_client.classes import Agent, PageAgent, FakeAgent, FakePageAgent
+        from y_client.classes import Agent, FakeAgent, FakePageAgent, PageAgent
+
+        AgentClass = FakeAgent if self._rule_based_agents_enabled() else Agent
+        PageClass = FakePageAgent if self._rule_based_agents_enabled() else PageAgent
 
         for a in agents["agents"]:
             try:
                 if a["is_page"] == 0:
-                    if self.llm_active:
-                        ag = Agent(
-                            name=a["name"],
-                            email=a["email"],
-                            load=True,
-                            config=self.config,
-                            web=True,
-                        )
-                    else:
-                        ag = FakeAgent(
-                            name=a["name"],
-                            email=a["email"],
-                            load=True,
-                            config=self.config,
-                            web=True,
-                        )
-
+                    ag = AgentClass(
+                        name=a["name"],
+                        email=a["email"],
+                        load=True,
+                        config=self.config,
+                        web=True,
+                        opinions=a.get("opinions"),
+                        stubborn_topics=a.get("stubborn_topics"),
+                        custom_features=a.get("custom_features"),
+                    )
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)
                 else:
-                    if self.llm_active:
-                        ag = PageAgent(
-                            a["name"],
-                            email=a["email"],
-                            load=True,
-                            config=self.config,
-                            web=True,
-                        )
-                    else:
-                        ag = FakePageAgent(
-                            a["name"],
-                            email=a["email"],
-                            load=True,
-                            config=self.config,
-                            web=True,
-                        )
+                    ag = PageClass(
+                        a["name"], email=a["email"], load=True, config=self.config, web=True
+                    )
                     ag.set_prompts(self.prompts)
                     ag.set_rec_sys(self.content_recsys, self.follow_recsys)
                     self.agents.add_agent(ag)
@@ -512,48 +528,5 @@ class YClientWeb(object):
                 name=page["name"],
                 url_feed=page["feed"],
                 category=page["category"],
-                leaning=page["leaning"],
+                leaning=page["leaning"]
             )
-
-    def add_network(self):
-        users_id_map = {}
-
-        if self.first_run and self.network is not None:  # self.run
-            with open(os.path.join(self.base_path, self.network), "r") as f:
-                headers = {"Content-Type": "application/x-www-form-urlencoded"}
-
-                for l in f:
-                    l = l.strip().split(",")
-
-                    # from username to id on the server
-                    if l[0] not in users_id_map:
-                        api_url = f"{self.config['servers']['api']}get_user_id"
-                        data = {
-                            "username": l[0],
-                        }
-                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
-
-                        users_id_map[l[0]] = json.loads(
-                            uid.__dict__["_content"].decode("utf-8")
-                        )["id"]
-
-                    if l[1] not in users_id_map:
-                        api_url = f"{self.config['servers']['api']}get_user_id"
-                        data = {
-                            "username": l[1],
-                        }
-                        uid = post(f"{api_url}", headers=headers, data=json.dumps(data))
-                        users_id_map[l[1]] = json.loads(
-                            uid.__dict__["_content"].decode("utf-8")
-                        )["id"]
-
-                    api_url = f"{self.config['servers']['api']}follow"
-
-                    data = {
-                        "user_id": users_id_map[l[0]],
-                        "target": users_id_map[l[1]],
-                        "action": "follow",
-                        "tid": 0,  # first round
-                    }
-
-                    post(f"{api_url}", headers=headers, data=json.dumps(data))

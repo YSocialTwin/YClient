@@ -11,8 +11,12 @@ import re
 
 from requests import post
 from y_client.classes.base_agent import Agent
-from y_client.logger import log_execution_time
-from y_client.news_feeds.client_modals import Websites, session
+from y_client import content_store
+try:
+    from y_client.logger import log_execution_time
+except Exception:
+    def log_execution_time(func):
+        return func
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.classes.page_agent import PageAgent
 
@@ -84,7 +88,7 @@ class FakePageAgent(PageAgent):
         """
 
         # Select websites with the same name of the page
-        website = session.query(Websites).filter(Websites.name == self.name).first()
+        website = content_store.get_website(name=self.name)
 
         if website is None:
             return "", ""

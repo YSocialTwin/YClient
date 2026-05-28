@@ -6,6 +6,7 @@ Each log entry is written as a JSON object to a log file with rotating file supp
 """
 
 import json
+import os
 import time
 import functools
 import logging
@@ -17,6 +18,11 @@ from pathlib import Path
 # Default rotation settings
 DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 DEFAULT_BACKUP_COUNT = 5
+
+# Environment variable used to persist the configured log file path so that
+# child/worker processes (multiprocessing spawn) can discover it even though
+# they do not inherit the in-process global state.
+_LOG_FILE_ENV_VAR = "YCLIENT_LOG_FILE"
 
 
 class AgentLogger:
@@ -154,9 +160,11 @@ def get_logger(log_file=None, max_bytes=None, backup_count=None):
     
     Args:
         log_file (str, optional): Path to the log file. If None and no logger exists,
-                                  defaults to "agent_execution.log". If a logger already
-                                  exists, the existing logger is returned regardless of
-                                  this parameter.
+                                  falls back to the ``YCLIENT_LOG_FILE`` environment
+                                  variable (set by :func:`set_logger`), and finally to
+                                  ``"agent_execution.log"``. If a logger already exists,
+                                  the existing logger is returned regardless of this
+                                  parameter.
         max_bytes (int, optional): Maximum size of a log file in bytes before rotation.
                                   Defaults to 10 MB. Only used when creating a new logger.
         backup_count (int, optional): Number of backup files to keep.
@@ -168,7 +176,10 @@ def get_logger(log_file=None, max_bytes=None, backup_count=None):
     global _default_logger
     if _default_logger is None:
         if log_file is None:
-            log_file = "agent_execution.log"
+            # Prefer the path persisted by set_logger() so that child/worker
+            # processes that did not call set_logger() directly (e.g. spawned
+            # via multiprocessing) still write to the correct log file.
+            log_file = os.environ.get(_LOG_FILE_ENV_VAR, "agent_execution.log")
         _default_logger = AgentLogger(log_file, max_bytes=max_bytes, backup_count=backup_count)
     return _default_logger
 
@@ -180,6 +191,11 @@ def set_logger(log_file, max_bytes=None, backup_count=None):
     This function allows reconfiguring the logger to use a different log file
     with optional rotation settings. Use this at client initialization to 
     specify a custom log location and rotation parameters.
+
+    The path is also persisted in the ``YCLIENT_LOG_FILE`` environment variable
+    so that child/worker processes that are spawned *after* this call (e.g. via
+    ``multiprocessing`` with the *spawn* start method) automatically write to
+    the same file when they call :func:`get_logger` for the first time.
     
     Args:
         log_file (str): Path to the log file
@@ -192,6 +208,9 @@ def set_logger(log_file, max_bytes=None, backup_count=None):
         AgentLogger: The newly configured logger instance
     """
     global _default_logger
+    # Persist the path so child processes (multiprocessing spawn) can pick it up
+    # via get_logger() without needing an explicit set_logger() call of their own.
+    os.environ[_LOG_FILE_ENV_VAR] = str(log_file)
     # Close existing logger if present
     if _default_logger is not None:
         _default_logger.close()

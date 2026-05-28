@@ -27,37 +27,13 @@ import shutil
 from pathlib import Path
 
 import sqlalchemy as db
-from sqlalchemy import orm
+from sqlalchemy import orm, text
 from sqlalchemy.ext.declarative import declarative_base
 
-try:
-    BASE_DIR = Path(__file__).parent.absolute()
 
-    # read the experiment configuration (hardcoded config filename is a big issue!)
-    config_path = Path("experiments") / "current_config.json"
-    config = json.load(open(config_path))
-
-    db_file = Path("experiments") / f"{config['simulation']['name']}.db"
-    if not db_file.exists():
-        # copy the clean database to the experiments folder
-        source_db = BASE_DIR.parent.parent / "data_schema" / "database_clean_client.db"
-        dest_db = BASE_DIR.parent.parent / "experiments" / f"{config['simulation']['name']}.db"
-        shutil.copyfile(source_db, dest_db)
-
-    base = declarative_base()
-    # SQLite URIs always use forward slashes, use pathlib for robust conversion
-    db_path = Path("experiments") / f"{config['simulation']['name']}.db"
-    db_uri = db_path.as_posix()
-    engine = db.create_engine(
-        f"sqlite:///{db_uri}",
-        connect_args={"check_same_thread": False},
-    )
-    base.metadata.bind = engine
-    session = orm.scoped_session(orm.sessionmaker())(bind=engine)
-except:
-    from y_client.clients.client_web import base, session
-
-    pass
+base = declarative_base()
+engine = None
+session = None
 
 
 class Articles(base):
@@ -141,3 +117,103 @@ class Agent_Custom_Prompt(base):
     id = db.Column(db.Integer, primary_key=True)
     agent_name = db.Column(db.TEXT, nullable=False)
     prompt = db.Column(db.TEXT, nullable=False)
+
+
+class StressReward(base):
+    __tablename__ = "stress_reward"
+    __table_args__ = (
+        db.CheckConstraint(
+            "variable IN ('stress', 'reward')", name="ck_stress_reward_variable"
+        ),
+        db.CheckConstraint(
+            "type IN ('aggregate', 'variation')", name="ck_stress_reward_type"
+        ),
+        db.CheckConstraint("value >= 0 AND value <= 1", name="ck_stress_reward_value"),
+    )
+
+    id = db.Column(db.String(36), primary_key=True)
+    uid = db.Column(db.Integer, db.ForeignKey("user_mgmt.id"), nullable=False, index=True)
+    variable = db.Column(db.String(16), nullable=False)
+    value = db.Column(db.Float, nullable=False)
+    type = db.Column(db.String(16), nullable=False)
+    tid = db.Column(db.Integer, db.ForeignKey("rounds.id"), nullable=False, index=True)
+
+
+def _legacy_default_db_path():
+    database_url = os.environ.get("CONTENT_DATABASE_URL")
+    if database_url:
+        return None, database_url
+
+    try:
+        config = json.load(open("experiments/current_config.json"))
+        db_name = config["simulation"]["name"]
+        return f"experiments/{db_name}.db", None
+    except Exception:
+        return None, None
+
+
+def _ensure_sqlite_seed_db(target_path):
+    if target_path is None or os.path.exists(target_path):
+        return
+    os.makedirs(os.path.dirname(target_path), exist_ok=True)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    shutil.copyfile(
+        f"{base_dir}/../../data_schema/database_clean_client.db",
+        target_path,
+    )
+
+
+def initialize_client_db(*, db_path=None, database_url=None):
+    global engine, session
+
+    if db_path is None and database_url is None:
+        db_path, database_url = _legacy_default_db_path()
+
+    if database_url:
+        engine = db.create_engine(database_url)
+    elif db_path:
+        _ensure_sqlite_seed_db(db_path)
+        engine = db.create_engine(f"sqlite:////{os.path.abspath(db_path)}")
+    else:
+        engine = None
+        session = None
+        return None, None, base
+
+    base.metadata.bind = engine
+    session = orm.scoped_session(orm.sessionmaker())(bind=engine)
+    if engine.dialect.name == "sqlite":
+        with engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    CREATE TABLE IF NOT EXISTS stress_reward (
+                        id VARCHAR(36) PRIMARY KEY,
+                        uid INTEGER NOT NULL,
+                        variable VARCHAR(16) NOT NULL,
+                        value FLOAT NOT NULL,
+                        type VARCHAR(16) NOT NULL,
+                        tid INTEGER NOT NULL,
+                        FOREIGN KEY(uid) REFERENCES user_mgmt(id),
+                        FOREIGN KEY(tid) REFERENCES rounds(id),
+                        CONSTRAINT ck_stress_reward_variable
+                            CHECK (variable IN ('stress', 'reward')),
+                        CONSTRAINT ck_stress_reward_type
+                            CHECK (type IN ('aggregate', 'variation')),
+                        CONSTRAINT ck_stress_reward_value
+                            CHECK (value >= 0 AND value <= 1)
+                    )
+                    """
+                )
+            )
+    return session, engine, base
+
+
+def get_session():
+    return session
+
+
+def get_engine():
+    return engine
+
+
+initialize_client_db()

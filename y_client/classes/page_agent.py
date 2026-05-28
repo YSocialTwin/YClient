@@ -8,10 +8,11 @@ focusing solely on publishing news content from RSS feeds.
 
 import json
 import re
+from y_client.llm import AssistantAgent
 
-from autogen import AssistantAgent
 from requests import post
 from y_client.classes.base_agent import Agent
+from y_client import content_store
 from y_client.logger import log_execution_time
 from y_client.news_feeds.client_modals import Websites, session
 from y_client.news_feeds.feed_reader import NewsFeed
@@ -45,6 +46,7 @@ class PageAgent(Agent):
         super().__init__(*args, **kwargs)
         self.feed_url = kwargs.get("feed_url")
         self.name = kwargs.get("name")
+        self.activity_profile = kwargs.get("activity_profile")
 
     @log_execution_time
     def select_action(self, tid, actions, max_length_thread_reading=5):
@@ -84,7 +86,7 @@ class PageAgent(Agent):
         """
 
         # Select websites with the same name of the page
-        website = session.query(Websites).filter(Websites.name == self.name).first()
+        website = content_store.get_website(name=self.name)
 
         if website is None:
             return "", ""
@@ -153,38 +155,47 @@ class PageAgent(Agent):
             Response: HTTP response object from the POST request to the news endpoint
         """
 
-        u1 = AssistantAgent(
-            name=f"{self.name}",
-            llm_config=self.llm_config,
-            system_message=self.__effify(
-                self.prompts["page_roleplay"], website=website, article=article
-            ),
-            max_consecutive_auto_reply=1,
-        )
+        if self._has_usable_llm_config():
+            topics = self._extract_news_topics(article=article, website=website)
+            u1 = AssistantAgent(
+                name=f"{self.name}",
+                llm_config=self.llm_config,
+                system_message=self.__effify(
+                    self.prompts["page_roleplay"], website=website
+                ),
+                max_consecutive_auto_reply=1,
+            )
 
-        u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions_topics"]),
-            max_consecutive_auto_reply=1,
-        )
+            u2 = AssistantAgent(
+                name=f"Handler",
+                llm_config=self.llm_config,
+                system_message=self.__effify(self.prompts["handler_instructions"]),
+                max_consecutive_auto_reply=1,
+            )
 
-        u2.initiate_chat(
-            u1,
-            message=self.__effify(
-                self.prompts["handler_news"], website=website, article=article
-            ),
-            silent=True,
-            max_round=1,
-        )
+            u2.initiate_chat(
+                u1,
+                message=self.__effify(
+                    self.prompts["handler_news"], website=website, article=article
+                ),
+                silent=True,
+                max_round=1,
+            )
 
-        topic_eval = u2.chat_messages[u1][-1]["content"]
+            post_text = u2.chat_messages[u1][-2]["content"]
+            post_text = post_text.replace(f"@{self.name}", "")
 
-        topics = re.findall(r"[#T]: \w+ \w+", topic_eval)
-        topics = [x.split(": ")[1] for x in topics if "Topic" not in x]
-
-        post_text = u2.chat_messages[u1][-2]["content"]
-        post_text = post_text.replace(f"@{self.name}", "")
+            u1.reset()
+            u2.reset()
+        else:
+            topics = []
+            title = str(getattr(article, "title", "") or "").strip()
+            summary = str(getattr(article, "summary", "") or "").strip()
+            link = str(getattr(article, "link", "") or "").strip()
+            parts = [p for p in [title, summary] if p]
+            post_text = " - ".join(parts) if parts else title or summary or "News update"
+            if link:
+                post_text = f"{post_text} {link}".strip()
 
         hashtags = self.__extract_components(post_text, c_type="hashtags")
         mentions = self.__extract_components(post_text, c_type="mentions")
@@ -210,9 +221,6 @@ class PageAgent(Agent):
                 "topics": topics,
             }
         )
-
-        u1.reset()
-        u2.reset()
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
@@ -312,4 +320,5 @@ class PageAgent(Agent):
             "joined_on": self.joined_on,
             "is_page": self.is_page,
             "feed_url": self.feed_url,
+            "activity_profile": getattr(self, "activity_profile", None),
         }

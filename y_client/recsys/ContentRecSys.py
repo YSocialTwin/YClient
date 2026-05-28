@@ -90,6 +90,8 @@ class ContentRecSys(object):
 
         if articles:
             self.params["articles"] = True
+        else:
+            self.params.pop("articles", None)
 
         self.params["uid"] = user_id
 
@@ -99,7 +101,7 @@ class ContentRecSys(object):
 
         return response.__dict__["_content"].decode("utf-8")
 
-    def read_mentions(self, base_url):
+    def read_mentions(self, base_url, user_id=None):
         """
         Fetch posts that mention the user.
         
@@ -112,6 +114,9 @@ class ContentRecSys(object):
         api_url = f"{base_url}/read_mentions"
 
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
+
+        if user_id is not None:
+            self.params["uid"] = user_id
 
         st = json.dumps(self.params)
         response = post(f"{api_url}", headers=headers, data=st)

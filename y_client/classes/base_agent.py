@@ -2393,10 +2393,16 @@ class Agent(object):
             max_round=1,
         )
 
-        post_text = self._extract_generated_chat_content(
-            u2, u1, prompt_hint=self.prompts["handler_post"]
-        )
+        # emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        # emotion_eval = self.__clean_emotion(emotion_eval)
+
+        post_text = u2.chat_messages[u1][-2]["content"]
+
         post_text = self.__clean_text(post_text)
+
+        emotion_eval = []
+        if getattr(self, "annotate_emotions", False):
+            emotion_eval = self.__emotion_annotation(post_text)
 
         # avoid posting empty messages
         if len(post_text) < 3:
@@ -2759,9 +2765,12 @@ class Agent(object):
             max_round=1,
         )
 
-        post_text = self._extract_generated_chat_content(
-            u2, u1, prompt_hint=self.__effify(self.prompts["handler_comment"], conv=conv)
-        )
+        #emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        #emotion_eval = self.__clean_emotion(emotion_eval)
+
+        post_text = u2.chat_messages[u1][-2]["content"]
+
+        # cleaning the post text of some unwanted characters
         post_text = self.__clean_text(post_text)
 
         emotion_eval = []
@@ -2958,13 +2967,10 @@ class Agent(object):
             max_round=1,
         )
 
-        post_text = self._extract_generated_chat_content(
-            u2,
-            u1,
-            prompt_hint=self.__effify(
-                self.prompts["handler_news"], website=website, article=article
-            ),
-        )
+        # emotion_eval = u2.chat_messages[u1][-1]["content"].lower()
+        # emotion_eval = self.__clean_emotion(emotion_eval)
+
+        post_text = u2.chat_messages[u1][-2]["content"]
 
         post_text = (
             post_text.split(":")[-1]
@@ -4146,88 +4152,6 @@ class Agent(object):
             },
             "custom_features": dict(getattr(self, "custom_features", {}) or {}),
         }
-
-    def _looks_like_emotion_payload(self, text_value):
-        text = str(text_value or "").strip()
-        if not text:
-            return False
-        normalized = text.lower()
-        if "no emotions were found" in normalized:
-            return True
-        if "annotated sentence" in normalized and "emotion" in normalized:
-            return True
-        allowed = {
-            "admiration",
-            "amusement",
-            "anger",
-            "annoyance",
-            "approval",
-            "caring",
-            "confusion",
-            "curiosity",
-            "desire",
-            "disappointment",
-            "disapproval",
-            "disgust",
-            "embarrassment",
-            "excitement",
-            "fear",
-            "gratitude",
-            "grief",
-            "joy",
-            "love",
-            "nervousness",
-            "optimism",
-            "pride",
-            "realization",
-            "relief",
-            "remorse",
-            "sadness",
-            "surprise",
-            "trust",
-        }
-        tokens = [t for t in re.split(r"[\s,\[\]\(\)\{\}:;,.!?\n\r\t]+", normalized) if t]
-        emotion_tokens = [t for t in tokens if t in allowed]
-        non_emotion_tokens = [t for t in tokens if t not in allowed]
-        if len(emotion_tokens) >= 2 and len(non_emotion_tokens) <= 4:
-            return True
-        if len(tokens) <= 12 and tokens and all(t in allowed for t in tokens):
-            return True
-        return False
-
-    def _extract_generated_chat_content(self, chat_owner, peer_agent, prompt_hint=None):
-        prompt_norm = re.sub(r"\s+", " ", str(prompt_hint or "").strip()).lower()
-        messages = []
-        try:
-            messages = chat_owner.chat_messages.get(peer_agent, [])
-        except Exception:
-            messages = []
-        for msg in reversed(messages):
-            if not isinstance(msg, dict):
-                continue
-            content = msg.get("content")
-            if not isinstance(content, str) or not content.strip():
-                continue
-            norm = re.sub(r"\s+", " ", content.strip()).lower()
-            if prompt_norm and norm == prompt_norm:
-                continue
-            cleaned = self.__clean_text(content)
-            if not cleaned:
-                continue
-            if self._looks_like_emotion_payload(cleaned):
-                continue
-            return cleaned
-        try:
-            last = chat_owner.last_message(peer_agent)
-            if isinstance(last, dict):
-                content = last.get("content")
-                if isinstance(content, str):
-                    cleaned = self.__clean_text(content)
-                    if cleaned and not self._looks_like_emotion_payload(cleaned):
-                        return cleaned
-        except Exception:
-            pass
-        return ""
 
     def __emotion_annotation(self, text_to_annotate: str):
         """

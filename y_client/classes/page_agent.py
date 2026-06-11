@@ -167,14 +167,11 @@ class PageAgent(Agent):
             )
 
             u2 = AssistantAgent(
-            name=f"Handler",
-            llm_config=self.llm_config,
-            system_message=self.__effify(
-                self.prompts.get("handler_instructions_simple")
-                or self.prompts.get("handler_instructions", "")
-            ),
-            max_consecutive_auto_reply=1,
-        )
+                name=f"Handler",
+                llm_config=self.llm_config,
+                system_message=self.__effify(self.prompts["handler_instructions"]),
+                max_consecutive_auto_reply=1,
+            )
 
             u2.initiate_chat(
                 u1,

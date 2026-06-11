@@ -131,6 +131,16 @@ def _llm_temperature_from_config(config, default=0.0):
         return float(default)
 
 
+def _generation_handler_prompt(prompts):
+    if not isinstance(prompts, dict):
+        return ""
+    simple = prompts.get("handler_instructions_simple")
+    if isinstance(simple, str) and simple.strip():
+        return simple
+    fallback = prompts.get("handler_instructions")
+    return fallback if isinstance(fallback, str) else ""
+
+
 def _opinion_dynamics_from_config(config):
     if not isinstance(config, dict):
         return {}
@@ -2373,7 +2383,7 @@ class Agent(object):
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,
-            system_message=self.prompts["handler_instructions"],
+            system_message=_generation_handler_prompt(self.prompts),
             max_consecutive_auto_reply=1,
         )
 
@@ -2456,7 +2466,7 @@ class Agent(object):
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
+            system_message=_generation_handler_prompt(self.prompts),
             max_consecutive_auto_reply=1,
         )
 
@@ -2737,7 +2747,7 @@ class Agent(object):
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
+            system_message=_generation_handler_prompt(self.prompts),
             max_consecutive_auto_reply=1,
         )
 
@@ -2942,7 +2952,7 @@ class Agent(object):
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,  # self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
+            system_message=_generation_handler_prompt(self.prompts),
             max_consecutive_auto_reply=1,
         )
 
@@ -3921,7 +3931,7 @@ class Agent(object):
         u2 = AssistantAgent(
             name=f"Handler",
             llm_config=self.llm_config,
-            system_message=self.__effify(self.prompts["handler_instructions"]),
+            system_message=_generation_handler_prompt(self.prompts),
             max_consecutive_auto_reply=1,
         )
 

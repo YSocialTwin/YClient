@@ -445,6 +445,43 @@ def test_comment_payload_keeps_post_text_separate_from_emotion_annotations(monke
     assert "No emotions were found in this annotated sentence." not in comment_payload["text"]
 
 
+def test_short_emotion_label_snippets_are_rejected(monkeypatch):
+    agent = make_content_agent()
+    agent.emotions = [
+        "admiration",
+        "amusement",
+        "anger",
+        "annoyance",
+        "approval",
+        "caring",
+        "confusion",
+        "curiosity",
+        "desire",
+        "disappointment",
+        "disapproval",
+        "disgust",
+        "embarrassment",
+        "excitement",
+        "fear",
+        "gratitude",
+        "grief",
+        "joy",
+        "love",
+        "nervousness",
+        "optimism",
+        "pride",
+        "realization",
+        "relief",
+        "remorse",
+        "sadness",
+        "surprise",
+        "trust",
+    ]
+
+    assert agent._looks_like_emotion_payload("Sadness nostalgia apprehension")
+    assert agent._looks_like_emotion_payload("Anger joy fear")
+
+
 def test_post_payload_keeps_post_text_separate_from_emotion_annotations(monkeypatch):
     agent = make_content_agent()
     agent.annotate_emotions = True

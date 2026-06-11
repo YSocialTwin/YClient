@@ -4189,6 +4189,8 @@ class Agent(object):
         tokens = [t for t in re.split(r"[\s,\[\]\(\)\{\}:;,.!?\n\r\t]+", normalized) if t]
         emotion_tokens = [t for t in tokens if t in allowed]
         non_emotion_tokens = [t for t in tokens if t not in allowed]
+        if len(tokens) <= 4 and emotion_tokens:
+            return True
         if len(emotion_tokens) >= 2 and len(non_emotion_tokens) <= 4:
             return True
         if len(tokens) <= 12 and tokens and all(t in allowed for t in tokens):

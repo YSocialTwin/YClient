@@ -5,6 +5,7 @@ This module provides image annotation capabilities using multimodal LLM agents.
 It can analyze and describe images shared in the social network simulation.
 """
 
+from y_client import prompt_store
 from y_client.llm import AssistantAgent, MultimodalConversableAgent
 
 
@@ -79,8 +80,7 @@ class Annotator(object):
         self.user_proxy.initiate_chat(
             self.image_agent,
             silent=True,
-            message=f"""Describe the following image. 
-            Write in english. <img {image}>""",
+            message=prompt_store.prompt("image_description_user", image=image),
         )
 
         payload = self.image_agent.chat_messages[self.user_proxy][-1]["content"]

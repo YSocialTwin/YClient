@@ -31,6 +31,7 @@ except Exception:
     def log_execution_time(func):
         return func
 from y_client import content_store
+from y_client import prompt_store
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
@@ -332,11 +333,11 @@ class FakeAgent(Agent):
             )
             sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-            self.topics_opinions = (
-                "Your opinion topics of the post you are responding to are: "
-            )
+            self.topics_opinions = prompt_store.get("opinion_topics_intro")
             for s in sentiment:
-                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+                self.topics_opinions += prompt_store.prompt(
+                    "opinion_topic_item", topic=s["topic"], sentiment=s["sentiment"]
+                )
             if len(sentiment) == 0:
                 self.topics_opinions = ""
         else:

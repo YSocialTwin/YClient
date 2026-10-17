@@ -25,6 +25,7 @@ from y_client.memory_runtime import build_agent_memory_engine
 from y_client.stress_reward.update_system import StressRewardSystem, deep_update
 import y_client.opinion_dynamics as op_dynamics
 from y_client import content_store
+from y_client import prompt_store
 from y_client.logger import log_execution_time
 import random
 from requests import get, post
@@ -995,12 +996,11 @@ class Agent(object):
             system_message=system_prompt,
             max_consecutive_auto_reply=1,
         )
-        prompt = (
-            "Annotate the interaction for stress/reward scoring.\n"
-            f"Actor user id: {getattr(self, 'user_id', '')}\n"
-            f"Recipient user id: {target_user_id if target_user_id is not None else ''}\n"
-            f"Text:\n{text}\n"
-            "Return JSON only."
+        prompt = prompt_store.prompt(
+            "stress_annotation_user",
+            actor_id=getattr(self, "user_id", ""),
+            recipient_id=target_user_id if target_user_id is not None else "",
+            text=text,
         )
         try:
             response = annotator._generate_reply(prompt)
@@ -1267,12 +1267,14 @@ class Agent(object):
         if not messages:
             return base_prompt
 
-        rendered = ["Active system messages addressed to you for this round."]
-        rendered.append(
-            "These are mandatory platform or moderator instructions for the content you are about to write. Follow them exactly."
-        )
+        rendered = [prompt_store.get("system_messages_header")]
+        rendered.append(prompt_store.get("system_messages_intro"))
         for item in messages:
-            rendered.append(f"- [{item['type']}] {item['message']}")
+            rendered.append(
+                prompt_store.prompt(
+                    "system_message_item", type=item["type"], message=item["message"]
+                )
+            )
         return f"{base_prompt}\n\n" + "\n".join(rendered)
 
     @staticmethod
@@ -1282,14 +1284,14 @@ class Agent(object):
         except Exception:
             stress_value = 0.0
         if stress_value <= 0.0:
-            return 1, "none"
+            return 1, prompt_store.get("stress_level_none")
         if stress_value <= 0.25:
-            return 2, "slightly stressed"
+            return 2, prompt_store.get("stress_level_slight")
         if stress_value <= 0.5:
-            return 3, "moderately stressed"
+            return 3, prompt_store.get("stress_level_moderate")
         if stress_value <= 0.75:
-            return 4, "very stressed"
-        return 5, "extremely stressed"
+            return 4, prompt_store.get("stress_level_high")
+        return 5, prompt_store.get("stress_level_extreme")
 
     def _stress_prompt_block(self, tid: int) -> str:
         if not getattr(self, "stress_reward_enabled", False):
@@ -1301,11 +1303,7 @@ class Agent(object):
         if not isinstance(state, dict):
             return ""
         level, label = self._stress_likert_bucket(state.get("stress", 0.0))
-        return (
-            "Current stress level: "
-            f"{label} ({level}/5 on a five-point scale where 1 means none and 5 means extremely stressed). "
-            "Use this only as internal emotional context while writing."
-        )
+        return prompt_store.prompt("stress_level_block", label=label, level=level)
 
     def _append_stress_level_to_prompt(self, *, base_prompt: str, tid: int):
         stress_block = self._stress_prompt_block(int(tid))
@@ -2929,11 +2927,11 @@ class Agent(object):
             )
             sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-            self.topics_opinions = (
-                "Your opinion topics of the post you are responding to are: "
-            )
+            self.topics_opinions = prompt_store.get("opinion_topics_intro")
             for s in sentiment:
-                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+                self.topics_opinions += prompt_store.prompt(
+                    "opinion_topic_item", topic=s["topic"], sentiment=s["sentiment"]
+                )
             if len(sentiment) == 0:
                 self.topics_opinions = ""
         else:
@@ -3156,23 +3154,14 @@ class Agent(object):
         u2 = AssistantAgent(
             name="ModeratorHandler",
             llm_config=self.llm_config,
-            system_message=(
-                "Read the content and decide whether it should be reported for moderation. "
-                "Reply with exactly one label: REPORT_TOXIC, REPORT_OFFENSIVE, or NONE."
-            ),
+            system_message=prompt_store.get("moderation_system"),
             max_consecutive_auto_reply=0,
         )
 
         try:
             u2.initiate_chat(
                 u1,
-                message=(
-                    "Classify the following content for moderation. "
-                    "Use REPORT_TOXIC for hateful, threatening, abusive, or toxic content. "
-                    "Use REPORT_OFFENSIVE for insulting, vulgar, or norm-breaking content that "
-                    "is offensive but not necessarily toxic. Use NONE otherwise.\n\n"
-                    f"##TEXT START##\n{post_text}\n##TEXT END##"
-                ),
+                message=prompt_store.prompt("moderation_user", post_text=post_text),
                 silent=True,
                 max_round=1,
             )
@@ -3311,7 +3300,11 @@ class Agent(object):
             return False
 
         action = str(action or "").strip().lower()
-        requested = "follow them back" if action == "follow" else "unfollow them back"
+        requested = prompt_store.get(
+            "follow_back_request_follow"
+            if action == "follow"
+            else "follow_back_request_unfollow"
+        )
         source_summary = self._summarize_agent_for_follow_back(source_agent)
 
         u1 = AssistantAgent(
@@ -3328,12 +3321,15 @@ class Agent(object):
         )
         u2.initiate_chat(
             u1,
-            message=(
-                "Another user has just "
-                f"{'followed' if action == 'follow' else 'unfollowed'} you.\n\n"
-                f"Their profile:\n{source_summary}\n\n"
-                f"Decide whether you want to {requested}. "
-                "Reply with ONLY YES or NO."
+            message=prompt_store.prompt(
+                "follow_back_user",
+                verb=prompt_store.get(
+                    "follow_back_verb_follow"
+                    if action == "follow"
+                    else "follow_back_verb_unfollow"
+                ),
+                profile=source_summary,
+                requested=requested,
             ),
             silent=True,
             max_round=1,
@@ -4167,9 +4163,8 @@ class Agent(object):
             max_consecutive_auto_reply=1,
         )
 
-        prompt = (
-            f"Annotate the following text with the emotions it elicits:\n\n"
-            f"{text_to_annotate}. Answer with a JSON formatted list of emotions only."
+        prompt = prompt_store.prompt(
+            "emotion_annotation_user", text=text_to_annotate
         )
         response = emotion_agent._generate_reply(prompt)
 

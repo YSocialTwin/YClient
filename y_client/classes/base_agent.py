@@ -776,6 +776,8 @@ class Agent(object):
         kwargs["self"] = prompt_store.localize(self)  # profile values in the prompt language (English: self)
         if "website" in kwargs:
             kwargs["website"] = prompt_store.localize(kwargs["website"])
+        if "action" in kwargs:
+            kwargs["action"] = prompt_store.localize_value("action", kwargs["action"])
         # The persona clause is a closed field; prompts saved with the old marker keep working.
         non_f_str = non_f_str.replace(
             "{self._custom_features_persona_clause()}", "{custom_features_clause}"

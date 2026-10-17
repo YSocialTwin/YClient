@@ -74,6 +74,29 @@ def _warn_if_language_unsupported(MemoryConfig, language):
             language,
         )
 
+_PACKAGE_LOGGED = False
+
+
+def _log_memory_package_once(language):
+    """One INFO line saying which yclient_memory is loaded (plugin checkout or pip)."""
+    global _PACKAGE_LOGGED
+    if _PACKAGE_LOGGED:
+        return
+    _PACKAGE_LOGGED = True
+    try:
+        import logging
+
+        import yclient_memory
+
+        logging.getLogger(__name__).info(
+            "yclient_memory %s loaded from %s (memory language: %s)",
+            getattr(yclient_memory, "__version__", "?"),
+            getattr(yclient_memory, "__file__", "?"),
+            language or "en",
+        )
+    except Exception:  # logging must never break the simulation
+        pass
+
 
 def build_agent_memory_engine(agent):
     from y_client import prompt_store
@@ -135,6 +158,7 @@ def build_agent_memory_engine(agent):
         "memory_importance_mode": getattr(agent, "memory_importance_mode", ""),
     }
     _warn_if_language_unsupported(MemoryConfig, raw["memory_language"])
+    _log_memory_package_once(raw["memory_language"])
     config = MemoryConfig.from_mapping(raw)
     runtime = YClientMemoryRuntime(agent)
     engine = build_memory_engine(

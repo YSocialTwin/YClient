@@ -60,3 +60,13 @@ def test_missing_package_message_names_the_plugin(monkeypatch):
     monkeypatch.setattr(builtins, "__import__", fake_import)
     with pytest.raises(RuntimeError, match="Agent Memory"):
         memory_runtime._load_memory_package()
+
+
+def test_loaded_package_path_is_logged_once(caplog, monkeypatch):
+    monkeypatch.setattr(memory_runtime, "_PACKAGE_LOGGED", False)
+    prompt_store.set_language("it")
+    with caplog.at_level("INFO"):
+        memory_runtime.build_agent_memory_engine(_agent())
+        memory_runtime.build_agent_memory_engine(_agent())
+    lines = [r.getMessage() for r in caplog.records if "yclient_memory" in r.getMessage() and "loaded from" in r.getMessage()]
+    assert len(lines) == 1 and "memory language: it" in lines[0]

@@ -168,3 +168,23 @@ def test_opinion_evaluation_prompt_matches():
         new += ps.prompt("opinion_eval_peer_item", group=opinion_group, count=count)
     new += ps.get("opinion_eval_question")
     assert new == old
+
+
+def test_render_follows_paths_items_joins_and_formats_without_evaluating():
+    class Agent:
+        age = 30
+        _secret = "x"
+
+    out = ps.render(
+        "{self.age} {article['title']} {', '.join(tags)} {score:.2f} {\"a\": 1}",
+        self=Agent(),
+        article={"title": "T"},
+        tags=["a", "b"],
+        score=0.5,
+    )
+    assert out == '30 T a, b 0.50 {"a": 1}'
+    with pytest.raises(ps.PromptError):
+        ps.render("{self._secret}", self=Agent())
+    with pytest.raises(ps.PromptError):
+        ps.render("{missing.name}")
+    assert ps.render("{self.upper()}", self="x") == "{self.upper()}"

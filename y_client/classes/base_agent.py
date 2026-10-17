@@ -25,7 +25,7 @@ from y_client.memory_runtime import build_agent_memory_engine
 from y_client.stress_reward.update_system import StressRewardSystem, deep_update
 import y_client.opinion_dynamics as op_dynamics
 from y_client import content_store
-from y_client import prompt_store
+from y_client import prompt_store, protocol_tokens
 from y_client.logger import log_execution_time
 import random
 from requests import get, post
@@ -774,7 +774,12 @@ class Agent(object):
         :return: the effified string
         """
         kwargs["self"] = self
-        return eval(f'f"""{non_f_str}"""', kwargs)
+        # The persona clause is a closed field; prompts saved with the old marker keep working.
+        non_f_str = non_f_str.replace(
+            "{self._custom_features_persona_clause()}", "{custom_features_clause}"
+        )
+        kwargs.setdefault("custom_features_clause", self._custom_features_persona_clause())
+        return prompt_store.render(non_f_str, **kwargs)
 
     def _custom_features_persona_clause(self):
         custom_features = dict(getattr(self, "custom_features", {}) or {})
@@ -793,7 +798,7 @@ class Agent(object):
         return "Additional personal details: " + "; ".join(parts) + "."
 
     def _augment_roleplay_prompt_with_custom_features(self, prompt):
-        marker = "{self._custom_features_persona_clause()}"
+        marker = "{custom_features_clause}"
         if (
             not isinstance(prompt, str)
             or marker in prompt
@@ -3080,7 +3085,7 @@ class Agent(object):
         u1.reset()
         u2.reset()
 
-        if "YES" in text.split():
+        if protocol_tokens.has_token(text, protocol_tokens.YES):
             st = json.dumps(
                 {
                     "user_id": self.user_id,
@@ -3091,7 +3096,7 @@ class Agent(object):
             )
             flag = "follow"
 
-        elif "NO" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.NO):
             st = json.dumps(
                 {
                     "user_id": self.user_id,
@@ -3240,7 +3245,7 @@ class Agent(object):
         u1.reset()
         u2.reset()
 
-        if "YES" in text.split():
+        if protocol_tokens.has_token(text, protocol_tokens.YES):
             if action == "follow":
                 self.follow(post_id=post_id, action=action, tid=tid)
                 return action
@@ -3487,15 +3492,15 @@ class Agent(object):
             "content_id": post_id,
         }
 
-        if "RIGHT" in text.split():
+        if protocol_tokens.has_token(text, protocol_tokens.RIGHT):
             data["vote"] = "R"
             st = json.dumps(data)
 
-        elif "LEFT" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.LEFT):
             data["vote"] = "D"
             st = json.dumps(data)
 
-        elif "NONE" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.NONE):
             data["vote"] = "U"
             st = json.dumps(data)
         else:
@@ -3565,7 +3570,7 @@ class Agent(object):
         u1.reset()
         u2.reset()
 
-        if "COMMENT" in text.split():
+        if protocol_tokens.has_token(text, protocol_tokens.COMMENT):
             candidates = json.loads(self.read())
             if len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
@@ -3576,10 +3581,10 @@ class Agent(object):
                 )
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
-        elif "POST" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.POST):
             self.post(tid=tid)
 
-        elif "READ" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.READ):
             candidates = json.loads(self.read())
             try:
                 selected_post = random.sample(candidates, 1)
@@ -3589,7 +3594,7 @@ class Agent(object):
             except:
                 pass
 
-        elif "SEARCH" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.SEARCH):
             candidates = json.loads(self.search())
             if "status" not in candidates and len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
@@ -3600,7 +3605,7 @@ class Agent(object):
                 )
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
-        elif "FOLLOW" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.FOLLOW):
             if self.probability_of_daily_follow > 0:
                 candidates = self.search_follow()
                 if len(candidates) > 0:
@@ -3613,13 +3618,13 @@ class Agent(object):
                     )[0]
                     self.follow(tid=tid, target=selected, action="follow")
 
-        elif "SHARE" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.SHARE):
             candidates = json.loads(self.read(article=True))
             if len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
                 self.share(int(selected_post[0]), tid=tid)
 
-        elif "CAST" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.CAST):
             candidates = json.loads(self.read())
             try:
                 selected_post = random.sample(candidates, 1)
@@ -3627,7 +3632,7 @@ class Agent(object):
             except:
                 pass
 
-        elif "IMAGE" in text.split():
+        elif protocol_tokens.has_token(text, protocol_tokens.IMAGE):
             image, article_id = self.select_image(tid=tid)
             if image is not None:
                 self.comment_image(image, tid=tid, article_id=article_id)
@@ -3646,7 +3651,7 @@ class Agent(object):
             return
         action = np.random.choice(actions)
 
-        if action == "COMMENT":
+        if action == protocol_tokens.COMMENT:
             candidates = json.loads(self.read())
             if len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
@@ -3657,10 +3662,10 @@ class Agent(object):
                 )
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
-        elif action == "POST":
+        elif action == protocol_tokens.POST:
             self.post(tid=tid)
 
-        elif action == "READ":
+        elif action == protocol_tokens.READ:
             candidates = json.loads(self.read())
             try:
                 selected_post = random.sample(candidates, 1)
@@ -3668,7 +3673,7 @@ class Agent(object):
             except:
                 pass
 
-        elif action == "SEARCH":
+        elif action == protocol_tokens.SEARCH:
             candidates = json.loads(self.search())
             if "status" not in candidates and len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
@@ -3679,7 +3684,7 @@ class Agent(object):
                 )
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
-        elif action == "FOLLOW":
+        elif action == protocol_tokens.FOLLOW:
             if self.probability_of_daily_follow > 0:
                 candidates = self.search_follow()
                 if len(candidates) > 0:
@@ -3692,13 +3697,13 @@ class Agent(object):
                     )[0]
                     self.follow(tid=tid, target=selected, action="follow")
 
-        elif action == "SHARE":
+        elif action == protocol_tokens.SHARE:
             candidates = json.loads(self.read(article=True))
             if len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
                 self.share(int(selected_post[0]), tid=tid)
 
-        elif action == "CAST":
+        elif action == protocol_tokens.CAST:
             candidates = json.loads(self.read())
             try:
                 selected_post = random.sample(candidates, 1)
@@ -3706,7 +3711,7 @@ class Agent(object):
             except:
                 pass
 
-        elif action == "IMAGE":
+        elif action == protocol_tokens.IMAGE:
             image, article_id = self.select_image(tid=tid)
             if image is not None:
                 self.comment_image(image, tid=tid, article_id=article_id)

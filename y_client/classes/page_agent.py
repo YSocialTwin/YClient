@@ -244,7 +244,7 @@ class PageAgent(Agent):
             str: The evaluated f-string with placeholders replaced by values
         """
         kwargs["self"] = self
-        return eval(f'f"""{non_f_str}"""', kwargs)
+        return prompt_store.render(non_f_str, **kwargs)
 
     def __extract_components(self, text, c_type="hashtags"):
         """

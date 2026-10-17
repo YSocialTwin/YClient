@@ -4,7 +4,7 @@ from enum import Enum
 
 from requests import post
 
-from y_client import prompt_store
+from y_client import prompt_store, protocol_tokens
 from y_client.llm import AssistantAgent
 from y_client.opinion_dynamics.utils import get_opinion_group
 
@@ -69,10 +69,10 @@ def llm_evaluation(
     prompt += prompt_store.get("opinion_eval_question")
 
     response = _llm_eval(llm_config, prompt)
-    if "AGREE" in response.upper():
+    if protocol_tokens.has_token(response, protocol_tokens.AGREE):
         _, updated_value = shift_class(x_group, y_group, Direction.AGREE, group_classes)
         return updated_value
-    if "DISAGREE" in response.upper():
+    if protocol_tokens.has_token(response, protocol_tokens.DISAGREE):
         _, updated_value = shift_class(x_group, y_group, Direction.DISAGREE, group_classes)
         return updated_value
     return float(x)

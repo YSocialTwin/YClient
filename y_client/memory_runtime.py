@@ -57,9 +57,13 @@ class YClientMemoryRuntime:
 
 
 def build_agent_memory_engine(agent):
+    from y_client import prompt_store
+
     build_memory_engine, MemoryConfig = _load_memory_package()
     prompt_mode = str(getattr(agent, "memory_prompt_mode", "subtle_timeline") or "subtle_timeline")
     raw = {
+        # Language of the simulation prompts: the memory package renders its texts in it.
+        "memory_language": prompt_store.current_language(),
         "memory_enabled": getattr(agent, "memory_enabled", False),
         "memory_backend": getattr(agent, "memory_backend", "hybrid_semantic"),
         "memory_prompt_mode": "subtle_forum" if prompt_mode == "subtle_timeline" else prompt_mode,

@@ -797,7 +797,7 @@ class Agent(object):
             parts.append(f"{label}: {value}" if value else label)
         if not parts:
             return ""
-        return "Additional personal details: " + "; ".join(parts) + "."
+        return prompt_store.prompt("custom_features_persona", details="; ".join(parts))
 
     def _augment_roleplay_prompt_with_custom_features(self, prompt):
         marker = "{custom_features_clause}"

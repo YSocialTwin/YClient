@@ -23,5 +23,6 @@
   "opinion_eval_peer_item": "Opinione: '{group}' ({count})\n",
   "opinion_eval_question": "\nRispondi con una sola parola tra le opzioni: AGREE|DISAGREE|NEUTRAL.",
   "follow_back_request_follow": "ricambiare il follow",
-  "follow_back_request_unfollow": "ricambiare l'unfollow"
+  "follow_back_request_unfollow": "ricambiare l'unfollow",
+  "custom_features_persona": "Ulteriori dettagli personali: {details}."
 }

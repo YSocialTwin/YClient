@@ -2267,7 +2267,7 @@ class Agent(object):
 
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
         try:
-            # exactly one topic per post, drawn with probability ~ interaction frequency
+            # exactly one topic per post, drawn with probability ~ interaction count (moving window)
             selected = [pick_topic_index(data)]
 
             interests = [data[i]["topic"] for i in selected]

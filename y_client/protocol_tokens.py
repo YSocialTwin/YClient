@@ -24,6 +24,7 @@ CAST = "CAST"
 NONE = "NONE"
 SHARE_LINK = "SHARE_LINK"
 SHARE_IMAGE = "SHARE_IMAGE"
+NEWS = "NEWS"  # legacy alias of SHARE_LINK that the forum client still reads (not offered to the model)
 
 # Answers to yes/no and vote questions.
 YES = "YES"

@@ -8,6 +8,7 @@ focusing solely on publishing news content from RSS feeds.
 
 import json
 import re
+from y_client.hashtag_text import HASHTAG_PATTERN
 from y_client.llm import AssistantAgent
 
 from requests import post
@@ -262,7 +263,7 @@ class PageAgent(Agent):
         """
         # Define the regex pattern
         if c_type == "hashtags":
-            pattern = re.compile(r"#\w+")
+            pattern = re.compile(HASHTAG_PATTERN)
         elif c_type == "mentions":
             pattern = re.compile(r"@\w+")
         else:

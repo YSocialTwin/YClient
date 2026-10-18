@@ -12,7 +12,7 @@ from y_client.llm import AssistantAgent
 
 from requests import post
 from y_client.classes.base_agent import Agent
-from y_client import content_store
+from y_client import content_store, prompt_store
 from y_client.logger import log_execution_time
 from y_client.news_feeds.client_modals import Websites, session
 from y_client.news_feeds.feed_reader import NewsFeed
@@ -243,7 +243,7 @@ class PageAgent(Agent):
         Returns:
             str: The evaluated f-string with placeholders replaced by values
         """
-        kwargs["self"] = self
+        kwargs["self"] = prompt_store.localize(self)  # profile values in the prompt language (English: self)
         return prompt_store.render(non_f_str, **kwargs)
 
     def __extract_components(self, text, c_type="hashtags"):

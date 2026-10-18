@@ -103,13 +103,8 @@ class FakeAgent(Agent):
 
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
         try:
-            # select a random interest without replacement
-            if len(data) >= 3:
-                selected = np.random.choice(
-                    range(len(data)), np.random.randint(1, 3), replace=False
-                )
-            else:
-                selected = np.random.choice(range(len(data)), len(data), replace=False)
+            # exactly one topic per post
+            selected = np.random.choice(range(len(data)), 1, replace=False)
 
             interests = [data[i]["topic"] for i in selected]
             interests_id = [data[i]["id"] for i in selected]

@@ -6,5 +6,6 @@
   "authors": [
     "YSocialTwin"
   ],
-  "repository_url": "https://github.com/YSocialTwin/YClient"
+  "repository_url": "https://github.com/YSocialTwin/YClient",
+  "license": "GPL-3.0-only"
 }

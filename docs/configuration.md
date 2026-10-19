@@ -1,6 +1,6 @@
 # Main Config
 
-The main client runtime file is [`config_files/config.json`](/Users/rossetti/PycharmProjects/YClient/config_files/config.json). Alternate scenario files under the same directory keep the same overall structure but change scales, providers, or domain data.
+The main client runtime file is [`config_files/config.json`](../config_files/config.json). Alternate scenario files under the same directory keep the same overall structure but change scales, providers, or domain data.
 
 ## Top-Level Structure
 
@@ -36,7 +36,7 @@ These entries shape the run itself.
 | Key | Type | Typical values | Impact |
 | --- | --- | --- | --- |
 | `name` | string | `simulation`, `memory_eval`, `small_run` | Logical simulation identifier. Also used as the default memory namespace when memory is enabled. |
-| `client` | string | `YClientBase`, `YClientWithPages` | Selects the runtime class instantiated by [`y_client.py`](/Users/rossetti/PycharmProjects/YClient/y_client.py). |
+| `client` | string | `YClientBase`, `YClientWithPages` | Selects the runtime class instantiated by [`y_client.py`](../y_client.py). |
 | `days` | integer | `1`, `7`, `30` | Number of simulated days. Higher values increase runtime linearly. |
 | `slots` | integer | `1`, `24` | Time slots per day. `24` gives hourly behavior. |
 | `starting_agents` | integer | `2`, `50`, `180` | Number of initial agents created when no saved population is supplied. |
@@ -139,7 +139,7 @@ Representative shape:
 
 `enabled` activates client-side stress/reward processing. `backward_rounds` controls how far back aggregate reconstruction looks when the client asks the server for the current state. `system.events` and `system.coupling` customize the update weights, while `system.churn` configures the stress/reward-driven churn probability model.
 
-See [Social Feedback Loop](/Users/rossetti/PycharmProjects/YClient/docs/social-feedback.md) for the execution semantics and the client/server split.
+See [Social Feedback Loop](social-feedback.md) for the execution semantics and the client/server split.
 
 ## `posts`
 
@@ -156,13 +156,4 @@ Supported default labels include:
 
 ## Alternate Config Files
 
-The repository includes additional scenario files:
-
-| File | Main purpose |
-| --- | --- |
-| [`config_small.json`](/Users/rossetti/PycharmProjects/YClient/config_files/config_small.json) | lower-cost runs |
-| [`config_test.json`](/Users/rossetti/PycharmProjects/YClient/config_files/config_test.json) | lightweight automated/local testing |
-| [`config_bsky_mar.json`](/Users/rossetti/PycharmProjects/YClient/config_files/config_bsky_mar.json) | specialized scenario profile |
-| [`config_paralympics.json`](/Users/rossetti/PycharmProjects/YClient/config_files/config_paralympics.json) | domain-specific event/news scenario |
-
-Use them as templates rather than as hidden feature flags: the code path stays the same, only the runtime values change.
+Copy `config.json` and edit it to create other scenarios: the code path stays the same, only the runtime values change.

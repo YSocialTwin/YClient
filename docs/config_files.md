@@ -4,7 +4,7 @@ Besides the main runtime config, `YClient` depends on several auxiliary configur
 
 ## `config_files/prompts.json`
 
-File: [`prompts.json`](/Users/rossetti/PycharmProjects/YClient/config_files/prompts.json)
+File: [`prompts.json`](../config_files/prompts.json)
 
 This file contains the prompt templates used to steer the agents and the handler agents created through PyAutoGen.
 
@@ -59,7 +59,7 @@ Impact:
 
 ### `config_files/rss_feeds.json`
 
-File: [`rss_feeds.json`](/Users/rossetti/PycharmProjects/YClient/config_files/rss_feeds.json)
+File: [`rss_feeds.json`](../config_files/rss_feeds.json)
 
 Used when `YClientWithPages` loads RSS-backed page agents. Each entry typically contains:
 

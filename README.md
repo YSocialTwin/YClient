@@ -33,9 +33,9 @@ The server-side code can be found [here](https://github.com/YSocialTwin/YServer)
 
 Refer to the official [documentation](https://ysocialtwin.github.io/) for a detailed guide on how to use YSocial.
 
-Memory integration notes for the external `yclient-memory` pip package are documented in [docs/external_memory_integration.md](/Users/rossetti/PycharmProjects/YClient/docs/external_memory_integration.md).
+Memory integration notes for the external `yclient-memory` pip package are documented in [docs/external_memory_integration.md](docs/external_memory_integration.md).
 
-MkDocs documentation for the client repository is configured in [mkdocs.yml](/Users/rossetti/PycharmProjects/YClient/mkdocs.yml). Build it locally with:
+MkDocs documentation for the client repository is configured in [mkdocs.yml](mkdocs.yml). Build it locally with:
 
 ```bash
 uv run --with mkdocs-material mkdocs build --strict
@@ -45,7 +45,7 @@ uv run --with mkdocs-material mkdocs build --strict
 
 *Step 2:* Configure the simulation by editing the file `/config_files/config.json`: it allows to specify several parameters, such as the number of agents, the LLM model to be used, the length of the simulation.
 
-*Step 2a:* Configure the RSS feeds by editing the file `/config_files/rss_feeds.json`: it allows to specify the RSS feeds to be used in the simulation (use `pupulate_news_feeds.py` to automatically generate it from a list of keywords).
+*Step 2a:* Configure the RSS feeds by editing the file `/config_files/rss_feeds.json`: it allows to specify the RSS feeds to be used in the simulation (use `populate_news_feeds.py` to automatically generate it from a list of keywords).
 
 *Step 3:* Make sure the y_server is running.
 
@@ -137,4 +137,4 @@ If you use YSocial in your research, please cite the following paper:
 
 ## License
 
-YSocial is licensed under the GNU GENERAL PUBLIC LICENSEe. See LICENSE.txt for details.
+YSocial is licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.

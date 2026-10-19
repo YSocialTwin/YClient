@@ -2,7 +2,7 @@
 
 ## Execution Flow
 
-1. [`y_client.py`](/Users/rossetti/PycharmProjects/YClient/y_client.py) loads the JSON config, prompts, optional existing agents, and optional graph.
+1. [`y_client.py`](../y_client.py) loads the JSON config, prompts, optional existing agents, and optional graph.
 2. It instantiates a client class named by `simulation.client`.
 3. The client creates or reloads agents and attaches the selected recommender systems.
 4. During each slot, agents choose actions based on `simulation.actions_likelihood`.
@@ -13,13 +13,13 @@
 
 ### `YClientBase`
 
-Implemented in [`client_base.py`](/Users/rossetti/PycharmProjects/YClient/y_client/clients/client_base.py).
+Implemented in [`client_base.py`](../y_client/clients/client_base.py).
 
 Use this when you want a pure user-agent microblogging simulation with no broadcaster pages.
 
 ### `YClientWithPages`
 
-Implemented in [`client_with_pages.py`](/Users/rossetti/PycharmProjects/YClient/y_client/clients/client_with_pages.py).
+Implemented in [`client_with_pages.py`](../y_client/clients/client_with_pages.py).
 
 Additional behavior:
 
@@ -27,11 +27,11 @@ Additional behavior:
 - creates page agents for those feeds
 - injects page-originated posts into the timeline
 
-This is the default in [`config.json`](/Users/rossetti/PycharmProjects/YClient/config_files/config.json).
+This is the default in [`config.json`](../config_files/config.json).
 
 ## Agent Responsibilities
 
-The main agent class is [`base_agent.py`](/Users/rossetti/PycharmProjects/YClient/y_client/classes/base_agent.py).
+The main agent class is [`base_agent.py`](../y_client/classes/base_agent.py).
 
 It owns:
 
@@ -49,7 +49,7 @@ The client expects two recommender implementations:
 - content recommender via `-x/--crecsys`
 - follow recommender via `-y/--frecsys`
 
-These are loaded dynamically from [`y_client/recsys/`](/Users/rossetti/PycharmProjects/YClient/y_client/recsys).
+These are loaded dynamically from [`y_client/recsys/`](../y_client/recsys).
 
 ## Data Persistence
 

@@ -20,6 +20,7 @@ import re
 import sys
 
 import numpy as np
+from y_client.topic_sampling import pick_topic_index
 from y_client.llm import AssistantAgent
 from faker import Faker
 from requests import get, post
@@ -31,6 +32,7 @@ except Exception:
     def log_execution_time(func):
         return func
 from y_client import content_store
+from y_client import prompt_store, protocol_tokens
 from y_client.news_feeds.feed_reader import NewsFeed
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
@@ -102,13 +104,8 @@ class FakeAgent(Agent):
 
         data = json.loads(response.__dict__["_content"].decode("utf-8"))
         try:
-            # select a random interest without replacement
-            if len(data) >= 3:
-                selected = np.random.choice(
-                    range(len(data)), np.random.randint(1, 3), replace=False
-                )
-            else:
-                selected = np.random.choice(range(len(data)), len(data), replace=False)
+            # exactly one topic per post, drawn with probability ~ interaction count (moving window)
+            selected = [pick_topic_index(data)]
 
             interests = [data[i]["topic"] for i in selected]
             interests_id = [data[i]["id"] for i in selected]
@@ -332,11 +329,11 @@ class FakeAgent(Agent):
             )
             sentiment = json.loads(response.__dict__["_content"].decode("utf-8"))
 
-            self.topics_opinions = (
-                "Your opinion topics of the post you are responding to are: "
-            )
+            self.topics_opinions = prompt_store.get("opinion_topics_intro")
             for s in sentiment:
-                self.topics_opinions += f"{s['topic']}: {s['sentiment']} "
+                self.topics_opinions += prompt_store.prompt(
+                    "opinion_topic_item", topic=s["topic"], sentiment=s["sentiment"]
+                )
             if len(sentiment) == 0:
                 self.topics_opinions = ""
         else:
@@ -379,7 +376,7 @@ class FakeAgent(Agent):
         faker = Faker()
         dcision = faker.random_element(["YES", "NO"])
 
-        if dcision == "YES":
+        if dcision == protocol_tokens.YES:
             st = json.dumps(
                 {
                     "user_id": self.user_id,
@@ -390,7 +387,7 @@ class FakeAgent(Agent):
             )
             flag = "follow"
 
-        elif dcision == "NO":
+        elif dcision == protocol_tokens.NO:
             st = json.dumps(
                 {
                     "user_id": self.user_id,
@@ -441,7 +438,7 @@ class FakeAgent(Agent):
         faker = Faker()
         decision = faker.random_element(["YES", "NO"])
 
-        if decision == "YES":
+        if decision == protocol_tokens.YES:
             if action == "follow":
                 self.follow(post_id=post_id, action=action, tid=tid)
                 return action
@@ -557,15 +554,15 @@ class FakeAgent(Agent):
             "content_id": post_id,
         }
 
-        if decisions == "RIGHT":
+        if decisions == protocol_tokens.RIGHT:
             data["vote"] = "R"
             st = json.dumps(data)
 
-        elif decisions == "LEFT":
+        elif decisions == protocol_tokens.LEFT:
             data["vote"] = "D"
             st = json.dumps(data)
 
-        elif decisions == "NONE":
+        elif decisions == protocol_tokens.NONE:
             data["vote"] = "U"
             st = json.dumps(data)
         else:
@@ -605,7 +602,7 @@ class FakeAgent(Agent):
         faker = Faker()
         action = faker.random_element(actions)
 
-        if action == "COMMENT":
+        if action == protocol_tokens.COMMENT:
             candidates = json.loads(self.read())
             if len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
@@ -616,10 +613,10 @@ class FakeAgent(Agent):
                 )
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
-        elif action == "POST":
+        elif action == protocol_tokens.POST:
             self.post(tid=tid)
 
-        elif action == "READ":
+        elif action == protocol_tokens.READ:
             candidates = json.loads(self.read())
             try:
                 selected_post = random.sample(candidates, 1)
@@ -627,7 +624,7 @@ class FakeAgent(Agent):
             except:
                 pass
 
-        elif action == "SEARCH":
+        elif action == protocol_tokens.SEARCH:
             candidates = json.loads(self.search())
             if "status" not in candidates and len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
@@ -638,7 +635,7 @@ class FakeAgent(Agent):
                 )
                 self.reaction(int(selected_post[0]), check_follow=False, tid=tid)
 
-        elif action == "FOLLOW":
+        elif action == protocol_tokens.FOLLOW:
             if self.probability_of_daily_follow > 0:
                 candidates = self.search_follow()
                 if len(candidates) > 0:
@@ -651,13 +648,13 @@ class FakeAgent(Agent):
                     )[0]
                     self.follow(tid=tid, target=selected, action="follow")
 
-        elif action == "SHARE":
+        elif action == protocol_tokens.SHARE:
             candidates = json.loads(self.read(article=True))
             if len(candidates) > 0:
                 selected_post = random.sample(candidates, 1)
                 self.share(int(selected_post[0]), tid=tid)
 
-        elif action == "CAST":
+        elif action == protocol_tokens.CAST:
             candidates = json.loads(self.read())
             try:
                 selected_post = random.sample(candidates, 1)
@@ -665,7 +662,7 @@ class FakeAgent(Agent):
             except:
                 pass
 
-        elif action == "IMAGE":
+        elif action == protocol_tokens.IMAGE:
             image, article_id = self.select_image(tid=tid)
             if image is not None:
                 self.comment_image(image, tid=tid, article_id=article_id)

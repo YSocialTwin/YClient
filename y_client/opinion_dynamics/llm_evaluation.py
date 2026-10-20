@@ -4,6 +4,7 @@ from enum import Enum
 
 from requests import post
 
+from y_client import prompt_store, protocol_tokens
 from y_client.llm import AssistantAgent
 from y_client.opinion_dynamics.utils import get_opinion_group
 
@@ -52,22 +53,26 @@ def llm_evaluation(
     if evaluation_scope != "interlocutor_only":
         peer_groups = _get_peer_groups(uid, topic, base_url, group_classes)
 
-    prompt = (
-        f"Read the following text on the topic '{str(topic or '').upper()}': '{text}'.\n"
-        f"The author has opinion '{y_group}' on the topic.\n"
-        f"Your initial opinion is '{x_group}'."
+    prompt = prompt_store.prompt(
+        "opinion_eval_context",
+        topic=str(topic or "").upper(),
+        text=text,
+        y_group=y_group,
+        x_group=x_group,
     )
     if peer_groups:
-        prompt += " The following are the opinions of your friends:\n"
+        prompt += prompt_store.get("opinion_eval_peers_intro")
         for opinion_group, count in peer_groups:
-            prompt += f"Opinion: '{opinion_group}' ({count})\n"
-    prompt += "\nAnswer with a single word among the options: AGREE|DISAGREE|NEUTRAL."
+            prompt += prompt_store.prompt(
+                "opinion_eval_peer_item", group=opinion_group, count=count
+            )
+    prompt += prompt_store.get("opinion_eval_question")
 
     response = _llm_eval(llm_config, prompt)
-    if "AGREE" in response.upper():
+    if protocol_tokens.has_token(response, protocol_tokens.AGREE):
         _, updated_value = shift_class(x_group, y_group, Direction.AGREE, group_classes)
         return updated_value
-    if "DISAGREE" in response.upper():
+    if protocol_tokens.has_token(response, protocol_tokens.DISAGREE):
         _, updated_value = shift_class(x_group, y_group, Direction.DISAGREE, group_classes)
         return updated_value
     return float(x)

@@ -8,10 +8,11 @@ focusing solely on publishing news content from RSS feeds.
 
 import json
 import re
+from y_client.hashtag_text import HASHTAG_PATTERN
 
 from requests import post
 from y_client.classes.base_agent import Agent
-from y_client import content_store
+from y_client import content_store, prompt_store
 try:
     from y_client.logger import log_execution_time
 except Exception:
@@ -204,8 +205,8 @@ class FakePageAgent(PageAgent):
         Returns:
             str: The evaluated f-string with placeholders replaced by values
         """
-        kwargs["self"] = self
-        return eval(f'f"""{non_f_str}"""', kwargs)
+        kwargs["self"] = prompt_store.localize(self)  # profile values in the prompt language (English: self)
+        return prompt_store.render(non_f_str, **kwargs)
 
     def __extract_components(self, text, c_type="hashtags"):
         """
@@ -223,7 +224,7 @@ class FakePageAgent(PageAgent):
         """
         # Define the regex pattern
         if c_type == "hashtags":
-            pattern = re.compile(r"#\w+")
+            pattern = re.compile(HASHTAG_PATTERN)
         elif c_type == "mentions":
             pattern = re.compile(r"@\w+")
         else:

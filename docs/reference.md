@@ -2,7 +2,7 @@
 
 ## CLI Parameters
 
-The main CLI parameters are defined in [`y_client.py`](/Users/rossetti/PycharmProjects/YClient/y_client.py).
+The main CLI parameters are defined in [`y_client.py`](../y_client.py).
 
 | Flag | Long form | Meaning |
 | --- | --- | --- |

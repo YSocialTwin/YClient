@@ -30,6 +30,7 @@ session = None
 engine = None
 base = None
 
+from y_client import prompt_store
 from y_client.content_store import initialize_content_store
 from y_client.classes.base_agent import (
     _emotion_annotation_from_config,
@@ -108,6 +109,7 @@ class YClientWeb(object):
 
         self.first_run = first_run
         self.base_path = data_base_path
+        prompt_store.use_language_from_folder(data_base_path)
         self.config = config_file
 
         # Derive log file path from simulation name when none is provided

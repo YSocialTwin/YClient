@@ -85,6 +85,10 @@ if __name__ == "__main__":
     prompts_file = args.prompts
     graph_file = args.graph
 
+    from y_client import prompt_store
+
+    prompt_store.use_language_from_folder(os.path.dirname(os.path.abspath(prompts_file)))
+
     # get simulation client and name
     config = json.load(open(config_file, "r"))
     client_name = config["simulation"]["client"]

@@ -4,24 +4,27 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
-Changes made since the last published state of `main`, newest first:
+## [2.1.0] - 2026-10-20
 
-- Docs: README citation updated to the published YSocial reference (Big Data & Society, 2026)
-- Topic sampling: weight = count, only topics with count > 0 in the moving window
-- Frequency-weighted choice of the post topic (count+1, moving window)
-- Select exactly one topic per generated post
-- Hashtags: canonical form without '#', apostrophes and accents kept in the tag, case-insensitive identity
-- Fix missing prompt_store import in page agents (microblogging)
-- protocol_tokens: define NEWS (legacy alias of SHARE_LINK read by the forum client)
-- M2: log which yclient_memory is loaded (path, version, language)
-- M2: memory errors name the Agent Memory plugin; warn when the package ignores the language
-- M5: memory engine renders its texts in the simulation prompt language
-- Prompts i18n step 5: localize the follow action and the reciprocal-follow verb
-- Prompts i18n step 5: move the remaining English persona fragments into the packs
-- Prompts i18n step 5: client reads the prompt language and shows profile values in it
-- Prompts i18n step 4: Italian internal prompt pack
-- Prompts i18n step 3: prompt_store language support
-- Prompts i18n step 2: protocol_tokens reaction tokens
-- Prompts i18n step 2: protocol tokens, tolerant parsers, no eval
-- Prompts i18n step 1: move prompts out of the code (prompt_store, prompts_internal.json)
-- i18n: shorter, purpose-oriented plugin descriptions
+### Added
+- Topic sampling weighted by frequency in the moving window (only topics with count > 0); exactly one topic per generated post.
+- Hashtags in canonical form: no leading `#`, apostrophes and accents kept, case-insensitive identity.
+- Prompts i18n: prompts moved out of the code into `prompts_internal.json`, read through `prompt_store` with language support.
+- Prompts i18n: protocol tokens and tolerant parsers (no `eval`); Italian internal prompt pack.
+- Prompts i18n: localized follow action and reciprocal-follow verb; persona fragments moved into the packs.
+- Prompts i18n: the client reads the prompt language and shows profile values in it.
+- Memory M5: the memory engine renders its texts in the simulation prompt language.
+- Memory M2: the log shows which `yclient_memory` is loaded (path, version, language); errors name the Agent Memory plugin and warn when the package ignores the language.
+- `NEWS` defined in `protocol_tokens` as a legacy alias of `SHARE_LINK`.
+
+### Changed
+- Requirements aligned with the library versions shipped by YWeb.
+- Shorter, purpose-oriented plugin description in `meta/info.json`.
+- License: GPL-3.0-only, declared in `LICENSE`, `meta/info.json` and the README.
+- README restructured on the common layout; citation updated to the published YSocial reference (Big Data & Society, 2026).
+
+### Fixed
+- Missing `prompt_store` import in the page agents (microblogging).
+
+[Unreleased]: https://github.com/YSocialTwin/YClient/compare/v2.1.0...HEAD
+[2.1.0]: https://github.com/YSocialTwin/YClient/compare/v2.0.0...v2.1.0

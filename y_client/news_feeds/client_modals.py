@@ -173,7 +173,7 @@ def initialize_client_db(*, db_path=None, database_url=None):
         engine = db.create_engine(database_url)
     elif db_path:
         _ensure_sqlite_seed_db(db_path)
-        engine = db.create_engine(f"sqlite:////{os.path.abspath(db_path)}")
+        engine = db.create_engine(f"sqlite:///{os.path.abspath(db_path)}")
     else:
         engine = None
         session = None

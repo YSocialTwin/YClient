@@ -458,7 +458,7 @@ class FeedLinkExtractor(object):
                     url = e.get("href")
 
                 base_url = re.search(
-                    "^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)", url
+                    r"^(?:https?:\/\/)?(?:[^@\/\n]+@)?(?:www\.)?([^:\/\n]+)", url
                 ).group(0)
                 r = requests.get(url)
                 soup = BeautifulSoup(r.text, features="html.parser")

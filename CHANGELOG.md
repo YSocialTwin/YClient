@@ -4,6 +4,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-10-22
+
+### Fixed
+- SQLite URIs on Windows: `sqlite:///` plus the absolute path (the previous `sqlite:////` form produced "unable to open database file").
+- `SyntaxWarning` for the unescaped regex in the feed reader (raw string).
+
 ## [2.1.0] - 2026-10-20
 
 ### Added
@@ -26,5 +32,6 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Fixed
 - Missing `prompt_store` import in the page agents (microblogging).
 
-[Unreleased]: https://github.com/YSocialTwin/YClient/compare/v2.1.0...HEAD
+[Unreleased]: https://github.com/YSocialTwin/YClient/compare/v2.1.1...HEAD
+[2.1.1]: https://github.com/YSocialTwin/YClient/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/YSocialTwin/YClient/compare/v2.0.0...v2.1.0

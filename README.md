@@ -1,8 +1,25 @@
 # YClient
 
-![YSocial](docs/Ysocial.png)
+<p align="center">
+  <img src="docs/banner.png" alt="YClient: Microblogging · client side, a plugin for YSocial">
+</p>
 
 > Runs the agents of a microblogging simulation (client side).
+
+<p align="center">
+  <a href="https://github.com/YSocialTwin/YSocial"><b>YSocial</b></a> &nbsp;·&nbsp;
+  <a href="https://y-not.social/plugins">Plugins</a> &nbsp;·&nbsp;
+  <a href="https://github.com/YSocialTwin/YServer">YServer (server)</a> &nbsp;·&nbsp;
+  <a href="#documentation">Documentation</a> &nbsp;·&nbsp;
+  <a href="https://y-not.social/">Website</a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/YSocialTwin/YClient/releases/latest"><img src="https://img.shields.io/github/v/release/YSocialTwin/YClient?label=release" alt="Latest release"></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg" alt="License: GPL v3"></a>
+</p>
+
+**Contents:** [Features](#features) · [Requirements](#requirements) · [Installation](#installation) · [Usage](#usage) · [Configuration](#configuration) · [Documentation](#documentation) · [Testing](#testing) · [Contributing](#contributing) · [Citation](#citation) · [License](#license)
 
 ## Overview
 

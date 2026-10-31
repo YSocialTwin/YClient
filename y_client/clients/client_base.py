@@ -490,6 +490,7 @@ class YClientBase(object):
                         effective_round_actions = max(
                             1, int(round(float(g.round_actions) * action_multiplier))
                         )
+                        effective_round_actions = _federation.scale_actions(effective_round_actions, g.user_id)  # federation attention (F4.3)
 
                         for _ in range(effective_round_actions):
                             self.sim_clock.maybe_heartbeat()

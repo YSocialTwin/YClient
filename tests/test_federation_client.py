@@ -58,3 +58,26 @@ def test_crosspost_choice_is_a_seeded_draw_with_its_own_generator(monkeypatch):
     _on(monkeypatch, [], crosspost_propensity=1.0)
     assert federation.post_fields() == {"crosspost": True}
     federation.install({})
+
+
+def test_attention_multiplier_scales_the_actions_with_its_own_generator(monkeypatch):
+    def get(url, timeout=0):
+        if url.endswith("/federation/attention"):
+            return SimpleNamespace(json=lambda: {"multipliers": {"1": 2.0, "2": 0.5, "3": 1.0}})
+        return SimpleNamespace(json=lambda: {"inactive": []})
+
+    federation.install({"servers": {"api": "http://srv/"}, "federation": {"enabled": True, "seed": 3}})
+    monkeypatch.setattr(federation.requests, "get", get)
+    state = random.getstate()
+    assert federation.scale_actions(3, 1) == 3  # nothing known yet: unchanged
+    federation.filter_pool(_agents())  # reads the multipliers with the pool
+    assert federation.scale_actions(3, 1) == 6 and federation.scale_actions(3, 3) == 3 and federation.scale_actions(3, 9) == 3
+    half = [federation.scale_actions(1, 2) for _ in range(200)]
+    assert set(half) == {0, 1} and 70 < sum(half) < 130  # 1 * 0.5 rounded at random, can be 0
+    assert min(federation.scale_actions(1, 1) for _ in range(20)) == 2 and random.getstate() == state
+    federation.install({"servers": {"api": "http://srv/"}, "federation": {"enabled": True, "seed": 3}})
+    monkeypatch.setattr(federation.requests, "get", get)
+    federation.filter_pool(_agents())
+    assert [federation.scale_actions(1, 2) for _ in range(200)] == half  # reproducible
+    federation.install({})
+    assert federation.scale_actions(5, 1) == 5  # federation off: identity

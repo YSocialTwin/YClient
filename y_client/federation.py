@@ -15,14 +15,14 @@ import random
 
 import requests
 
-_state = {"enabled": False, "api": None, "propensity": 0.0, "rng": None, "inactive": set()}
+_state = {"enabled": False, "api": None, "propensity": 0.0, "rng": None, "inactive": set(), "attention": {}}
 
 
 def install(config):
     """Read config["federation"]; call once when the client starts."""
     section = (config or {}).get("federation") or {}
     enabled = bool(section.get("enabled"))
-    _state.update(enabled=enabled, inactive=set(), api=None, propensity=0.0, rng=None)
+    _state.update(enabled=enabled, inactive=set(), api=None, propensity=0.0, rng=None, attention={})
     if enabled:
         api = str((config.get("servers") or {}).get("api", "")).rstrip("/")
         _state.update(api=api, propensity=float(section.get("crosspost_propensity", 0.0)),
@@ -46,10 +46,37 @@ def inactive_ids():
     return set(_state["inactive"])
 
 
+def refresh_attention():
+    """Read the attention multipliers of the day from the server (the last known ones when it cannot be reached)."""
+    if not _state["enabled"]:
+        return
+    try:
+        res = requests.get(f"{_state['api']}/federation/attention", timeout=5)
+        _state["attention"] = {int(k): float(v) for k, v in res.json().get("multipliers", {}).items()}
+    except Exception:  # noqa: BLE001 - keep the last known multipliers
+        pass
+
+
+def scale_actions(n, user_id):
+    """Number of actions of the agent in the slot after the attention multiplier of the federation (F4.3).
+
+    Exactly `n` when the federation is off or the multiplier is 1 (nothing is drawn); otherwise `n * m` rounded at random
+    with the generator of this module, so the global one is untouched. A multiplier below 1 can bring it to 0 (the agent
+    does not act in the slot), one above 1 never below `n`."""
+    m = _state["attention"].get(user_id, 1.0) if _state["enabled"] else 1.0
+    if m == 1.0:
+        return n
+    x = n * m
+    whole = int(x)
+    k = whole if x == whole else whole + (1 if _state["rng"].random() < x - whole else 0)  # an exact count draws nothing
+    return max(n if m > 1.0 else 0, k)
+
+
 def filter_pool(agents):
     """The agents allowed to act: the same list object when nobody is inactive (or the federation is off)."""
     if not _state["enabled"]:
         return agents
+    refresh_attention()
     hidden = inactive_ids()
     if not hidden:
         return agents

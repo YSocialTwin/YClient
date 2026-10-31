@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Added
+- Federation (opt-in, `y_client/federation.py`): with the `federation` section of the client configuration enabled, agents that are not active on the platform (listed by `GET /federation/inactive_users`) are not sampled and do not act, and an agent may mark a post for cross-post (`federation.crosspost_propensity`, own seeded generator, extra `crosspost` field of `/post`). Without the section nothing changes.
+
 ## [2.1.1] - 2026-10-22
 
 ### Fixed

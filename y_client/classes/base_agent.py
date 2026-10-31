@@ -16,6 +16,7 @@ Classes:
 
 from __future__ import annotations
 
+from y_client import federation
 from y_client.recsys.ContentRecSys import ContentRecSys
 from y_client.recsys.FollowRecSys import FollowRecSys
 from y_client.classes.annotator import Annotator
@@ -2350,6 +2351,7 @@ class Agent(object):
                     "mentions": [],
                     "tid": tid,
                     "topics": interests_id,
+                    **federation.post_fields(),
                 }
             )
 
@@ -2428,6 +2430,7 @@ class Agent(object):
                 "mentions": mentions,
                 "tid": tid,
                 "topics": interests_id,
+                **federation.post_fields(),
             }
         )
 

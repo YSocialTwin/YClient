@@ -308,6 +308,29 @@ class YClientBase(object):
             agent.simulation_client = self
             self.agents.add_agent(agent)
 
+    def adopt_federated_account(self, account):
+        """Give an agent to an account the server created for the federation (INV-19): the agent is loaded from the server
+        by its name, like a resumed one, so nothing is registered twice. Returns the agent, or None when it cannot be built."""
+        known = {getattr(ag, "user_id", None) for ag in self.agents.agents}
+        if int(account["user_id"]) in known:
+            return next(ag for ag in self.agents.agents if getattr(ag, "user_id", None) == int(account["user_id"]))
+        try:
+            from y_client.classes import Agent
+
+            agent = Agent(name=account["username"], email=f"{account['username']}@federation.local", load=True,
+                          recsys=self.content_recsys, frecsys=self.follow_recsys, config=self.config,
+                          interests=list(account.get("interests") or []), owner=self.agents_owner)
+            if getattr(agent, "user_id", None) is None:
+                return None
+            agent.set_prompts(self.prompts)
+            agent.set_rec_sys(self.content_recsys, self.follow_recsys)
+        except Exception as exc:  # noqa: BLE001 - the account stays unadopted and is offered again
+            print(f"federation: could not adopt {account.get('username')}: {exc}")
+            return None
+        agent.simulation_client = self
+        self.agents.add_agent(agent)
+        return agent
+
     def process_reciprocal_follow_event(
         self, *, actor_agent, target_user_id: int, action: str, tid: int
     ) -> bool:
@@ -435,6 +458,7 @@ class YClientBase(object):
                         int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1
                     )
 
+                    _federation.adopt_provisioned(self)  # agents for the accounts the federation created here (INV-19)
                     pool = _federation.filter_pool(self.agents.agents)  # same list unless the federation hides accounts
                     if pool is not self.agents.agents:
                         expected_active_users = min(expected_active_users, len(pool))

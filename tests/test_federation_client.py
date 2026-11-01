@@ -81,3 +81,26 @@ def test_attention_multiplier_scales_the_actions_with_its_own_generator(monkeypa
     assert [federation.scale_actions(1, 2) for _ in range(200)] == half  # reproducible
     federation.install({})
     assert federation.scale_actions(5, 1) == 5  # federation off: identity
+
+
+def test_adoption_is_off_unless_configured_and_adopts_each_account_once(monkeypatch):
+    class Client:
+        def __init__(self):
+            self.adopted = []
+
+        def adopt_federated_account(self, account):
+            self.adopted.append(account["username"])
+            return SimpleNamespace(user_id=account["user_id"]) if account["username"] != "broken" else None
+
+    accounts = [{"user_id": 7, "username": "newcomer"}, {"user_id": 8, "username": "broken"}]
+    posted = []
+    monkeypatch.setattr(federation.requests, "get", lambda url, timeout=0: SimpleNamespace(json=lambda: {"accounts": accounts}))
+    monkeypatch.setattr(federation.requests, "post", lambda url, json=None, timeout=0: posted.append((url, json)))
+    federation.install({"servers": {"api": "http://srv/"}, "federation": {"enabled": True}})
+    c = Client()
+    assert federation.adopt_provisioned(c) == 0 and c.adopted == [] and posted == []  # no `adopt`: nothing asked
+    federation.install({"servers": {"api": "http://srv/"}, "federation": {"enabled": True, "adopt": True}})
+    assert federation.adopt_provisioned(c) == 1 and c.adopted == ["newcomer", "broken"]
+    assert posted == [("http://srv/federation/provisioned/adopted", {"user_ids": [7]})]  # the broken one is offered again
+    federation.install({})
+    assert federation.adopt_provisioned(c) == 0

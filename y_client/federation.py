@@ -17,7 +17,7 @@ import re
 import requests
 
 _state = {"enabled": False, "api": None, "propensity": 0.0, "rng": None, "inactive": set(), "attention": {},
-          "mode": "coordinator_rule", "member": None}
+          "mode": "coordinator_rule", "member": None, "adopt": False}
 
 # Longest text each destination accepts (characters); the rules and the parser of an LLM reply both apply them.
 LIMITS = {"microblogging": 280, "forum": 2000, "photo_sharing": 300, "instant_messaging": 400, "dating": 200}
@@ -28,12 +28,13 @@ def install(config):
     section = (config or {}).get("federation") or {}
     enabled = bool(section.get("enabled"))
     _state.update(enabled=enabled, inactive=set(), api=None, propensity=0.0, rng=None, attention={},
-                  mode="coordinator_rule", member=None)
+                  mode="coordinator_rule", member=None, adopt=False)
     if enabled:
         api = str((config.get("servers") or {}).get("api", "")).rstrip("/")
         _state.update(api=api, propensity=float(section.get("crosspost_propensity", 0.0)),
                       rng=random.Random(section.get("seed", 0)),
-                      mode=str(section.get("crosspost_mode") or "coordinator_rule"), member=section.get("member"))
+                      mode=str(section.get("crosspost_mode") or "coordinator_rule"), member=section.get("member"),
+                      adopt=bool(section.get("adopt")))
     return enabled
 
 
@@ -51,6 +52,32 @@ def inactive_ids():
     except Exception:  # noqa: BLE001 - keep the last known list
         pass
     return set(_state["inactive"])
+
+
+def adopt_provisioned(client):
+    """INV-19: accounts the server created because an agent of another platform decided to join this one get an agent here.
+
+    Only with `federation.adopt` in the client configuration. Each account the server lists (GET /federation/provisioned)
+    becomes an agent of `client` (`client.adopt_federated_account(account)` returns it, or None) and is reported as adopted;
+    the new agent acts like any other from the next slot. Returns the number adopted; never raises for an unreachable server."""
+    if not (_state["enabled"] and _state["adopt"]):
+        return 0
+    try:
+        res = requests.get(f"{_state['api']}/federation/provisioned", timeout=5)
+        accounts = res.json().get("accounts", [])
+    except Exception:  # noqa: BLE001 - try again at the next slot
+        return 0
+    done = []
+    for account in accounts:
+        agent = client.adopt_federated_account(account)
+        if agent is not None and getattr(agent, "user_id", None) is not None:
+            done.append(int(account["user_id"]))
+    if done:
+        try:
+            requests.post(f"{_state['api']}/federation/provisioned/adopted", json={"user_ids": done}, timeout=5)
+        except Exception:  # noqa: BLE001 - they are offered again and skipped as already known
+            pass
+    return len(done)
 
 
 def refresh_attention():

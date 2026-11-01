@@ -1,4 +1,4 @@
-"""P13: with crosspost.content including own_posts the agent is not offered the cross-post of a share."""
+"""P13: with crosspost.content including own_content the agent is not offered the cross-post of a share."""
 
 from types import SimpleNamespace
 
@@ -15,14 +15,14 @@ def _on(monkeypatch, **kw):
 
 
 @pytest.mark.parametrize("content", [None, ["news"], ["images"]])
-def test_a_share_is_offered_without_the_own_posts_restriction(monkeypatch, content):
+def test_a_share_is_offered_without_the_own_content_restriction(monkeypatch, content):
     _on(monkeypatch, **({} if content is None else {"crosspost_content": content}))
     assert federation.share_fields(1, "nice one")["crosspost_to"][0]["member"] == "forum"
     federation.install({})
 
 
-@pytest.mark.parametrize("content", [["own_posts"], ["own_posts", "news"]])
-def test_a_share_is_not_offered_with_the_own_posts_restriction_and_a_post_still_is(monkeypatch, content):
+@pytest.mark.parametrize("content", [["own_content"], ["own_content", "news"], ["own_posts"]])  # own_posts: legacy alias
+def test_a_share_is_not_offered_with_the_own_content_restriction_and_a_post_still_is(monkeypatch, content):
     _on(monkeypatch, crosspost_content=content)
     rng_before = federation._state["rng"].getstate()
     assert federation.share_fields(1, "nice one") == {} and federation._state["rng"].getstate() == rng_before

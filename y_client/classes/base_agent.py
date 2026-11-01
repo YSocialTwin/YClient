@@ -2351,7 +2351,7 @@ class Agent(object):
                     "mentions": [],
                     "tid": tid,
                     "topics": interests_id,
-                    **federation.post_fields(),
+                    **federation.post_fields(self.user_id, post_text, self._crosspost_adapt),
                 }
             )
 
@@ -2430,7 +2430,7 @@ class Agent(object):
                 "mentions": mentions,
                 "tid": tid,
                 "topics": interests_id,
-                **federation.post_fields(),
+                **federation.post_fields(self.user_id, post_text, self._crosspost_adapt),
             }
         )
 
@@ -4157,6 +4157,28 @@ class Agent(object):
             },
             "custom_features": dict(getattr(self, "custom_features", {}) or {}),
         }
+
+    def _crosspost_adapt(self, dest, text):
+        """The agent's own version of its post for the destination platform (cross-post as an agent action, F6.2).
+
+        None when it cannot be done (no usable model, no prompt for that platform, an error or an empty reply): the
+        caller then uses the rule text."""
+        key = federation.adapt_prompt_key(dest)
+        if key is None or not self._has_usable_llm_config():
+            return None
+        try:
+            adapter = AssistantAgent(
+                name="CrosspostAdapter",
+                llm_config=self.llm_config,
+                system_message=self.prompts["handler_instructions"],
+                max_consecutive_auto_reply=1,
+            )
+            reply = adapter._generate_reply(
+                prompt_store.prompt(key, source_platform=federation.source_platform(), text=text)
+            )
+        except Exception:  # noqa: BLE001 - a failing model must not stop the post
+            return None
+        return federation.parse_reply(dest, reply)
 
     def __emotion_annotation(self, text_to_annotate: str):
         """

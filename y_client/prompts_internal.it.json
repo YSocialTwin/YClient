@@ -24,5 +24,10 @@
   "opinion_eval_question": "\nRispondi con una sola parola tra le opzioni: AGREE|DISAGREE|NEUTRAL.",
   "follow_back_request_follow": "ricambiare il follow",
   "follow_back_request_unfollow": "ricambiare l'unfollow",
-  "custom_features_persona": "Ulteriori dettagli personali: {details}."
+  "custom_features_persona": "Ulteriori dettagli personali: {details}.",
+  "crosspost_adapt_microblogging": "Stai per condividere su una piattaforma di microblogging qualcosa che hai appena scritto su {source_platform}. Riscrivilo come un breve post con la tua voce, al massimo 280 caratteri e al massimo due hashtag. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo il testo del post.",
+  "crosspost_adapt_forum": "Stai per condividere su un forum qualcosa che hai appena scritto su {source_platform}. Riscrivilo come discussione di un forum. Prima riga: un titolo breve. Poi un corpo di alcune frasi che invita a rispondere. Non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo il titolo e il corpo.",
+  "crosspost_adapt_photo_sharing": "Stai per condividere su una piattaforma di condivisione di foto qualcosa che hai appena scritto su {source_platform}. Riscrivilo come didascalia di una foto: una o due frasi evocative, al massimo tre hashtag. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo la didascalia.",
+  "crosspost_adapt_instant_messaging": "Stai per condividere su una chat qualcosa che hai appena scritto su {source_platform}. Riscrivilo come messaggio di chat a un gruppo: informale, una o due frasi, senza hashtag. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo il messaggio.",
+  "crosspost_adapt_dating": "Stai per condividere su una piattaforma di dating qualcosa che hai appena scritto su {source_platform}. Riscrivilo come breve frase per il tuo profilo di dating: calda, in prima persona, al massimo 200 caratteri, nulla che ti identifichi fuori dalla piattaforma. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo la frase."
 }

@@ -141,7 +141,7 @@ class FakeAgent(Agent):
                 "mentions": None,
                 "tid": tid,
                 "topics": interests_id,
-                **federation.post_fields(),
+                **federation.post_fields(self.user_id, post_text),
             }
         )
 

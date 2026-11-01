@@ -315,11 +315,14 @@ class YClientBase(object):
         if int(account["user_id"]) in known:
             return next(ag for ag in self.agents.agents if getattr(ag, "user_id", None) == int(account["user_id"]))
         try:
-            from y_client.classes import Agent
+            from y_client.classes import Agent, FakeAgent
+            from y_client.utils import _rule_based_agents_enabled
 
-            agent = Agent(name=account["username"], email=f"{account['username']}@federation.local", load=True,
-                          recsys=self.content_recsys, frecsys=self.follow_recsys, config=self.config,
-                          interests=list(account.get("interests") or []), owner=self.agents_owner)
+            # the class every other agent of the experiment has (generate_user): a rule-based experiment has no model
+            agent = (FakeAgent if _rule_based_agents_enabled(self.config) else Agent)(
+                name=account["username"], email=f"{account['username']}@federation.local", load=True,
+                recsys=self.content_recsys, frecsys=self.follow_recsys, config=self.config,
+                interests=list(account.get("interests") or []), owner=self.agents_owner)
             if getattr(agent, "user_id", None) is None:
                 return None
             agent.set_prompts(self.prompts)

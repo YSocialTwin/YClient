@@ -104,3 +104,41 @@ def test_adoption_is_off_unless_configured_and_adopts_each_account_once(monkeypa
     assert posted == [("http://srv/federation/provisioned/adopted", {"user_ids": [7]})]  # the broken one is offered again
     federation.install({})
     assert federation.adopt_provisioned(c) == 0
+
+
+def test_adopted_account_gets_the_agent_class_of_the_experiment(monkeypatch):
+    """INV-19: a rule-based experiment (no model) adopts a provisioned account as a FakeAgent, like generate_user would."""
+    from y_client.classes import base_agent as base_module
+    from y_client.classes import fake_base_agent as fake_module
+    from y_client.clients.client_base import YClientBase
+
+    class _Built:
+        def __init__(self, **kw):
+            self.kind, self.name, self.user_id = type(self).__name__, kw["name"], 9
+
+        def set_prompts(self, prompts):
+            pass
+
+        def set_rec_sys(self, *a):
+            pass
+
+    class Real(_Built):
+        pass
+
+    class Fake(_Built):
+        pass
+
+    import y_client.classes as classes
+
+    monkeypatch.setattr(classes, "Agent", Real, raising=False)
+    monkeypatch.setattr(classes, "FakeAgent", Fake, raising=False)
+    monkeypatch.setattr(base_module, "Agent", Real)
+    monkeypatch.setattr(fake_module, "FakeAgent", Fake)
+    monkeypatch.setattr("y_client.clients.client_base.Agent", Real, raising=False)
+    for llm_agents, expected in (([None], "Fake"), (["llama3"], "Real")):
+        client = YClientBase.__new__(YClientBase)
+        client.config = {"agents": {"llm_agents": llm_agents}}
+        client.agents = base_module.Agents()
+        client.prompts, client.content_recsys, client.follow_recsys, client.agents_owner = {}, None, None, "admin"
+        agent = client.adopt_federated_account({"user_id": 9, "username": "newcomer", "interests": []})
+        assert agent is not None and agent.kind == expected

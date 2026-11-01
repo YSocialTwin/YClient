@@ -176,3 +176,13 @@ def post_fields(user_id=None, text=None, adapt=None):
         targets = crosspost_targets(user_id, text, adapt) if user_id is not None else []
         return {"crosspost": True, "crosspost_to": targets} if targets else {}
     return {"crosspost": True} if _state["rng"].random() < _state["propensity"] else {}
+
+
+def share_fields(user_id=None, text=None, adapt=None):
+    """Extra fields of the /share payload (F8): the agent shares the post of another agent and may choose to share it,
+    with its own words, on other platforms. Only with crosspost.mode = agent_action: with the coordinator rule a share
+    never leaves the platform and nothing is drawn (so the draws of the other actions are the same as before)."""
+    if not agent_action() or _state["propensity"] <= 0.0 or user_id is None:
+        return {}
+    targets = crosspost_targets(user_id, text, adapt)
+    return {"crosspost": True, "crosspost_to": targets} if targets else {}

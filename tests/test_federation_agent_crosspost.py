@@ -104,3 +104,19 @@ def test_the_five_prompts_exist_in_both_languages_and_render():
             text = prompt_store.prompt(federation.adapt_prompt_key(dest), language=lang, source_platform="forum", text="SAMPLE")
             assert "SAMPLE" in text and "forum" in text and "{" not in text
     assert federation.adapt_prompt_key("unknown") is None
+
+
+def test_share_fields_only_in_agent_action_and_draw_nothing_otherwise(monkeypatch):
+    federation.install({})
+    state = random.getstate()
+    assert federation.share_fields(1, "text") == {} and random.getstate() == state
+    _on(monkeypatch, ["forum"], mode="coordinator_rule")
+    rng_before = federation._state["rng"].getstate()
+    assert federation.share_fields(1, "nice one") == {} and federation._state["rng"].getstate() == rng_before  # F8: no draw
+    _on(monkeypatch, ["forum", "dating"])
+    fields = federation.share_fields(1, "nice one", lambda d, t: "from the model" if d == "dating" else None)
+    assert fields["crosspost"] is True
+    assert {t["member"]: t["text"] for t in fields["crosspost_to"]} == {"dating": "from the model", "forum": "nice one\nnice one"}
+    _on(monkeypatch, ["forum"], propensity=0.0)
+    assert federation.share_fields(1, "nice one") == {}
+    federation.install({})

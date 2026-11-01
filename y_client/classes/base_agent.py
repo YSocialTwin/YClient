@@ -2897,6 +2897,7 @@ class Agent(object):
                     "hashtags": [],
                     "mentions": [],
                     "tid": tid,
+                    **federation.share_fields(self.user_id, share_text, self._crosspost_adapt),
                 }
             )
 
@@ -3008,6 +3009,7 @@ class Agent(object):
                 "hashtags": hashtags,
                 "mentions": mentions,
                 "tid": tid,
+                **federation.share_fields(self.user_id, post_text, self._crosspost_adapt),
             }
         )
 

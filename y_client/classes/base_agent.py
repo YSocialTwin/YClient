@@ -511,7 +511,8 @@ class Agent(object):
                 self.toxicity = us["toxicity"]
                 self.nationality = us["nationality"]
                 self.is_page = us["is_page"]
-                self.archetype = us['archetype'] if "archetype" in us else None
+                # The server does not store the archetype: on a resume keep the one of the agents file.
+                self.archetype = us.get("archetype") or archetype
 
             config_list = {
                 "model": _llm_model_from_config(config, default=self.type),
@@ -729,7 +730,9 @@ class Agent(object):
             self.nationality = us["nationality"]
             self.is_page = int(us["is_page"])
             if self.is_page == 0:
-                self.archetype = us['archetype']
+                # The server does not store the archetype: on a resume keep the one of the agents file
+                # (None here made the sampler of YWeb find no candidate for any archetype: nobody acted).
+                self.archetype = us.get("archetype") or archetype
 
             if self.opinions_enabled:
                 self.opinions = self.__get_opinions()

@@ -30,6 +30,7 @@ session = None
 engine = None
 base = None
 
+from y_client import federation as _federation
 from y_client import prompt_store
 from y_client.content_store import initialize_content_store
 from y_client.classes.base_agent import (
@@ -139,6 +140,10 @@ class YClientWeb(object):
             a.upper(): float(v)
             for a, v in self.config["simulation"]["actions_likelihood"].items()
         }
+        # Without this call the federation stays off in this process: no cross-post fields, no attention multipliers,
+        # no membership filter (World Simulation 1: 0 cross-posts of the microblogging). No-op unless the
+        # "federation" section of the configuration is enabled.
+        _federation.install(self.config)
         tot = sum(self.actions_likelihood.values())
         self.actions_likelihood = {
             k: v / tot for k, v in self.actions_likelihood.items()
@@ -523,6 +528,36 @@ class YClientWeb(object):
         #     pass
         if agent is not None:
             self.agents.add_agent(agent)
+
+    def adopt_federated_account(self, account):
+        """Give an agent to an account the server created for the federation (INV-19): the agent is loaded from the server
+        by its name, like a resumed one, so nothing is registered twice. Returns the agent, or None when it cannot be built.
+        Called by `federation.adopt_provisioned` (only with `federation.adopt`)."""
+        uid = int(account["user_id"])
+        for ag in self.agents.agents:
+            if getattr(ag, "user_id", None) == uid:
+                return ag
+        try:
+            import y_client.recsys as recsys
+            from y_client.classes import Agent, FakeAgent
+
+            # YClientWeb keeps no shared recommender (each agent of the file has its own): the defaults of the pages
+            # are used for an account the server created.
+            agent = (FakeAgent if self._rule_based_agents_enabled() else Agent)(
+                name=account["username"], email=f"{account['username']}@federation.local", load=True,
+                recsys=recsys.ReverseChronoPopularity(), frecsys=recsys.Jaccard(leaning_bias=1.5), config=self.config,
+                interests=list(account.get("interests") or []), owner=self.agents_owner)
+            if getattr(agent, "user_id", None) is None:
+                return None
+            if getattr(agent, "activity_profile", None) is None:
+                agent.activity_profile = "Always On"  # the profile of the agents without one (read_agents)
+            agent.set_prompts(self.prompts)
+        except Exception as exc:  # noqa: BLE001 - the account stays unadopted and is offered again
+            print(f"federation: could not adopt {account.get('username')}: {exc}")
+            return None
+        agent.simulation_client = self
+        self.agents.add_agent(agent)
+        return agent
 
     def add_feeds(self):
         for page in self.pages:

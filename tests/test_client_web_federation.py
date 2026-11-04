@@ -92,8 +92,48 @@ def test_yclientweb_adopts_the_provisioned_accounts_as_agents_of_the_experiment(
     agent = client.agents.agents[0]
     assert (agent.kind, agent.name, agent.activity_profile, agent.simulation_client) == ("Real", "newcomer", "Always On", client)
     assert agent.kw["load"] is True and agent.kw["interests"] == ["jazz"] and agent.kw["recsys"] is not None
+    # the server stores "default" for these accounts: the agent is saved with the recommenders it really uses
+    assert (agent.content_rec_sys_name, agent.follow_rec_sys_name) == ("ReverseChronoPopularity", "Jaccard")
     assert posted == [("http://srv/federation/provisioned/adopted", {"user_ids": [9]})]
     assert client.adopt_federated_account({"user_id": 9, "username": "newcomer"}) is agent  # offered again: not duplicated
     assert len(client.agents.agents) == 1
     client.config["agents"]["llm_agents"] = [None]  # rule-based experiment: no model
     assert client.adopt_federated_account({"user_id": 10, "username": "other"}).kind == "Fake"
+
+
+def test_a_saved_federation_agent_with_the_default_recommender_name_is_read_back(make_client, monkeypatch, tmp_path):
+    """The population file kept "default" for an adopted account and `read_agents` raised AttributeError on resume,
+    so the microblogging client of a World Simulation could not restart."""
+    import y_client.classes as classes
+
+    seen = []
+
+    class Stub:
+        def __init__(self, **kw):
+            seen.append(kw)
+
+        def set_prompts(self, prompts):
+            pass
+
+    monkeypatch.setattr(classes, "Agent", Stub, raising=False)
+    monkeypatch.setattr(classes, "FakeAgent", Stub, raising=False)
+    client = make_client(None)
+    keys = ("oe", "co", "ex", "ag", "ne", "education_level", "nationality", "gender")
+    entry = {"name": "JohnFord", "email": "j@federation.local", "password": "p", "type": "user", "leaning": "neutral",
+             "interests": [[], []], "round_actions": 3, "toxicity": "no", "age": 0, "language": "en", "owner": "federation",
+             "is_page": 0, "rec_sys": "default", "frec_sys": "default", **{k: None for k in keys}}
+    (tmp_path / "pop.json").write_text(json.dumps({"agents": [entry]}))
+    client.base_path = str(tmp_path)
+    client.read_agents()
+    assert [type(k["recsys"]).__name__ for k in seen] == ["ReverseChronoPopularity"]
+    assert [type(k["frecsys"]).__name__ for k in seen] == ["Jaccard"]
+
+
+def test_a_restart_lists_the_accounts_adopted_before(make_client, monkeypatch):
+    """The population file holds only some of the accounts the server created: on a restart the client asks for all of them."""
+    client = make_client({"enabled": True, "adopt": True})
+    urls = []
+    monkeypatch.setattr(federation.requests, "get", lambda url, timeout=0: urls.append(url) or SimpleNamespace(json=lambda: {"accounts": []}))
+    federation.adopt_provisioned(client)
+    federation.adopt_provisioned(client, include_adopted=True)
+    assert urls[0].endswith("/federation/provisioned") and urls[1].endswith("/federation/provisioned?all=1")

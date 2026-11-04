@@ -68,16 +68,19 @@ def inactive_ids():
     return set(_state["inactive"])
 
 
-def adopt_provisioned(client):
+def adopt_provisioned(client, include_adopted=False):
     """INV-19: accounts the server created because an agent of another platform decided to join this one get an agent here.
 
     Only with `federation.adopt` in the client configuration. Each account the server lists (GET /federation/provisioned)
     becomes an agent of `client` (`client.adopt_federated_account(account)` returns it, or None) and is reported as adopted;
-    the new agent acts like any other from the next slot. Returns the number adopted; never raises for an unreachable server."""
+    the new agent acts like any other from the next slot. Returns the number adopted; never raises for an unreachable server.
+    With `include_adopted` (a client that restarts) the accounts adopted before are listed too: the population file does not
+    hold them, and without an agent here they would stay silent for the rest of the run."""
     if not (_state["enabled"] and _state["adopt"]):
         return 0
     try:
-        res = requests.get(f"{_state['api']}/federation/provisioned", timeout=5)
+        url = f"{_state['api']}/federation/provisioned" + ("?all=1" if include_adopted else "")
+        res = requests.get(url, timeout=5)
         accounts = res.json().get("accounts", [])
     except Exception:  # noqa: BLE001 - try again at the next slot
         return 0

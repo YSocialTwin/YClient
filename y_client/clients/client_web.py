@@ -319,8 +319,10 @@ class YClientWeb(object):
         for ag in data["agents"]:
 
             if ag["is_page"] == 0:
-                content_recsys = getattr(recsys, ag["rec_sys"])()
-                follow_recsys = getattr(frecsys, ag["frec_sys"])(leaning_bias=1.5)
+                # an account the server created for the federation is saved with the name "default" (it has no
+                # recommender of its own): it gets the one adopt_federated_account gives it
+                content_recsys = getattr(recsys, ag["rec_sys"], recsys.ReverseChronoPopularity)()
+                follow_recsys = getattr(frecsys, ag["frec_sys"], recsys.Jaccard)(leaning_bias=1.5)
 
                 agent = AgentClass(
                     name=ag["name"],
@@ -413,6 +415,12 @@ class YClientWeb(object):
                 except Exception:
                     print(f"Error loading page agent: {ag['name']}")
                     continue
+
+        if not self.first_run:
+            # a restart: the accounts the server created for the federation are not in the population file
+            from y_client import federation
+
+            federation.adopt_provisioned(self, include_adopted=True)
 
     def set_interests(self):
         """
@@ -549,6 +557,9 @@ class YClientWeb(object):
                 interests=list(account.get("interests") or []), owner=self.agents_owner)
             if getattr(agent, "user_id", None) is None:
                 return None
+            # the server stores "default" for these accounts: save the names of the recommenders actually used
+            agent.content_rec_sys_name = "ReverseChronoPopularity"
+            agent.follow_rec_sys_name = "Jaccard"
             if getattr(agent, "activity_profile", None) is None:
                 agent.activity_profile = "Always On"  # the profile of the agents without one (read_agents)
             agent.set_prompts(self.prompts)

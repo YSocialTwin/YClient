@@ -327,6 +327,10 @@ class YClientBase(object):
                 return None
             agent.set_prompts(self.prompts)
             agent.set_rec_sys(self.content_recsys, self.follow_recsys)
+            # every agent shares these recommenders: the server stored "default" for an account it created
+            for attr, shared in (("content_rec_sys_name", self.content_recsys), ("follow_rec_sys_name", self.follow_recsys)):
+                if getattr(shared, "name", None):
+                    setattr(agent, attr, shared.name)
         except Exception as exc:  # noqa: BLE001 - the account stays unadopted and is offered again
             print(f"federation: could not adopt {account.get('username')}: {exc}")
             return None

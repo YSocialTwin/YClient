@@ -15,6 +15,7 @@ Classes:
 """
 
 import json
+import numbers
 import random
 import re
 import sys
@@ -470,7 +471,7 @@ class FakeAgent(Agent):
         if post_id is not None:
             target = self.get_user_from_post(post_id)
 
-        if isinstance(target, int):
+        if isinstance(target, numbers.Integral):  # also numpy integers (np.random.choice)
 
             st = json.dumps(
                 {

@@ -398,7 +398,7 @@ class YClientWeb(object):
                         gender=None,
                         nationality=None,
                         toxicity=None,
-                        api_key="",
+                        api_key=(self.config.get("servers") or {}).get("llm_api_key") or "",
                         feed_url=ag["feed_url"],
                         activity_profile=ag.get("activity_profile") or "Always On",
                         recsys=content_recsys,

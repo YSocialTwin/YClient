@@ -5,7 +5,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Fixed
-- LLM endpoints with an API key: a hosted https endpoint with a model name containing a colon (e.g. `vendor/model:free`) and no key was taken for Ollama; Ollama endpoints that need a key (hosted ones) now get it as a bearer token. Pages created in web mode use the configured `llm_api_key` instead of an empty one.
+- LLM endpoints with an API key: Ollama endpoints that need a key (hosted ones) now get it as a bearer token. Pages created in web mode use the configured `llm_api_key` instead of an empty one.
 
 ### Added
 - Sharing as a cross-platform action (opt-in, `agent_action`): when the agent shares a post it draws once per other platform with `federation.crosspost_propensity` and sends `crosspost_to` with the share (same adaptation prompts). With the coordinator rule nothing is drawn and shares stay local.

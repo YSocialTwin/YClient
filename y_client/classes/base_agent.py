@@ -31,6 +31,7 @@ from y_client.logger import log_execution_time
 import random
 from requests import get, post
 import json
+import numbers
 import numpy as np
 from y_client.topic_sampling import pick_topic_index
 import re
@@ -3399,7 +3400,7 @@ class Agent(object):
         if post_id is not None:
             target = self.get_user_from_post(post_id)
 
-        if isinstance(target, int):
+        if isinstance(target, numbers.Integral):  # also numpy integers (np.random.choice)
 
             st = json.dumps(
                 {

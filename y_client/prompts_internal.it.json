@@ -24,5 +24,17 @@
   "opinion_eval_question": "\nRispondi con una sola parola tra le opzioni: AGREE|DISAGREE|NEUTRAL.",
   "follow_back_request_follow": "ricambiare il follow",
   "follow_back_request_unfollow": "ricambiare l'unfollow",
-  "custom_features_persona": "Ulteriori dettagli personali: {details}."
+  "custom_features_persona": "Ulteriori dettagli personali: {details}.",
+  "crosspost_adapt_microblogging": "Stai per condividere su una piattaforma di microblogging qualcosa che hai appena scritto su {source_platform}. Riscrivilo come un breve post con la tua voce, al massimo 280 caratteri e al massimo due hashtag. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo il testo del post.",
+  "crosspost_adapt_forum": "Stai per condividere su un forum qualcosa che hai appena scritto su {source_platform}. Riscrivilo come discussione di un forum. Prima riga: un titolo breve. Poi un corpo di alcune frasi che invita a rispondere. Non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo il titolo e il corpo.",
+  "crosspost_adapt_photo_sharing": "Stai per condividere su una piattaforma di condivisione di foto qualcosa che hai appena scritto su {source_platform}. Riscrivilo come didascalia di una foto: una o due frasi evocative, al massimo tre hashtag. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo la didascalia.",
+  "crosspost_adapt_instant_messaging": "Stai per condividere su una chat qualcosa che hai appena scritto su {source_platform}. Riscrivilo come messaggio di chat a un gruppo: informale, una o due frasi, senza hashtag. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo il messaggio.",
+  "crosspost_adapt_dating": "Stai per condividere su una piattaforma di dating qualcosa che hai appena scritto su {source_platform}. Riscrivilo come breve frase per il tuo profilo di dating: calda, in prima persona, al massimo 200 caratteri, nulla che ti identifichi fuori dalla piattaforma. Mantieni il significato e non nominare l'altra piattaforma.\nTesto originale:\n{text}\nRestituisci solo la frase.",
+  "crosspost_decide": "Sei {name}. {profile}\nTu {trigger}:\n\"\"\"\n{text}\n\"\"\"\nPuoi condividerlo anche su altre piattaforme dello stesso mondo online. Piattaforme disponibili (tra parentesi, la lunghezza massima in caratteri di un testo per quella piattaforma):\n{destinations}\nDecidi, come farebbe davvero questa persona, se condividerlo su una o più di esse. Per lo più le persone non pubblicano lo stesso contenuto altrove; quando lo fanno scelgono la piattaforma adatta al contenuto e alle loro abitudini.\nRispondi SOLO con un oggetto JSON, senza altre parole, in questa forma: {\"crosspost\": true oppure false, \"destinations\": [\"<platform>\", ...], \"text\": {\"<platform>\": \"<text>\"}}\nUsa i nomi delle piattaforme esattamente come elencati; <text> sono le tue parole per quella piattaforma ed è facoltativo (ometti \"text\" per lasciare che la piattaforma adatti le tue parole). Rispondi {\"crosspost\": false, \"destinations\": []} se decidi di non condividerlo.",
+  "crosspost_decide_publish": "hai appena pubblicato questo contenuto",
+  "crosspost_decide_interaction": "hai appena interagito con questo contenuto scritto da qualcun altro ({action})",
+  "crosspost_decide_action_share": "l'hai condiviso",
+  "crosspost_decide_action_comment": "l'hai commentato",
+  "crosspost_decide_action_reply": "hai risposto",
+  "crosspost_decide_action_reaction": "hai reagito"
 }

@@ -28,6 +28,7 @@ from y_client.recsys import *
 from y_client.utils import generate_user
 from y_client.news_feeds import Feeds
 from y_client.content_store import initialize_content_store, reset_content_db
+from y_client import federation as _federation
 
 
 class YClientBase(object):
@@ -108,6 +109,7 @@ class YClientBase(object):
 
         self.prompts = json.load(open(prompts_filename, "r"))
         self.config = json.load(open(config_filename, "r"))
+        _federation.install(self.config)  # no-op unless the "federation" section is enabled
 
         # Derive log file path from simulation name when none is provided
         if log_file is None:
@@ -306,6 +308,36 @@ class YClientBase(object):
             agent.simulation_client = self
             self.agents.add_agent(agent)
 
+    def adopt_federated_account(self, account):
+        """Give an agent to an account the server created for the federation (INV-19): the agent is loaded from the server
+        by its name, like a resumed one, so nothing is registered twice. Returns the agent, or None when it cannot be built."""
+        known = {getattr(ag, "user_id", None) for ag in self.agents.agents}
+        if int(account["user_id"]) in known:
+            return next(ag for ag in self.agents.agents if getattr(ag, "user_id", None) == int(account["user_id"]))
+        try:
+            from y_client.classes import Agent, FakeAgent
+            from y_client.utils import _rule_based_agents_enabled
+
+            # the class every other agent of the experiment has (generate_user): a rule-based experiment has no model
+            agent = (FakeAgent if _rule_based_agents_enabled(self.config) else Agent)(
+                name=account["username"], email=f"{account['username']}@federation.local", load=True,
+                recsys=self.content_recsys, frecsys=self.follow_recsys, config=self.config,
+                interests=list(account.get("interests") or []), owner=self.agents_owner)
+            if getattr(agent, "user_id", None) is None:
+                return None
+            agent.set_prompts(self.prompts)
+            agent.set_rec_sys(self.content_recsys, self.follow_recsys)
+            # every agent shares these recommenders: the server stored "default" for an account it created
+            for attr, shared in (("content_rec_sys_name", self.content_recsys), ("follow_rec_sys_name", self.follow_recsys)):
+                if getattr(shared, "name", None):
+                    setattr(agent, attr, shared.name)
+        except Exception as exc:  # noqa: BLE001 - the account stays unadopted and is offered again
+            print(f"federation: could not adopt {account.get('username')}: {exc}")
+            return None
+        agent.simulation_client = self
+        self.agents.add_agent(agent)
+        return agent
+
     def process_reciprocal_follow_event(
         self, *, actor_agent, target_user_id: int, action: str, tid: int
     ) -> bool:
@@ -433,7 +465,11 @@ class YClientBase(object):
                         int(len(self.agents.agents) * self.hourly_activity[str(h)]), 1
                     )
 
-                    sagents = random.sample(self.agents.agents, expected_active_users)
+                    _federation.adopt_provisioned(self)  # agents for the accounts the federation created here (INV-19)
+                    pool = _federation.filter_pool(self.agents.agents)  # same list unless the federation hides accounts
+                    if pool is not self.agents.agents:
+                        expected_active_users = min(expected_active_users, len(pool))
+                    sagents = random.sample(pool, expected_active_users)
 
                     # available actions
                     acts = [a for a, v in self.actions_likelihood.items() if v > 0]
@@ -485,6 +521,7 @@ class YClientBase(object):
                         effective_round_actions = max(
                             1, int(round(float(g.round_actions) * action_multiplier))
                         )
+                        effective_round_actions = _federation.scale_actions(effective_round_actions, g.user_id)  # federation attention (F4.3)
 
                         for _ in range(effective_round_actions):
                             self.sim_clock.maybe_heartbeat()

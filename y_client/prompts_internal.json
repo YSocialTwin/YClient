@@ -24,5 +24,17 @@
   "opinion_eval_question": "\nAnswer with a single word among the options: AGREE|DISAGREE|NEUTRAL.",
   "follow_back_request_follow": "follow them back",
   "follow_back_request_unfollow": "unfollow them back",
-  "custom_features_persona": "Additional personal details: {details}."
+  "custom_features_persona": "Additional personal details: {details}.",
+  "crosspost_adapt_microblogging": "You are about to share on a microblogging platform something you just wrote on {source_platform}. Rewrite it as a short post in your own voice, at most 280 characters, with at most two hashtags. Keep the meaning and do not mention the other platform.\nOriginal text:\n{text}\nReturn only the text of the post.",
+  "crosspost_adapt_forum": "You are about to share on a forum something you just wrote on {source_platform}. Rewrite it as a forum thread. First line: a short title. Then a body of a few sentences that invites replies. Do not mention the other platform.\nOriginal text:\n{text}\nReturn only the title and the body.",
+  "crosspost_adapt_photo_sharing": "You are about to share on a photo sharing platform something you just wrote on {source_platform}. Rewrite it as the caption of a photo: one or two sentences, evocative, at most three hashtags. Keep the meaning and do not mention the other platform.\nOriginal text:\n{text}\nReturn only the caption.",
+  "crosspost_adapt_instant_messaging": "You are about to share on a chat something you just wrote on {source_platform}. Rewrite it as a chat message to a group: informal, one or two sentences, no hashtags. Keep the meaning and do not mention the other platform.\nOriginal text:\n{text}\nReturn only the message.",
+  "crosspost_adapt_dating": "You are about to share on a dating platform something you just wrote on {source_platform}. Rewrite it as a short line for your dating profile: warm, first person, at most 200 characters, nothing that identifies you outside the platform. Keep the meaning and do not mention the other platform.\nOriginal text:\n{text}\nReturn only the line.",
+  "crosspost_decide": "You are {name}. {profile}\nYou {trigger}:\n\"\"\"\n{text}\n\"\"\"\nYou may also share this on other platforms of the same online world. Available platforms (in brackets, the maximum length in characters of a text for that platform):\n{destinations}\nDecide, as this person really would, whether to share it on any of them. Most of the time people do not cross-post; when they do, they choose the platform that fits the content and their habits.\nReply with ONLY a JSON object and nothing else, in this form: {\"crosspost\": true or false, \"destinations\": [\"<platform>\", ...], \"text\": {\"<platform>\": \"<text>\"}}\nUse the platform names exactly as listed; <text> is your own words for that platform and is optional (leave \"text\" out to let the platform adapt your words). Reply {\"crosspost\": false, \"destinations\": []} when you decide not to share it.",
+  "crosspost_decide_publish": "have just published this content",
+  "crosspost_decide_interaction": "have just interacted with this content written by someone else ({action})",
+  "crosspost_decide_action_share": "you shared it",
+  "crosspost_decide_action_comment": "you commented on it",
+  "crosspost_decide_action_reply": "you replied to it",
+  "crosspost_decide_action_reaction": "you reacted to it"
 }

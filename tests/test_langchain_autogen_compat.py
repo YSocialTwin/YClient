@@ -119,3 +119,36 @@ def test_looks_like_ollama_honors_env_url_match(monkeypatch):
         backend_hint=None,
     )
     assert compat_module._looks_like_ollama(cfg) is True
+
+
+def _llm_config(**primary):
+    return {"config_list": [{"model": "m", **primary}]}
+
+
+
+
+def test_a_plain_http_endpoint_with_an_ollama_tag_is_still_ollama():
+    cfg = compat_module._normalize_llm_config(
+        _llm_config(base_url="http://gpu-box:8000/v1", model="llama3:8b", api_key="NULL")
+    )
+    assert compat_module._looks_like_ollama(cfg)
+
+
+def test_an_authenticated_ollama_endpoint_gets_the_bearer_token(monkeypatch):
+    seen = {}
+
+    class FakeChatOllama:
+        def __init__(self, **kwargs):
+            seen.update(kwargs)
+
+    fake = types.ModuleType("langchain_ollama")
+    fake.ChatOllama = FakeChatOllama
+    monkeypatch.setitem(sys.modules, "langchain_ollama", fake)
+    compat_module._build_chat_model(
+        _llm_config(base_url="https://ollama.com/v1", api_key="sk-secret")
+    )
+    assert seen["client_kwargs"] == {"headers": {"Authorization": "Bearer sk-secret"}}
+    assert seen["base_url"] == "https://ollama.com"
+    seen.clear()
+    compat_module._build_chat_model(_llm_config(base_url="http://127.0.0.1:11434/v1", api_key="NULL"))
+    assert "client_kwargs" not in seen

@@ -20,6 +20,7 @@ import re
 import sys
 
 import numpy as np
+from y_client import federation
 from y_client.topic_sampling import pick_topic_index
 from y_client.llm import AssistantAgent
 from faker import Faker
@@ -140,6 +141,7 @@ class FakeAgent(Agent):
                 "mentions": None,
                 "tid": tid,
                 "topics": interests_id,
+                **federation.post_fields(self.user_id, post_text),
             }
         )
 
@@ -350,6 +352,7 @@ class FakeAgent(Agent):
                 "hashtags": None,
                 "mentions": None,
                 "tid": tid,
+                **federation.share_fields(self.user_id, post_text),
             }
         )
 

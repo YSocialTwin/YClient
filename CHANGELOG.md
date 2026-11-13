@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+- LLM endpoints with an API key: Ollama endpoints that need a key (hosted ones) now get it as a bearer token. Pages created in web mode use the configured `llm_api_key` instead of an empty one.
+
+### Added
+- Sharing as a cross-platform action (opt-in, `agent_action`): when the agent shares a post it draws once per other platform with `federation.crosspost_propensity` and sends `crosspost_to` with the share (same adaptation prompts). With the coordinator rule nothing is drawn and shares stay local.
+- Cross-post as an agent action (opt-in, `federation.crosspost_mode: agent_action`): after posting, the agent draws once per platform where it is also active (`GET /federation/destinations`) with `federation.crosspost_propensity`, and sends `crosspost_to` ([{member, text}]) with the post; the text is the model's version (prompts `crosspost_adapt_<platform>`, EN and IT) or, without a model or on a failed reply, the same words cut and shaped for the platform. Default mode unchanged.
+- Federation attention (opt-in): the agent's number of actions in a slot is scaled by the multiplier of the day that the server publishes (`GET /federation/attention`), rounded at random with the module's own generator; with the federation off or multiplier 1 nothing changes.
+- Federation (opt-in, `y_client/federation.py`): with the `federation` section of the client configuration enabled, agents that are not active on the platform (listed by `GET /federation/inactive_users`) are not sampled and do not act, and an agent may mark a post for cross-post (`federation.crosspost_propensity`, own seeded generator, extra `crosspost` field of `/post`). Without the section nothing changes.
+
 ## [2.1.1] - 2026-10-22
 
 ### Fixed
